@@ -1,0 +1,5 @@
+#ifndef BUILD_INFO_H
+#define BUILD_INFO_H
+#define GIT_COMMIT_SHA "@GIT_COMMIT_SHA@"
+#define BUILD_TIME "@BUILD_TIME@"
+#endif

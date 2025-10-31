@@ -1,0 +1,26 @@
+Youngs Law benchmark description
+
+Three phase-field regions representing rigid body surface, gas and liquid droplet are 
+initiated in the box in order to check the Young's angles at the contact between them.
+The liquid droplet is allowed to evaporate, so its volume is not conserved.
+All interface energies are identical by default but interface energies can be changed 
+to study the contact angle dependence on the interface energy difference.
+
+The box size is 101x1x101 grid points. The input parameters are:
+
+grid spacing:         dX    = 10^{-6} m, 
+time step:            dt    = 10^{-4} s, 
+interface mobility:   mu    = 4*10^{-10} m^4/(J*s) (or 0 for rigid body surface), 
+interface energy:     sigma = 0.24 J/m^2, 
+interface width:      eta   = 5*dX.
+
+Insulating (adiabatic) boundary conditions are used in the simulation. After the start of the 
+simulation the dropel gas interface begin to evolve according to the surface tension balance at the
+contact between all three phases. Depending on the actual interface energy values, the 
+liquid droplet evolution would lead to different contact angles between the droplet and the
+rigid surface. Wikipedia article on Surface Energy provides more information on the Young's law
+and the contact angle.
+
+The output data in vtk format is written in the VTK directory and can be 
+directly visualized using the Paraview software (www.paraview.org). 
+

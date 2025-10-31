@@ -1,0 +1,8 @@
+This is a README file for the Pearlite simulation example.
+
+In order to run the example simulation you should run ./Pearlite. 
+/ProjectInput directory contains the necessary input file for the simulation. 
+Results will be placed in to the /VTK directory and can be visualised 
+using ParaView (www.paraview.org).
+
+

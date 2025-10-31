@@ -1,0 +1,129 @@
+ Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+
+@RunTimeControl
+
+$SimTtl         Simulation Title                        : Solidification of pure Fe
+$nSteps         Number of Time Steps                    : 100000
+$FTime          Output to Disk every (tSteps)           : 100
+$STime          Output to Screen every (tSteps)         : 100
+$LUnits         Units of Length                         : m
+$TUnits         Units of Time                           : s
+$MUnits         Units of Mass                           : kg
+$EUnits         Energy units                            : J
+$dt             Initial Time Step                       : 1.0e-6
+$nOMP           Number of OpenMP Threads                : 2
+$Restrt         Restart switch (Yes/No)                 : No
+$tStart         Start at time step                      : 0
+$tRstrt         Restart output every (tSteps)           : 10000
+
+@GridParameters
+
+$Nx             System Size in X Direction              : 201
+$Ny             System Size in Y Direction              : 0
+$Nz             System Size in Z Direction              : 201
+$IWidth         Interface Width (in grid points)        : 5.0
+$dx             Grid Spacing                            : 1.0e-6
+
+@Settings
+
+$Comp_0         Chemical Component 0                    : FE
+
+$Phase_0        Name of Phase 0                         : Liquid
+$State_0        Aggregate state of phase 0              : LIQUID
+$Phase_1        Name of Phase 1                         : Solid
+$State_1        Aggregate state of phase 1              : SOLID
+
+@DrivingForce
+
+$Average        Driving force averaging                 : Yes
+$CutOff_0_1     Driving force cutoff 0 1                : 0.95
+
+@UserDrivingForce
+
+$UDF_Mode_0_1        Driving force mode for phase pair 0 and 1      : Formula
+$UDF_LatentHeat_0_1  Latent heat for phase pair 0 and 1             : 9.03e8
+$UDF_Teq_0_1         Equilibrium temperature for phase pair 0 and 1 : 1811
+
+@InterfaceProperties
+
+$EnergyModel_0_1  Interface energy model                : Iso
+$Sigma_0_1        Interface energy                      : 0.24
+
+$EnergyModel_0_0  Interface energy model                : Iso
+$Sigma_0_0        Interface energy                      : 0.24
+
+$EnergyModel_1_1  Interface energy model                : Iso
+$Sigma_1_1        Interface energy                      : 0.24
+
+
+$MobilityModel_0_1  Interface mobility model            : Iso
+$Mu_0_1             Interface mobility                  : 3.0e-7
+
+$MobilityModel_0_0  Interface mobility model            : Iso
+$Mu_0_0             Interface mobility                  : 1.0e-7
+
+$MobilityModel_1_1  Interface mobility model            : Iso
+$Mu_1_1             Interface mobility                  : 1.0e-9
+
+@Nucleation
+
+$Allowed_0_1        Allow nucleation of phase 1 in phase 0              : Yes
+$Density_0_1        Particle Density of phase 1 in phase 0 (in 1/m^3)   : 2.0e+10
+$Tmin_0_1           Minimum temperature where nucleation is possible    : 0
+$Tmax_0_1           Maximum temperature where nucleation is possible    : 1911
+
+@Temperature
+
+$T0     Initial System Temperature                      : 1781
+$LatentHeatMode                                          : LOCAL
+$LatentHeat_0_1                                         : -9.03e8
+
+@HeatSources
+
+$Source_0     Source is present                         : Yes
+$Value_0      Heat source value                         : 1.0e7
+$Type_0       Heat source type                          : BCZ0
+$TriggerON_0  Turn ON condition                         : TimeStep
+$TriggerONvalue_0  Turn ON value                        : 0
+$TriggerOFF_0  Turn OFF condition                       : User
+
+$Source_1     Source is present                         : No
+$Value_1      Heat source value                         : -1.0e6
+$Type_1       Heat source type                          : BCZN
+$TriggerON_1  Turn ON condition                         : TimeStep
+$TriggerONvalue_1  Turn ON value                        : 0
+$TriggerOFF_1  Turn OFF condition                       : User
+
+$Source_2     Source is present                         : No
+$Value_2      Heat source value                         : -1.0e6
+$Type_2       Heat source type                          : BCX0
+$TriggerON_2  Turn ON condition                         : TimeStep
+$TriggerONvalue_2  Turn ON value                        : 0
+$TriggerOFF_2  Turn OFF condition                       : User
+
+$Source_3     Source is present                         : No
+$Value_3      Heat source value                         : -1.0e7
+$Type_3       Heat source type                          : BCXN
+$TriggerON_3  Turn ON condition                         : TimeStep
+$TriggerONvalue_3  Turn ON value                        : 0
+$TriggerOFF_3  Turn OFF condition                       : User
+
+@HeatDiffusion
+
+$ThermalConductivity_0                                  : 50
+$ThermalConductivity_1                                  : 75
+
+$VolumetricHeatCapacity_0                               : 5.51e+6
+$VolumetricHeatCapacity_1                               : 5.02e+6
+
+@BoundaryConditions
+
+$BC0X   X axis beginning boundary condition             : NoFlux
+$BCNX   X axis far end boundary condition               : NoFlux
+
+$BC0Y   Y axis beginning boundary condition             : NoFlux
+$BCNY   Y axis far end boundary condition               : NoFlux
+
+$BC0Z   Z axis beginning boundary condition             : NoFlux
+$BCNZ   Z axis far end boundary condition               : NoFlux

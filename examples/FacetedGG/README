@@ -1,0 +1,9 @@
+This is a README file for the FacetedGG simulation example.
+
+In order to run the example simulation you should run ./FacetedGG
+ProjectInput.opi file contains the necessary input data for the simulation.
+Results will be placed in to the /VTK directory and can be visualised
+using the ParaView software (www.paraview.org).
+
+A detailed description of the simulation setup is given in the FacetedGG.txt 
+file.

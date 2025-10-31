@@ -1,0 +1,171 @@
+\documentclass[12pt, twoside=false]{scrbook}
+
+\title{OpenPhase User Manual}
+\author{ICAMS}
+\date{2015}
+
+%-Principal packages --------------------------------------------------------
+\usepackage[utf8]{inputenc} 
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[tracking=true]{microtype}
+\DeclareMicrotypeSet*[tracking]{my}{ font = */*/*/sc/* }
+\setkomafont{disposition}{\normalfont\bfseries}
+\usepackage[english]{babel}
+%\usepackage{natbib}
+\usepackage{Packages/multibib}
+
+%-Packages-------------------------------------------------------------------
+\usepackage[top=25mm, left=30mm, right=25mm, bottom=25mm, headsep=10mm, footskip=15mm]{geometry}
+\usepackage{setspace}
+	
+\usepackage{Packages/siunitx}
+%\usepackage{lscape}
+%\usepackage{pdfpages}
+\usepackage{fancyhdr}
+%\usepackage{vmargin}
+\usepackage{afterpage}
+\usepackage{etex}
+\usepackage{hyperref}		
+\pdfminorversion=5 	
+
+\usepackage{fix-cm}       
+\usepackage{enumitem}                     
+\usepackage{booktabs}
+\usepackage{multirow}
+
+\usepackage{mathtools}
+\usepackage{subfig}	
+\usepackage[pdftex]{graphicx}
+\usepackage[capitalise]{cleveref}
+\usepackage{fancyhdr}
+\usepackage{xcolor}
+%\usepackage{colortbl}
+%\usepackage{ziffer}
+\usepackage{tabularx}
+\usepackage{amsmath, amssymb}
+\usepackage{mathtools}
+\usepackage{listings}
+\usepackage{Packages/kbordermatrix}
+\usepackage{soul}
+\usepackage{float}
+%\usepackage{Packages/MnSymbol}
+
+%--Figures------------------------------------------------------
+\graphicspath{{Figures/}}
+
+%--Foot/Head---------------------------------------------------
+\pagestyle{fancy} 	
+\renewcommand{\chaptermark}[1]{%
+\markboth{\thechapter.\ #1}{}}\fancyhead[LO,RE]{\leftmark}
+
+\fancyhead[LE,RO]{\thepage}
+\fancyfoot{} % clear all footer fields
+
+%\fancypagestyle{plain}{
+%\fancyhf{}
+%\fancyhead[R]{\thepage}
+
+%---Tikz / PGF ---------------------------------
+\usepackage{tikz}
+\usepackage{pgf}
+\usepackage{pgfplots}
+\usepackage{pgffor}
+\usetikzlibrary{backgrounds}
+\usepgflibrary{plothandlers}
+\usetikzlibrary{shapes,arrows}
+\pgfplotsset{compat=newest}
+% design of cycle list for plots
+\pgfplotscreateplotcyclelist{list}{
+blue,mark=*,line width=1pt\\
+green,mark=square*,line width=1pt\\
+red,mark=diamond*,line width=1pt\\
+magenta,mark=pentagon*,line width=1pt\\
+teal,mark=triangle*,line width=1pt\\
+cyan,mark=*,line width=1pt\\
+orange,mark=square*,line width=1pt\\
+gray,mark=pentagon*,line width=1pt\\
+violet,mark=diamond*,line width=1pt\\
+brown,mark=triangle*,line width=1pt\\
+} 
+\usepackage[some]{Packages/background}
+
+%-------------Colors------------------------------
+%\definecolor{RUBblau}{rgb}{0,51,91}
+\definecolor{RUBblau}{cmyk}{1,0.5,0,0.6}
+\definecolor{RUBgruen}{cmyk}{0.5,0,1.0,0}
+\definecolor{RUBgrau}{cmyk}{0.03,0.03,0.03,0.1}
+\definecolor{CiteColor}{cmyk}{1,0.5,0,0.6}
+\definecolor{LinkColor}{cmyk}{1,0.5,0,0.6}
+\definecolor{urlcolor}{cmyk}{1,0.5,0,0.6}
+
+%--------------------Hyperref,Glossaries----------------------
+\usepackage[nonumberlist, nosuper, notree,
+acronym, toc, section]{glossaries}  		
+ 
+%----------Layout---------------------------------
+
+\onehalfspacing	
+\numberwithin{equation}{chapter}
+\setlength{\skip\footins}{5mm}	
+\setlength{\parindent}{0pt}	
+
+\makeatletter\@openrightfalse\makeatother
+
+\input{Includes/aliases.tex}
+
+%\newcommand{\cmethod}{\textsf} 
+
+\newcommand{\cmethod}[1]{
+  \lstinline{#1} 
+}
+\newcommand{\cvar}{\textsf} 
+
+\lstset{
+ language          = C++,
+ breaklines        = true,
+ breakatwhitespace = true,
+ breakindent       = 130pt,
+ escapechar        = *,
+ numbers           = left
+}
+
+\newcites{opref}{References}
+\newcites{oppub}{Publications}
+
+\def\CallGraphSettings
+{
+\tikzstyle{decision} = [diamond, draw, fill=RUBgrau!20, 
+    text width=4.5em, text badly centered, node distance=3cm, inner sep=0pt]
+\tikzstyle{block} = [rectangle, draw, fill=RUBgrau!20,  text centered, rounded corners, minimum height=4em]
+\tikzstyle{line} = [draw, -latex']
+\tikzstyle{cloud} = [draw, ellipse,fill=RUBgrau!20, node distance=3cm,
+    minimum height=2em]
+}
+
+%--PDF options (hyperref)---------------------------------------
+
+\hypersetup{
+	pdftitle = {OpenPhase User Manual},
+	pdfauthor = {ICAMS},
+	pdfsubject = {OpenPhase User Manual},
+	pdfview = {FitV},
+	pdfkeywords = {Phase-Field, Materials Simulation}		
+	pdfstartview = {FitV},
+	pdfstartpage = {1},
+	bookmarksopen = {false},				
+	colorlinks = {true},
+	citecolor = CiteColor,
+	linkcolor = LinkColor,
+	urlcolor = urlcolor,
+	bookmarksnumbered = {true},			
+	pdfhighlight = {/I}					
+}
+
+\newcommand*{\lstitem}[1]{
+  \setbox0\hbox{\lstinline{#1}}  
+  \item[\usebox0]  
+  % \item[\hbox{\lstinline{#1}}]
+  \hfill \\
+}
+

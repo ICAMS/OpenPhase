@@ -1,0 +1,52 @@
+\section{ElasticityKhachaturyan}
+\label{sec:module_elasticitykhachaturyan}
+
+% Define box and box title style
+\tikzstyle{mybox} = [draw=black, fill=RUBgrau!20, very thick, rectangle, rounded corners, inner sep=10pt, inner ysep=20pt]
+\tikzstyle{fancytitle} =[fill=RUBblau!100, text=white, rectangle, rounded corners,draw=black]
+
+\begin{tikzpicture}
+\node[mybox] (box)
+{
+\begin{minipage}{1\textwidth}
+\begin{description}
+\item[What it does] Calculates homogenized elastic properties in the interface; calculates elastic driving force.
+\item[Requires] \nameref{sec:module_settings}, \nameref{sec:module_elasticproperties}
+\item[Header file] Mechanics/ElasticityModels/ElasticityKhachaturyan.h
+\item[Input file] None
+\item[Examples] /examples/MultiComp-Elastic
+\end{description}
+\end{minipage}
+};
+\node[fancytitle, right=12pt] at (box.north west) {Module in brief...};
+\end{tikzpicture}
+The \cvar{EffectiveElasticConstants} are calculated by calling the method \cmethod{SetEffectiveElasticConstants(EP)} as
+\begin{equation}
+  \CB = \sum_\alpha \CB_\alpha  \phi_\alpha
+\end{equation}
+The \cvar{EffectiveEigenStrains} are calculated by calling the method \cmethod{SetEffectiveEigenStrains(EP)}
+\begin{equation}
+  \varepsilon^* = \sum_\alpha \phi_\alpha \varepsilonB^*_\alpha
+\end{equation}
+The driving force $\Delta G^{el}_{\alpha\beta}$ becomes
+\begin{align}
+  \Delta G^{el}_{\alpha\beta} &= \frac{1}{2} \varepsilonB^{el} \left(\CB_\beta-\CB_\alpha\right)\varepsilonB^{el} + \varepsilon^{el} \CB \left(\varepsilonB^*_\beta-\varepsilonB^*_\alpha\right)\\
+  &= \frac{1}{2} \varepsilonB^{el} \left(\CB_\beta-\CB_\alpha\right)\varepsilonB^{el} - \sigmaB \left(\varepsilonB^*_\beta-\varepsilonB^*_\alpha\right)
+\end{align}
+
+% ----------------------------------------------------
+\CallGraphSettings
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[framed, node distance = 2cm, auto]
+    \node [block] (constructor) {\cmethod{Constructor}};
+        \node [block, below of=constructor] (constants) {\cmethod{SetEffectiveElasticConstants(ElasticProperties)}};
+    \node [block, below of=constants] (eigenstrains) {\cmethod{SetEffectiveEigenStrains(ElasticProperties)}};
+    
+    % Draw edges
+    \path [line] (constructor) -- (constants);
+    \path [line] (constants) -- (eigenstrains);
+\end{tikzpicture}
+\caption{Call graph for module \nameref{sec:module_elasticitysteinbach}}
+\end{figure}

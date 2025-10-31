@@ -1,0 +1,250 @@
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@RunTimeControl
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$SimTtl         Simulation Title                        : Fe-C Solidification
+$nSteps         Number of Time Steps                    : 100000
+$FTime          Output to Disk every (tSteps)           : 1000
+$STime          Output to Screen every (tSteps)         : 1000
+$LUnits         Units of Length                         : m
+$TUnits         Units of Time                           : s
+$MUnits         Units of Mass                           : kg
+$EUnits         Energy units                            : J
+$dt             Initial Time Step                       : 1.0e-4
+$nOMP           Number of OpenMP Threads                : 4
+$Restrt         Restart switch (Yes/No)                 : No
+$tStart         Restart at time step                    : 10000
+$tRstrt         Restart output every (tSteps)           : 1000
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GridParameters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Nx             System Size in X Direction              : 501
+$Ny             System Size in Y Direction              : 0
+$Nz             System Size in Z Direction              : 501
+$dx             Grid Spacing                            : 2.0e-6
+$Resolution     Phase-field resolution                  : Single
+$IWidth         Interface Width (in grid points)        : 5.0
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Settings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Comp_0         Chemical Component 0                    : C
+$Comp_1         Chemical Component 1                    : FE
+
+$Phase_0        Name of Phase 0                         : LIQUID
+$Phase_1        Name of Phase 1                         : BCC_A2
+$Phase_2        Name of Phase 2                         : FCC_A1
+
+$State_0        Aggregate state of Phase 0              : LIQUID
+$State_1        Aggregate state of Phase 1              : Solid
+$State_2        Aggregate state of Phase 2              : Solid
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@PhaseField
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$NucleusVolumeFactor                                    : 0.5
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@DrivingForce
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Range                                                  : 2
+Threshold                                              : 0.1
+$Average        Driving force averaging                 : Yes
+$Limiting       Driving force limiting                  : Yes
+$Limit_0_1      Driving force limit 0 1                 : 0.95
+$Limit_0_2      Driving force limit 0 2                 : 0.95
+$Limit_1_2      Driving force limit 1 2                 : 0.95
+$WeightsMode                                            : PhaseFields
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InterfaceProperties
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+TripleJunctionModel                                    : Model
+TripleJunctionFactor                                   : 1.0
+
+$EnergyModel_0_1  Interface energy model                : Cubic
+$Sigma_0_1        Interface energy                      : 0.24
+$EpsilonE_0_1     Interface anisotropy                  : 0.5
+
+$EnergyModel_0_2  Interface energy model                : Cubic
+$Sigma_0_2        Interface energy                      : 0.24
+$EpsilonE_0_2     Interface anisotropy                  : 0.35
+
+$EnergyModel_1_2  Interface energy model                : Iso
+$Sigma_1_2        Interface energy                      : 0.24
+
+
+$EnergyModel_0_0  Interface energy model                : Iso
+$Sigma_0_0        Interface energy                      : 0.24
+
+$EnergyModel_1_1  Interface energy model                : Iso
+$Sigma_1_1        Interface energy                      : 0.24
+
+$EnergyModel_2_2  Interface energy model                : Iso
+$Sigma_2_2        Interface energy                      : 0.24
+
+
+$MobilityModel_0_1 Interface model                      : Iso
+$Mu_0_1            Interface mobility                   : 2.0e-9
+$EpsilonM_0_1    Interface anisotropy                   : 0.0
+
+$MobilityModel_0_2  Interface mobility model            : Iso
+$Mu_0_2             Interface mobility                  : 5.0e-9
+
+$MobilityModel_1_2  Interface mobility model            : Iso
+$Mu_1_2             Interface mobility                  : 5.0e-9
+
+$MobilityModel_0_0  Interface mobility model            : Iso
+$Mu_0_0             Interface mobility                  : 1.0e-9
+
+$MobilityModel_1_1  Interface mobility model            : Iso
+$Mu_1_1             Interface mobility                  : 1.0e-11
+
+$$MobilityModel_2_2 Interface mobility model            : Iso
+$Mu_2_2             Interface mobility                  : 1.0e-11
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Nucleation
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$RandomNumberSeed                                       : 1
+
+$Allowed_0_0   allows to nucleate phase 0 in itself     : No
+$Allowed_0_1   allows to nucleate phase 0 in phase 1    : No
+$Allowed_0_2   allows to nucleate phase 0 in phase 2    : No
+$Allowed_1_0   allows to nucleate phase 1 in phase 0    : Yes
+$Allowed_1_1   allows to nucleate phase 1 in itself     : No
+$Allowed_1_2   allows to nucleate phase 1 in phase 2    : No
+$Allowed_2_0   allows to nucleate phase 2 in phase 0    : Yes
+$Allowed_2_1   allows to nucleate phase 2 in phase 1    : Yes
+$Allowed_2_2   allows to nucleate phase 2 in itself     : No
+
+$Location_1_0       Phase 1 seeds preferential location in phase 0      : Bulk
+$Density_1_0        Particle Density of phase 1 in phase 0 (in 1/m^3)   : 1.0e7
+$Distribution_1_0   Nuclei size distribution                            : Normal
+$Center_1_0         Mu of the Normal SizeDistribution (in m)            : 1.0e-6
+$Deviation_1_0      Sigma of the SizeDistribution (in m)                : 1.0e-6
+$Tmin_1_0           Minimum temperature where nucleation is possible    : 1600
+$Tmax_1_0           Maximum temperature where nucleation is possible    : 1800
+$Orientation_1_0    Grains orientation mode                             : Random
+$Variants_1_0       Crystallographic variants per nucleation site       : 1
+$VariantsMode_1_0   Variants selection mode                             : Random
+
+$Location_2_0       Phase 1 seeds preferential location in phase 0      : Interface
+$Density_2_0        Particle Density of phase 2 in phase 0 (in 1/m^3)   : 1.0e8
+NSites_2_0          Particle number of phase 2 in phase 0 (in 1/m^3)   : 100
+$Distribution_2_0   Nuclei size distribution                            : Normal
+$Center_2_0         Mu of the Normal SizeDistribution (in m)            : 1.0e-6
+$Deviation_2_0      Sigma of the SizeDistribution (in m)                : 1.0e-6
+$Tmin_2_0           Minimum temperature where nucleation is possible    : 1600
+$Tmax_2_0           Maximum temperature where nucleation is possible    : 1767
+$Orientation_2_0    Grains orientation mode                             : Random
+$Variant_2_0        Symmetry variants per nucleation site               : Single
+
+$Location_2_1       Phase 1 seeds preferential location in phase 0      : Interface
+$Density_2_1        Particle Density of phase 2 in phase 0 (in 1/m^3)   : 1.0e8
+NSites_2_1          Particle number of phase 2 in phase 0 (in 1/m^3)   : 100
+$Distribution_2_1   Nuclei size distribution                            : Normal
+$Center_2_1         Mu of the Normal SizeDistribution (in m)            : 1.0e-6
+$Deviation_2_1      Sigma of the SizeDistribution (in m)                : 1.0e-6
+$Tmin_2_1           Minimum temperature where nucleation is possible    : 1600
+$Tmax_2_1           Maximum temperature where nucleation is possible    : 1767
+$Orientation_2_1    Grains orientation mode                             : Parent
+$Variant_2_1        Symmetry variants per nucleation site               : Single
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Composition
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$RefElement_0   Reference element in phase 0            : FE
+$RefElement_1   Reference element in phase 1            : FE
+$RefElement_2   Reference element in phase 2            : FE
+
+$C0_0_C  Initial Concentration                          : 0.012
+$C0_1_C  Initial Concentration                          : 0.002788
+$C0_2_C  Initial Concentration                          : 0.002385
+
+$C0_0_FE  Initial Concentration                         : 0.988
+$C0_1_FE  Initial Concentration                         : 0.997212
+$C0_2_FE  Initial Concentration                         : 0.997615
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@EquilibriumPartitionDiffusion
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$RefElement  Reference Element                          : FE
+$EnableAntiTrapping                                     : Yes
+
+$Cs_0_1  Intersection Concentration                     : 0
+$Ts_0_1  Intersection Temperature 01                    : 1811
+
+$Cs_0_2  Intersection Concentration                     : 0
+$Ts_0_2  Intersection Temperature 01                    : 1801
+
+$Cs_1_2  Intersection Concentration                     : 0
+$Ts_1_2  Intersection Temperature 01                    : 1667
+
+$ML_0_1  Liquidus Slope                                 : -1792
+$ML_1_0  Solidus Slope                                  : -10000
+
+$ML_0_2  Liquidus Slope                                 : -1375
+$ML_2_0  Solidus Slope                                  : -4125
+
+$ML_1_2  Solvus Slope                                   : 23488
+$ML_2_1  solvus Slope                                   : 12625
+
+$DC_0  Diffusion Coefficient of Liquid                  : 3.0e-9
+$DC_1  Diffusion Coefficient of Ferrite                 : 6.0e-12
+$DC_2  Diffusion Coefficient of Austenite               : 1.0e-12
+
+$AE_0  Diffusion activation energy of Liquid            : 0.0
+$AE_1  Diffusion activation energy of Ferrite           : 0.0
+$AE_2  Diffusion activation energy of Austenite         : 0.0
+
+$EF_0  Entropy of Fusion                                : 0.0
+$EF_1  Entropy of Fusion                                : -1.0e6
+$EF_2  Entropy of Fusion                                : -1.14e6
+
+$Flag_0 Stoichiometry flag                              : No
+$Flag_1 Stoichiometry flag                              : No
+$Flag_2 Stoichiometry flag                              : No
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Temperature
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$T0     Initial System Temperature                      : 1790
+
+$R0X    X coordinate of the reference point             : 0
+$R0Y    Y coordinate of the reference point             : 0
+$R0Z    Z coordinate of the reference point             : 0
+
+$DT_DRX X component of the temp. gradient               : 0
+$DT_DRY Y component of the temp. gradient               : 0
+$DT_DRZ Z component of the temp. gradient               : 0
+
+$ControlMode_0                                          : LINEAR
+$LinearRate_0  Cooling(-) or heating(+) rate            : -10.0
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@BoundaryConditions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$BC0X   X axis beginning boundary condition             : Periodic
+$BCNX   X axis far end boundary condition               : Periodic
+
+$BC0Y   Y axis beginning boundary condition             : Periodic
+$BCNY   Y axis far end boundary condition               : Periodic
+
+$BC0Z   Z axis beginning boundary condition             : Periodic
+$BCNZ   Z axis far end boundary condition               : Periodic
+

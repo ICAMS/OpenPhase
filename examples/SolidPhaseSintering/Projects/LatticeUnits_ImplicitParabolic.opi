@@ -1,0 +1,204 @@
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@RunTimeControl
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$SimTtl     Simulation Title                        : SolidPhaseSintering
+$nSteps     Number of Time Steps                    : 10000000
+$tRstrt     Restart output every (tSteps)           : 10000
+$FTime      Output to disk every (tSteps)           : 10
+$STime      Output to screen every (tSteps)         : 10
+
+$dt         Initial Time Step                       : 1.0
+
+$nOMP       Number of OpenMP Threads                : 1
+
+$LogScreen  Logarithmic output to screen            : No
+$LogVTK     Logarithmic output to VTK               : No
+$LogScreenF Outputs to screen per decade = 10 x     : 1
+$LogVTKF    Outputs to VTK    per decade = 10 x     : 1
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@ProjectInput
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$RandomSeed Random number seed                      : random
+
+% The following parameters determine initially generated micro structure
+% NOTE!!: The initial relative density can no be set directly. An optimization
+% algorithm fill try too find a solution! Because this is a random process it
+% it may not be always successful. Also an extreme value may cause the algorithm
+% to fail.
+$Rho        Initial Relative Density                : 0.65
+$AvR        Mean particle radius                    : 5.50
+$StdR       Standard deviation of particle radius   : 0.05
+$RhoInit    Initial phase relative density          : 0.64
+
+% The following parameters determine initially geometry of the sample. For example
+% $VLX = 20,  $VLY = 20, and  $VLZ : 20 will generate a cubic sample while 20 is
+% the number of vapor cells around the sample. $VLX = 0,  $VLY = 20, and  $VLZ : 0
+% sets the number of vapor cells to zero in the z and x direction. Meaning that
+% sample is infinitely long in the z and x direction of periodic boundary cell are chosen.
+$VLX        Vapor layer thickness X                 : 20
+$VLY        Vapor layer thickness Y                 : 20
+$VLZ        Vapor layer thickness Z                 : 20
+
+$RhoRef     Reference Density used to calculate relative Density (Rho/RhoRef) [dm/dx^3]: 1.0
+
+% The simulation stops when one of the following conditions is met
+$RhoFin     Stops when relative density higher then            : 0.98
+$MinGrains  Stops when number of grains is lower then          : 10
+$EOR        Stops when restart output has been written to file : No
+
+% Instead of of equally distanced output in time a equally distanced output in
+# the relative density can be chosen. Choose a value between (0:1) for the
+# ouput distance.
+$DRhoVtk    VTK output frequency in density         : 0.000
+$DRhoStat   Satistics output frequency in density   : 0.000
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@AnalysisSintering
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$BBox       Calculate Density using bounding box method     : Yes
+$BBSX       Bounding box size size X [m]                    : 60e-7
+$BBSY       Bounding box size size Y [m]                    : 60e-7
+$BBSZ       Bounding box size size Z [m]                    : 60e-7
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Settings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Nx         System Size in X Direction              : 100
+$Ny         System Size in Y Direction              : 100
+$Nz         System Size in Z Direction              : 0
+$IWidth     Interface Width (in grid points)        : 5
+$dx         Grid Spacing                            : 1
+
+$Comp_0     Chemical Component 0                    : X
+
+$Phase_0    Name of Phase 0                         : Vapor
+$Phase_1    Name of Phase 1                         : Solid
+
+$VTKDir  : Projects/LatticeUnits_ImplicitParabolic/VTK
+$RAWDir  : Projects/LatticeUnits_ImplicitParabolic/RawData
+$DATADir : Projects/LatticeUnits_ImplicitParabolic/TextData
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@BoundaryConditions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Boundary Condition Options: Periodic, Fixed, NoFlux
+% NoFlux corresponds to mirroring boundary conditions
+
+$BC0X      X axis beginning boundary condition        : Periodic
+$BCNX      X axis far end boundary condition          : Periodic
+$BC0Y      Y axis beginning boundary condition        : Periodic
+$BCNY      Y axis far end boundary condition          : Periodic
+$BC0Z      Z axis beginning boundary condition        : Periodic
+$BCNZ      Z axis far end boundary condition          : Periodic
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InterfaceProperties
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Mu_0_0     Interface mobility    Vapor_Vapor  [dx^2 dt/dm] : 0.20
+$Mu_0_1     Interface mobility    Solid_Vapor  [dx^2 dt/dm] : 0.20
+$Mu_1_1     Interface mobility    Solid_Solid  [dx^2 dt/dm] : 0.20
+
+$Sigma_0_0  Interface energy      Vapor_Vapor     [dm/dt^2] : 1.000
+$Sigma_0_1  Interface energy      Solid_Vapor     [dm/dt^2] : 1.000
+$Sigma_1_1  Interface energy      Solid_Solid     [dm/dt^2] : 1.000
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GrandPotentialSolver
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% The mobility model model how the local mobility is computed
+% Mobility Model Options:
+%
+% MobilityInterpolationWithConstantMobilities:
+%     Uses a mobility value for each phase as input which is
+%     interpolated with M=sum_alpha M_alpha.
+%
+% MobilityInterpolationWithConstantDiffusivities:
+%     Uses a diffusion constant for each phase alpha as input and computes a
+%     phase mobility M_alpha with M_alpha=D_alpha/chi chi being the second
+%     derivative of the grand potential density with respect to the
+%     concentration. The mobility is again calculated with M=sum_alpha M_alpha.
+%
+% DiffusivityInterpolationWithConstantDiffusivities:
+%     Uses a diffusion constant for each phase and component as input and
+%     computes a local diffusion coefficient with D=sum_alpha D_alpha.
+%     The mobility is then calculated with M=D/chi with chi being the
+%     second derivative of the grand potential density with respect to the
+%     concentration.
+$MM  Mobility model : DiffusivityInterpolationWithConstantDiffusivities
+
+% The phase model determines the grand potential density
+% Phase Model Options:
+%
+% Parabolic:
+%     A parabolic free energy density with f = EPS*(C0-C)^2 is used for each
+%     phase. The chemical potential is mu = EPS*(C0-C).
+%
+% ImplicitParabolic:
+%     A parabolic free energy density with f = EPS*(C0-C)^2 + ZETA/C is used for
+%     each phase. The additional parameter ZETA enforce a positive value of C.
+$     Because chemical potential is mu = EPS*(C0-C) - ZETA/C^2 there is always
+$     a positive solution for c for every value of mu.
+$PM Phase model : ImplicitParabolic
+
+$Implicit           Use semi implicit Euler scheme          : No
+$MAXI               Maximum of iterations                   : 100000
+$ACC                Relative Accuracy of chemical potential : 1.0e-06
+
+$TOC                Conserve total amount of components     : Yes
+$TOCMAXI            Maximum of iterations                   : 100
+$TOCACC             Relative Accuracy                       : 1.0e-10
+
+$MASS_X             Mass of X [dm/mol]                             : 1.0
+
+$C0_Solid_X         Equilibrium concentration [X/dx^3]             :   1.00
+$C0_Vapor_X         Equilibrium concentration [X/dx^3]             :   0.01
+
+$CI_Solid_X         Initial concentration [X/dx^3]                 :   1.00
+$CI_Vapor_X         Initial concentration [X/dx^3]                 :   0.01
+
+$D0_Solid_X         Diffusion Coefficient [dx^2/dt]                :   0.50
+$D0_Vapor_X         Diffusion Coefficient [dx^2/dt]                :   0.50
+
+$EPS_Solid_X        Energy Coefficient [dm dx^5/(dt^2 X^2)]        :   5.00
+$EPS_Vapor_X        Energy Coefficient [dm dx^5/(dt^2 X^2))]       :   5.00
+
+$Zeta_Solid_X                                                      :   1.000e-6
+$Zeta_Vapor_X                                                      :   1.000e-6
+
+$CC                 Concentration Coupling Coefficient             : No
+$ID                 Interface Diffusion Coefficient                : No
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InteractionSolidSolid
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Model         Solid-Solid interaction model                    : Wang
+$StrengthWang  Solid-Solid interaction strength [kg/(m^3 s^2)]  : 0
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InteractionSolidFluid
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Inertia      Consider inertia of solid bodies  : No
+$Mobility     Mobility of solid bodies [s/Kg]   : 1
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Temperature
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$T0    Sintering temperature [K]    : 600

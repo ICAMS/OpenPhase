@@ -1,0 +1,180 @@
+%%
+%% This is file `multibib.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% multibib.dtx  (with options: `package')
+%% 
+%% IMPORTANT NOTICE:
+%% 
+%% For the copyright see the source file.
+%% 
+%% Any modified versions of this file must be renamed
+%% with new filenames distinct from multibib.sty.
+%% 
+%% For distribution of the original source see the terms
+%% for copying and modification in the file multibib.dtx.
+%% 
+%% This generated file may be distributed as long as the
+%% original source files, as listed above, are part of the
+%% same distribution. (The sources need not necessarily be
+%% in the same archive or directory.)
+%% Package `multibib' to use with LaTeX2e.
+%% Copyright (C) 2003 by Thorsten Hansen. All rights reserved.
+%%
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{multibib}
+          [2003/03/24 v1.2 Multiple bibliographies for one document.]
+
+\newif\ifcontinuouslabels
+\continuouslabelstrue
+\DeclareOption{resetlabels}{\continuouslabelsfalse}
+\ProcessOptions
+\def\mylop#1\to#2{\expandafter\mylopoff#1\mylopoff#1#2}
+\long\def\mylopoff#1,#2\mylopoff#3#4{\def#4{#1}\def#3{#2}}
+\AtBeginDocument{%
+  \@ifpackageloaded{natbib}{%
+    \NAT@set@cites
+    \let\std@@citex\@citex
+    \def\mb@@citex[#1][#2]#3{%
+      \global\let\@save@auxout\@auxout
+      \let\@auxout\@newciteauxhandle
+      \std@@citex[#1][#2]{#3}%
+      \let\@auxout\@save@auxout
+      \let\@citex\std@@citex}%
+  }{% else
+    \let\std@@citex\@citex
+    \def\mb@@citex[#1]#2{{%
+      \let\@auxout\@newciteauxhandle
+      \std@@citex[#1]{#2}}%
+      \let\@citex\std@@citex}%
+  }%
+}%
+\def\@newusecounter#1{\@nmbrlisttrue\def\@listctr{#1}}
+\let\newusecounter\usecounter
+\let\std@bibliography\bibliography
+\def\bibliography#1{%
+  \ifcontinuouslabels
+    \let\usecounter\newusecounter
+  \fi
+  \std@bibliography{#1}%
+  \ifcontinuouslabels
+    \global\let\newusecounter\@newusecounter
+  \fi}
+\newcount\mb@biblabelwidth
+\newcommand\setbiblabelwidth[1]{\mb@biblabelwidth #1}
+\AtBeginDocument{%
+  \@ifpackageloaded{suthesis}%
+    {\def\thebibliography#1{%
+       \newpage
+       \addcontentsline{toc}{chapter}{\bibname}%
+       \@ldthebibliography{#1}}}%
+    {}%
+  \let\std@thebibliography\thebibliography
+  \def\thebibliography#1{%
+    \@isnumber{#1}%
+      {\ifnum\mb@biblabelwidth=0
+         \@tempcnta\c@enumiv
+         \ifcontinuouslabels
+           \advance\@tempcnta#1%
+         \fi
+         \std@thebibliography{\@arabic\@tempcnta}%
+      \else
+        \std@thebibliography{\@arabic\mb@biblabelwidth}%
+        \global\mb@biblabelwidth 0
+      \fi}%
+      {\std@thebibliography{#1}}%
+  }%
+}
+\newcommand{\@isnumber}[3]{%
+  \def\argi{#1}%
+  \ifx\argi\empty
+    #3
+  \else
+    \global\@tempswafalse
+    \setbox\@tempboxa=\hbox{\@scannumber#1\plugh}%
+    \if@tempswa#2\else#3\fi
+  \fi}
+\let\plugh\relax
+\newcommand{\@scannumber}[1]{%
+  \let\testchar#1%
+  \ifx \testchar 0\let\next\@scannumber
+  \else\ifx \testchar 1\let\next\@scannumber
+  \else\ifx \testchar 2\let\next\@scannumber
+  \else\ifx \testchar 3\let\next\@scannumber
+  \else\ifx \testchar 4\let\next\@scannumber
+  \else\ifx \testchar 5\let\next\@scannumber
+  \else\ifx \testchar 6\let\next\@scannumber
+  \else\ifx \testchar 7\let\next\@scannumber
+  \else\ifx \testchar 8\let\next\@scannumber
+  \else\ifx \testchar 9\let\next\@scannumber
+  \else\ifx \testchar \plugh \let\next\relax \global\@tempswatrue
+  \else \let\next\relax
+  \fi\fi\fi\fi\fi\fi\fi\fi\fi\fi\fi
+  \next}
+\long\def\mb@addtocontents#1#2{%
+  \protected@write\temp@auxout
+    {\let\label\@gobble \let\index\@gobble \let\glossary\@gobble}%
+    {\string\@writefile{#1}{#2}}}
+\def\newcites#1#2{%
+  \def\@suffixlist{#1,}%
+  \@for\@newrefname:=#2\do{%
+    \mylop\@suffixlist\to\@suffix
+    \expandafter\protected@edef\csname refname\@suffix\endcsname
+      {\@newrefname}%
+    \if@filesw
+      \expandafter\newwrite\csname @auxout\@suffix\endcsname
+      \expandafter\edef\csname @auxout\@suffix name\endcsname{\@suffix}%
+      \begingroup
+        \makeatletter
+        \@input@{\csname @auxout\@suffix name\endcsname .aux}%
+      \endgroup
+      \immediate\openout\csname @auxout\@suffix\endcsname
+                        \csname @auxout\@suffix name\endcsname .aux
+    \fi
+    \expandafter\edef\csname cite\@suffix\endcsname{%
+      \let\noexpand\@citex\noexpand\mb@@citex
+      \let\noexpand\@newciteauxhandle\csname @auxout\@suffix\endcsname
+      \noexpand\cite}%
+    \expandafter\edef\csname nocite\@suffix\endcsname##1{{%
+      \let\noexpand\@citex\noexpand\mb@@citex
+      \let\noexpand\@auxout\csname @auxout\@suffix\endcsname
+      \noexpand\nocite{##1}}}%
+    \expandafter\edef\csname citep\@suffix\endcsname{%
+      \let\noexpand\@citex\noexpand\mb@@citex
+      \let\noexpand\@newciteauxhandle\csname @auxout\@suffix\endcsname
+      \noexpand\citep}%
+    \expandafter\edef\csname citet\@suffix\endcsname{%
+      \let\noexpand\@citex\noexpand\mb@@citex
+      \let\noexpand\@newciteauxhandle\csname @auxout\@suffix\endcsname
+      \noexpand\citet}%
+    \expandafter\edef\csname citealp\@suffix\endcsname{%
+      \let\noexpand\@citex\noexpand\mb@@citex
+      \let\noexpand\@newciteauxhandle\csname @auxout\@suffix\endcsname
+      \noexpand\citealp}%
+    \expandafter\edef\csname citealt\@suffix\endcsname{%
+      \let\noexpand\@citex\noexpand\mb@@citex
+      \let\noexpand\@newciteauxhandle\csname @auxout\@suffix\endcsname
+      \noexpand\citealt}%
+    \expandafter\edef\csname bibliography\@suffix\endcsname##1{{%
+      \let\noexpand\temp@auxout\noexpand\@auxout
+      \let\noexpand\addtocontents\noexpand\mb@addtocontents
+      \let\noexpand\@auxout\csname @auxout\@suffix\endcsname
+      \let\noexpand\jobname
+         \expandafter\noexpand\csname @auxout\@suffix name\endcsname
+      \let\noexpand\refname
+          \expandafter\noexpand\csname refname\@suffix\endcsname
+      \let\noexpand\bibname
+          \expandafter\noexpand\csname refname\@suffix\endcsname
+      \noexpand\bibliography{##1}%
+      }}
+    \expandafter\edef\csname bibliographystyle\@suffix\endcsname##1{{%
+      \let\noexpand\@auxout\csname @auxout\@suffix\endcsname
+      \noexpand\bibliographystyle{##1}}}%
+   }%
+}
+\@onlypreamble\newcites
+\endinput
+%%
+%% End of file `multibib.sty'.

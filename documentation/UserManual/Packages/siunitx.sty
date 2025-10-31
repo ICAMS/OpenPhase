@@ -1,0 +1,3583 @@
+%%
+%% This is file `siunitx.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% siunitx.dtx  (with options: `package')
+%% ---------------------------------------------------------------
+%% The siunitx package --- A comprehensive (SI) units package
+%% Maintained by Joseph Wright
+%% E-mail: joseph.wright@morningstar2.co.uk
+%% Released under the LaTeX Project Public License v1.3c or later
+%% See http://www.latex-project.org/lppl.txt
+%% ---------------------------------------------------------------
+%% 
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{siunitx}
+  [2009/03/29 v2.0alpha A comprehensive (SI) units package]
+\begingroup
+  \@ifundefined{eTeXversion}{%
+    \PackageError{siunitx}{Not running under e-TeX}{%
+       This package requires e-TeX. Try compiling the document with
+       \MessageBreak `elatex' instead of `latex'. When using pdfTeX, try
+       `pdfelatex' \MessageBreak instead of `pdflatex'.
+     }%
+     \endgroup\endinput
+  }{%
+    \endgroup
+}
+\begingroup
+  \@for\@tempa:=SIunits,sistyle,siunits,SIstyle,unitsdef,fancyunits\do{%
+    \@ifpackageloaded{\@tempa}{%
+      \PackageError{siunitx}{Package `\@tempa' incompatible}{%
+         The \@tempa\space package and siunitx are incompatible.
+         \MessageBreak Use the `emulate=\@tempa' package option when
+         loading siunitx.
+      }%
+    }{}%
+  }
+\endgroup
+\newcommand*{\si@package@check}{%
+  \begingroup
+    \@for\@tempa:=SIunits,sistyle,siunits,SIstyle\do{
+      \@ifpackageloaded{\@tempa}{%
+        \PackageError{siunitx}{Package `\@tempa' incompatible}{%
+          The \@tempa\space package and siunitx are incompatible.
+          \MessageBreak Use the `emulate=\@tempa' package option when
+           loading siunitx.
+        }%
+      }{}%
+    }%
+  \endgroup
+}
+\AtBeginDocument{\si@package@check}
+\newcommand*{\si@catcode@restore}{}
+\newcommand*{\si@catcode@set}{}
+\newcommand*{\si@catcode@store}[2]{%
+  \edef\si@catcode@restore{%
+    \si@catcode@restore
+    \catcode#1 \the\catcode#1\relax
+  }%
+  \catcode#1 #2\relax
+}
+\newcommand*{\si@catcode@symbols}{%
+  \si@catcode@set{42}{12}% *
+  \si@catcode@set{43}{12}% +
+  \si@catcode@set{44}{12}% ,
+  \si@catcode@set{46}{12}% .
+  \si@catcode@set{47}{12}% /
+  \si@catcode@set{58}{12}% :
+  \si@catcode@set{59}{12}% ;
+  \si@catcode@set{60}{12}% <
+  \si@catcode@set{61}{12}% =
+  \si@catcode@set{62}{12}% >
+}
+\let\si@catcode@set\si@catcode@store
+\si@catcode@symbols
+\si@catcode@set{38}{4}% &
+\si@catcode@set{45}{12}% -
+\si@catcode@set{94}{7}% ^
+\si@catcode@set{95}{8}% _
+\si@catcode@set{126}{13}% ~
+\renewcommand*{\si@catcode@set}[2]{%
+  \catcode#1 #2\relax
+}
+\newcommand*{\si@lccode@restore}{}
+\edef\si@lccode@restore{%
+  \lccode38 \the\lccode38\relax % &
+}
+\newcommand*{\si@lccode@set}[2]{%
+  \lccode#1 #2\relax
+}
+\RequirePackage{amstext,array,etex,pgfkeys}
+\newcommand*{\si@encoding@ts@one}{%
+  \@ifundefined{T@TS1}{%
+    \DeclareFontEncoding{TS1}{}{}%
+    \DeclareFontSubstitution{TS1}{cmr}{m}{n}%
+  }{}%
+}
+\AtBeginDocument{%
+  \si@encoding@ts@one
+}
+\newcommand*{\si@key@path}{}
+\newcommand*{\si@key@error}{%
+  \expandafter\si@key@error@aux\pgfkeyscurrentkey\si@stop
+}
+\newcommand*{\si@key@error@aux}{}
+\def\si@key@error@aux/siunitx/#1\si@stop{%
+  \si@log@error{Unknown option `#1'}{%
+    The option `#1' is not known to siunitx.
+  }%
+}
+\newcommand*{\si@keys@family}[1]{%
+  \pgfkeys{
+    /siunitx/#1/.is family,
+    /siunitx/#1/.unknown/.code = \si@key@error
+  }%
+}
+\pgfkeys{
+  /siunitx/.is family,
+  /siunitx/.unknown/.code = \si@key@error
+}
+\pgfkeys{
+  /handlers/.is siunitx switch/.code = {%
+    \edef\si@key@path{\pgfkeyscurrentpath}%
+    \pgfkeys{
+      \si@key@path/.is choice,
+      \si@key@path/.default    = {true},
+      \si@key@path/true/.code  = {\si@bool@cs@true{si@#1@bool}},
+      \si@key@path/false/.code = {\si@bool@cs@false{si@#1@bool}},
+      \si@key@path/yes/.code   = {\si@bool@cs@true{si@#1@bool}},
+      \si@key@path/no/.code    = {\si@bool@cs@false{si@#1@bool}},
+      \si@key@path/on/.code    = {\si@bool@cs@true{si@#1@bool}},
+      \si@key@path/off/.code   = {\si@bool@cs@false{si@#1@bool}},
+    }%
+  }
+}
+\newcommand*{\si@false@bool}{01}
+\newcommand*{\si@true@bool}{00}
+\newcommand*{\si@tmp@bool}{}
+\newcommand*{\si@tempa}{}
+\newcommand*{\si@tempb}{}
+\newcount\si@tempcnt
+\newsavebox\si@tempbox
+\newtoks\si@temp@toks
+\newcommand*{\si@log@error}{%
+  \PackageError{siunitx}%
+}
+\newcommand*{\si@log@info}{%
+  \PackageInfo{siunitx}%
+}
+\newcommand*{\si@log@warning}{%
+  \PackageWarning{siunitx}%
+}
+\newcommand*{\si@reserveda}{}
+\newcommand*{\si@reservedb}{}
+\newtoks\si@reserved@toks
+\newcommand*{\si@add@left@n}[2]{%
+  \def\si@reserveda{#2}%
+  \edef#1{%
+    \expandafter\unexpanded\expandafter{\si@reserveda}%
+    \expandafter\unexpanded\expandafter{#1}%
+  }%
+}
+\newcommand*{\si@add@left@o}[2]{%
+  \expandafter\si@add@left@n\expandafter#1\expandafter{#2}%
+}
+\newcommand*{\si@add@left@cs@n}[1]{%
+  \expandafter\si@add@left@n\csname #1\endcsname
+}
+\newcommand*{\si@add@left@cs@o}[1]{%
+  \expandafter\si@add@left@o\csname #1\endcsname
+}
+\newcommand*{\si@add@right@n}[2]{%
+  \def\si@reserveda{#2}%
+  \edef#1{%
+    \expandafter\unexpanded\expandafter{#1}%
+    \expandafter\unexpanded\expandafter{\si@reserveda}%
+  }%
+}
+\newcommand*{\si@add@right@o}[2]{%
+  \expandafter\si@add@right@n\expandafter#1\expandafter{#2}%
+}
+\newcommand*{\si@add@right@cs@n}[1]{%
+  \expandafter\si@add@right@n\csname #1\endcsname
+}
+\newcommand*{\si@add@right@cs@o}[1]{%
+  \expandafter\si@add@right@o\csname #1\endcsname
+}
+\newcommand*{\si@bool@false}[1]{%
+  \let#1\si@false@bool
+}
+\newcommand*{\si@bool@new}[1]{%
+  \newcommand*{#1}{}%
+  \let#1\si@false@bool
+}
+\newcommand*{\si@bool@true}[1]{%
+  \let#1\si@true@bool
+}
+\newcommand*{\si@bool@cs@false}[1]{%
+  \expandafter\si@bool@false\csname #1\endcsname
+}
+\newcommand*{\si@bool@cs@new}[1]{%
+  \expandafter\si@bool@new\csname #1\endcsname
+}
+\newcommand*{\si@bool@cs@true}[1]{%
+  \expandafter\si@bool@true\csname #1\endcsname
+}
+\newcommand*{\si@bool@if@F}[1]{%
+  \if#1%
+    \expandafter\@gobble
+  \else
+    \expandafter\@firstofone
+  \fi
+}
+\newcommand*{\si@bool@if@T}[1]{%
+  \if#1%
+    \expandafter\@firstofone
+  \else
+    \expandafter\@gobble
+  \fi
+}
+\newcommand*{\si@bool@if@TF}[1]{%
+  \if#1%
+    \expandafter\@firstoftwo
+  \else
+    \expandafter\@secondoftwo
+  \fi
+}
+\newcommand*{\si@bool@cs@if@F}[1]{%
+  \expandafter\si@bool@if@F\csname #1\endcsname
+}
+\newcommand*{\si@bool@cs@if@T}[1]{%
+  \expandafter\si@bool@if@T\csname #1\endcsname
+}
+\newcommand*{\si@bool@cs@if@TF}[1]{%
+  \expandafter\si@bool@if@TF\csname #1\endcsname
+}
+\newcommand*{\si@clear@cs}[1]{%
+  \si@let@cN{#1}\@empty
+}
+\newcommand*{\si@clear@macro}[1]{%
+  \let#1\@empty
+}
+\newcommand*{\si@count@incr@cs}[1]{%
+  \advance\@nameuse{#1}\@ne\relax
+}
+\newcommand*{\si@csname@if@F}[1]{%
+  \ifcsname #1\endcsname
+    \expandafter\@gobble
+  \else
+    \expandafter\@firstofone
+  \fi
+}
+\newcommand*{\si@csname@if@T}[1]{%
+  \ifcsname #1\endcsname
+    \expandafter\@firstofone
+  \else
+    \expandafter\@gobble
+  \fi
+}
+\newcommand*{\si@csname@if@TF}[1]{%
+  \ifcsname #1\endcsname
+    \expandafter\@firstoftwo
+  \else
+    \expandafter\@secondoftwo
+  \fi
+}
+\newcommand*{\si@dowhile@bool@T}[2]{%
+  #2%
+  \si@bool@if@T#1{%
+    \si@dowhile@bool@T#1{#2}%
+  }%
+}
+\newcommand*{\si@empty@cs@if@F}[1]{%
+  \expandafter\si@empty@if@F\csname #1\endcsname
+}
+\newcommand*{\si@empty@cs@if@T}[1]{%
+  \expandafter\si@empty@if@T\csname #1\endcsname
+}
+\newcommand*{\si@empty@cs@if@TF}[1]{%
+  \expandafter\si@empty@if@TF\csname #1\endcsname
+}
+\newcommand*{\si@empty@if@F}[1]{%
+  \si@meaning@eq@if@F#1\@empty
+}
+\newcommand*{\si@empty@if@T}[1]{%
+  \si@meaning@eq@if@T#1\@empty
+}
+\newcommand*{\si@empty@if@TF}[1]{%
+  \si@meaning@eq@if@TF#1\@empty
+}
+\newcommand*{\si@empty@tlist@if@F}[1]{%
+  \expandafter\ifx\expandafter\si@nil\detokenize{#1}\si@nil
+    \expandafter\@gobble
+  \else
+    \expandafter\@firstofone
+  \fi
+}
+\newcommand*{\si@empty@tlist@if@T}[1]{%
+  \expandafter\ifx\expandafter\si@nil\detokenize{#1}\si@nil
+    \expandafter\@firstofone
+  \else
+    \expandafter\@gobble
+  \fi
+}
+\newcommand*{\si@empty@tlist@if@TF}[1]{%
+  \expandafter\ifx\expandafter\si@nil\detokenize{#1}\si@nil
+    \expandafter\@firstoftwo
+  \else
+    \expandafter\@secondoftwo
+  \fi
+}
+\newcommand*{\si@empty@toks@if@F}[1]{%
+ \expandafter\si@empty@tlist@if@F\expandafter{\the#1}%
+}
+\newcommand*{\si@empty@toks@if@T}[1]{%
+ \expandafter\si@empty@tlist@if@T\expandafter{\the#1}%
+}
+\newcommand*{\si@empty@toks@if@TF}[1]{%
+ \expandafter\si@empty@tlist@if@TF\expandafter{\the#1}%
+}
+\newcommand*{\si@elt@count}[1]{%
+  \number\numexpr 0\si@loop@over@macro#1\si@elt@count@aux\relax
+}
+\newcommand*{\si@elt@count@aux}[1]{+1}
+\newcommand*{\si@elt@count@cs}[1]{%
+  \expandafter\si@elt@count\csname #1\endcsname
+}
+\newcommand*{\si@expand@tlist}[2]{%
+  \si@clear@macro#1%
+  \def\si@reservedb##1{%
+    \si@add@right@o#1{##1}%
+  }%
+  \si@loop@over@macro@aux\si@reservedb#2\si@loop@end\si@loop@stop
+}
+\newcommand*{\si@expand@tlist@cs}[1]{%
+  \expandafter\si@expand@tlist\csname #1\endcsname
+}
+\newcommand*{\si@in@if@F}[2]{%
+  \def\si@reserveda##1#2##2\si@stop{%
+    \si@no@value@if@T{##2}%
+  }%
+  \expandafter\si@reserveda#1#2\si@no@value\si@stop
+}
+\newcommand*{\si@in@if@T}[2]{%
+  \def\si@reserveda##1#2##2\si@stop{%
+    \si@no@value@if@F{##2}%
+  }%
+  \expandafter\si@reserveda#1#2\si@no@value\si@stop
+}
+\newcommand*{\si@in@if@TF}[2]{%
+  \def\si@reserveda##1#2##2\si@stop{%
+    \si@no@value@if@FT{##2}%
+  }%
+  \expandafter\si@reserveda#1#2\si@no@value\si@stop
+}
+\newcommand*{\si@in@tlist@if@F}[2]{%
+  \def\si@reserveda##1#2##2\si@stop{%
+    \si@no@value@if@T{##2}%
+  }%
+  \si@reserveda#1#2\si@no@value\si@stop
+}
+\newcommand*{\si@in@tlist@if@T}[2]{%
+  \def\si@reserveda##1#2##2\si@stop{%
+    \si@no@value@if@F{##2}%
+  }%
+  \si@reserveda#1#2\si@no@value\si@stop
+}
+\newcommand*{\si@in@tlist@if@TF}[2]{%
+  \def\si@reserveda##1#2##2\si@stop{%
+    \si@no@value@if@FT{##2}%
+  }%
+  \si@reserveda#1#2\si@no@value\si@stop
+}
+\newcommand*{\si@in@cs@if@F}[1]{%
+  \expandafter\si@in@if@F\csname #1\endcsname
+}
+\newcommand*{\si@in@cs@if@T}[1]{%
+  \expandafter\si@in@if@T\csname #1\endcsname
+}
+\newcommand*{\si@in@cs@if@TF}[1]{%
+  \expandafter\si@in@if@TF\csname #1\endcsname
+}
+\newcommand*{\si@let@cc}[2]{%
+  \expandafter\si@let@cN\expandafter{\expandafter#1\expandafter}%
+    \csname #2\endcsname
+}
+\newcommand*{\si@let@cN}[1]{%
+  \expandafter\let\csname #1\endcsname
+}
+\newcommand*{\si@let@Nc}[2]{%
+  \expandafter\let\expandafter#1\csname #2\endcsname
+}
+\newcommand*{\si@loop@over@cs}[1]{%
+  \expandafter\si@loop@over@macro\csname #1\endcsname
+}
+\newcommand*{\si@loop@over@macro}[2]{%
+  \expandafter\si@loop@over@macro@aux
+  \expandafter#2#1\si@loop@end\si@loop@stop
+}
+\newcommand*{\si@loop@over@macro@aux}[2]{%
+  \si@loop@end@if{#2}%
+  #1{#2}%
+  \si@loop@over@macro@aux#1%
+}
+\newcommand*{\si@loop@end@if}[1]{%
+  \expandafter\ifx\si@loop@end@if@aux#1?\si@nil\si@loop@end\si@loop@end
+    \expandafter\si@loop@exit
+  \fi
+}
+\newcommand*{\si@loop@exec@end@if}[2]{%
+  \expandafter\ifx\si@loop@end@if@aux#1?\si@nil\si@loop@end\si@loop@end
+    \expandafter\si@loop@exit@exec
+  \else
+    \expandafter\@gobble
+  \fi
+  {#2}%
+}
+\newcommand*{\si@loop@end@if@aux}{}
+\def\si@loop@end@if@aux#1#2\si@nil\si@loop@end{#1}
+\newcommand*{\si@loop@exit}{}
+\def\si@loop@exit#1\si@loop@stop{}
+\newcommand*{\si@loop@exit@exec}{}
+\def\si@loop@exit@exec#1#2\si@loop@stop{#1}
+\newcommand*{\si@loop@end}{\si@loop@end}
+\newcommand*{\si@loop@stop}{\si@loop@stop}
+\newcommand*{\si@loop@over@three}[2]{%
+  \expandafter\si@loop@over@three@aux
+  \expandafter#2#1\si@loop@end\si@loop@stop
+}
+\newcommand*{\si@loop@over@three@aux}[4]{%
+  \si@loop@end@if{#2}%
+  #1{#2#3#4}%
+  \si@loop@over@three@aux#1%
+}
+\newcommand*{\si@loop@over@three@cs}[1]{%
+  \expandafter\si@loop@over@three\csname #1\endcsname
+}
+\newcommand*{\si@meaning@eq@if@F}[2]{%
+  \ifx#1#2%
+    \expandafter\@gobble
+  \else
+    \expandafter\@firstofone
+  \fi
+}
+\newcommand*{\si@meaning@eq@if@T}[2]{%
+  \ifx#1#2%
+    \expandafter\@firstofone
+  \else
+    \expandafter\@gobble
+  \fi
+}
+\newcommand*{\si@meaning@eq@if@TF}[2]{%
+  \ifx#1#2%
+    \expandafter\@firstoftwo
+  \else
+    \expandafter\@secondoftwo
+  \fi
+}
+\newcommand*{\si@meaning@eq@cs@if@F}[2]{%
+  \expandafter\si@meaning@eq@if@F\csname #1\expandafter\endcsname
+    \csname #2\endcsname
+}
+\newcommand*{\si@meaning@eq@cs@if@T}[2]{%
+  \expandafter\si@meaning@eq@if@T\csname #1\expandafter\endcsname
+    \csname #2\endcsname
+}
+\newcommand*{\si@meaning@eq@cs@if@TF}[2]{%
+  \expandafter\si@meaning@eq@if@TF\csname #1\expandafter\endcsname
+    \csname #2\endcsname
+}
+\newcommand*{\si@mode@maths@display@if@T}{%
+  \ifmmode
+    \ifinner
+      \expandafter\expandafter\expandafter\@gobble
+    \else
+      \expandafter\expandafter\expandafter\@firstofone
+    \fi
+  \else
+    \expandafter\@gobble
+  \fi
+}
+\newcommand*{\si@mode@maths@inline@if@T}{%
+  \ifmmode
+    \ifinner
+      \expandafter\expandafter\expandafter\@firstofone
+    \else
+      \expandafter\expandafter\expandafter\@gobble
+    \fi
+  \else
+    \expandafter\@gobble
+  \fi
+}
+\newcommand*{\si@mode@maths@if@F}{%
+  \ifmmode
+    \expandafter\@gobble
+  \else
+    \expandafter\@firstofone
+  \fi
+}
+\newcommand*{\si@mode@maths@if@TF}{%
+  \ifmmode
+    \expandafter\@firstoftwo
+  \else
+    \expandafter\@secondoftwo
+  \fi
+}
+\newcommand*{\si@edef@c}[1]{%
+  \expandafter\edef\csname #1\endcsname
+}
+\newcommand*{\si@newcommand}{%
+  \@ifstar{%
+    \let\l@ngrel@x\protected
+    \si@newcommand@aux@i
+  }{%
+    \def\l@ngrel@x{\protected\long}%
+    \si@newcommand@aux@i
+  }%
+}
+\newcommand*{\si@newcommand@aux@i}[1]{%
+  \@testopt{\si@newcommand@aux@ii#1}0%
+}
+\newcommand*{\si@newcommand@aux@ii}{}
+\def\si@newcommand@aux@ii#1[#2]{%
+  \@ifnextchar[{%
+    \si@newcommand@aux@iii#1[#2]%
+  }{%
+    \@argdef#1[#2]%
+  }%]
+}
+\newcommand*{\si@newcommand@aux@iii}{}
+\def\si@newcommand@aux@iii#1[#2][#3]#4{%
+  \@ifdefinable#1{%
+    \expandafter\protected\expandafter\def\expandafter#1\expandafter{%
+      \expandafter\@testopt\csname\string#1\endcsname{#3}%
+    }%
+    \expandafter\@yargdef\csname\string#1\endcsname\tw@{#2}{#4}%
+  }%
+}
+\newcommand*{\si@nil}{\si@nil}
+\newcommand*{\si@stop}{\si@stop}
+\newcommand*{\si@no@value}{\si@no@value}
+\newcommand*{\si@no@value@if@F}[1]{%
+  \if\si@no@value@if@aux@i{#1}%
+    \expandafter\@gobble
+  \else
+    \expandafter\@firstofone
+  \fi
+}
+\newcommand*{\si@no@value@if@FT}[1]{%
+  \if\si@no@value@if@aux@i{#1}%
+    \expandafter\@secondoftwo
+  \else
+    \expandafter\@firstoftwo
+  \fi
+}
+\newcommand*{\si@no@value@if@T}[1]{%
+  \if\si@no@value@if@aux@i{#1}%
+    \expandafter\@firstofone
+  \else
+    \expandafter\@gobble
+  \fi
+}
+\newcommand*{\si@no@value@if@TF}[1]{%
+  \if\si@no@value@if@aux@i{#1}%
+    \expandafter\@firstoftwo
+  \else
+    \expandafter\@secondoftwo
+  \fi
+}
+\newcommand*{\si@no@value@if@aux@i}[1]{%
+  \if\expandafter\si@no@value@if@aux@ii\expandafter
+    {\string\si@no@value\space}{\detokenize{#1}}%
+    \si@true@bool
+  \else
+    \si@false@bool
+  \fi
+}
+\newcommand*{\si@no@value@if@aux@ii}[1]{%
+  \if\number\si@no@value@if@aux@iii{}{}#1\relax
+}
+\newcommand*{\si@no@value@if@aux@iii}[3]{%
+  \if#3\relax
+    \expandafter\si@no@value@if@aux@iv
+  \fi
+  \si@no@value@if@aux@iii{\if#3#1}{#2\fi}%
+}
+\newcommand*{\si@no@value@if@aux@iv}{}
+\def\si@no@value@if@aux@iv\si@no@value@if@aux@iii#1#2#3{%
+  #1#3\relax'#213
+    \si@true@bool
+  \else
+    \si@false@bool
+  \fi
+}
+\newcommand*{\si@num@if@F}[1]{%
+  \ifnum#1\relax
+    \expandafter\@gobble
+  \else
+    \expandafter\@firstofone
+  \fi
+}
+\newcommand*{\si@num@if@T}[1]{%
+  \ifnum#1\relax
+    \expandafter\@firstofone
+  \else
+    \expandafter\@gobble
+  \fi
+}
+\newcommand*{\si@num@if@TF}[1]{%
+  \ifnum#1\relax
+    \expandafter\@firstoftwo
+  \else
+    \expandafter\@secondoftwo
+  \fi
+}
+\newcommand*{\si@replace@all@in}[3]{%
+  \si@reserved@toks{}%
+  \def\si@tempa##1#2##2\si@stop{%
+    \si@no@value@if@TF{##2}{%
+      \si@replace@all@in@aux{##1}%
+    }{%
+      \si@replace@all@in@aux{##1#3}%
+      \si@tempa\@empty##2\si@stop
+    }%
+  }%
+  \@firstofone{\expandafter\si@tempa\expandafter\@empty}%
+  #1#2\si@no@value\si@stop
+  \edef#1{\the\si@reserved@toks}%
+}
+\newcommand*{\si@replace@all@in@aux}[1]{%
+  \si@reserved@toks\expandafter\expandafter\expandafter{%
+    \expandafter\the\expandafter\si@reserved@toks#1%
+  }%
+}
+\newcommand*{\si@replace@all@in@cs}[1]{%
+  \expandafter\si@replace@all@in\csname #1\endcsname
+}
+\newcommand*{\si@reverse@macro}[1]{%
+ \edef#1{%
+   \expandafter\si@reverse@tlist\expandafter{#1}%
+  }%
+}
+\newcommand*{\si@reverse@cs}[1]{%
+ \expandafter\si@reverse@macro\csname #1\endcsname
+}
+\newcommand*{\si@reverse@tlist}[1]{%
+  \si@reverse@tlist@aux{}#1\si@loop@end\si@loop@stop
+}
+\newcommand*{\si@reverse@tlist@aux}[2]{%
+  \si@loop@exec@end@if{#2}{#1}%
+  \si@reverse@tlist@aux{#2#1}%
+}
+\newcommand*{\si@stop@if@F}[1]{%
+  \si@meaning@eq@if@F#1\si@stop
+}
+\newcommand*{\si@stop@if@T}[1]{%
+  \si@meaning@eq@if@T#1\si@stop
+}
+\newcommand*{\si@stop@if@TF}[1]{%
+  \si@meaning@eq@if@TF#1\si@stop
+}
+\newcommand*{\si@whiledo@num@T}[2]{%
+  \si@num@if@T{#1}{%
+    #2\si@whiledo@num@T{#1}{#2}%
+  }%
+}
+\newcommand*{\si@whiledo@empty@F}[2]{%
+  \si@empty@if@F#1{%
+    #2\si@whiledo@empty@F#1{#2}%
+  }%
+}
+\newcommand*{\si@whiledo@empty@T}[2]{%
+  \si@empty@if@T#1{%
+    #2\si@whiledo@empty@T#1{#2}%
+  }%
+}
+\newcommand*{\si@whiledo@empty@cs@F}[2]{%
+  \si@empty@cs@if@F{#1}{%
+    #2\si@whiledo@empty@cs@F{#1}{#2}%
+  }%
+}
+\newcommand*{\si@whiledo@empty@cs@T}[2]{%
+  \si@empty@cs@if@T{#1}{%
+    #2\si@whiledo@empty@cs@T{#1}{#2}%
+  }%
+}
+\newcommand*{\si@font@fam@mathsf}{}
+\newcommand*{\si@font@fam@mathtt}{}
+\newcommand*{\si@font@fam@detect@maths}[1]{%
+  \begingroup
+    \setbox\@tempboxa\hbox{%
+      \ensuremath{%
+        \csname math#1\endcsname{%
+          \expandafter\global\expandafter\chardef
+            \csname si@font@fam@math#1\endcsname\fam\relax
+        }%
+      }%
+    }%
+  \endgroup
+}
+\g@addto@macro{\document}{%
+  \si@font@fam@detect@maths{sf}%
+  \si@font@fam@detect@maths{tt}%
+}
+\newcommand*{\si@font@fam@sfdefault}{}
+\newcommand*{\si@font@fam@ttfamily}{}
+\newcommand*{\si@font@fam@detect@text}[1]{%
+  \si@edef@c{si@font@fam@#1default}{\@nameuse{#1default}}%
+}
+\AtBeginDocument{%
+  \si@font@fam@detect@text{sf}%
+  \si@font@fam@detect@text{tt}%
+}
+\si@bool@new\si@font@det@b@bool
+\si@bool@new\si@font@det@family@bool
+\si@bool@new\si@font@det@maths@display@bool
+\si@bool@new\si@font@det@maths@inline@bool
+\si@bool@new\si@font@det@it@bool
+\si@bool@new\si@font@det@mode@bool
+\si@keys@family{font/detect}
+\pgfkeys{
+  /siunitx/font/detect,
+  all/.style   =  {
+    /siunitx/font/detect/bold   = true,
+    /siunitx/font/detect/family = true,
+    /siunitx/font/detect/italic = true,
+    /siunitx/font/detect/mode   = true
+  },
+  bold/.is siunitx switch          = {font@det@b},
+  display math/.is siunitx switch  = {font@det@maths@display},
+  display maths/.is siunitx switch = {font@det@maths@display},
+  family/.is siunitx switch        = {font@det@family},
+  inline bold/.is choice,
+  inline bold/.cd,
+    maths/.code = {\si@bool@true\si@font@det@maths@inline@bool},
+    math/.code  = {\si@bool@true\si@font@det@maths@inline@bool},
+    text/.code  = {\si@bool@false\si@font@det@maths@inline@bool},
+  /siunitx/font/detect,
+  italic/.is siunitx switch = {font@det@it},
+  mode/.is siunitx switch   = {font@det@mode},
+  none/.style   =  {
+    /siunitx/font/detect/bold   = false,
+    /siunitx/font/detect/family = false,
+    /siunitx/font/detect/italic = false,
+    /siunitx/font/detect/mode   = false
+  },
+  bold          = false,
+  display maths = true,
+  inline bold   = text,
+  italic        = false,
+  mode          = false
+}
+\si@bool@new\si@font@set@bool
+\newcommand*{\si@font@set@bold}{}
+\newcommand*{\si@font@set@family}{}
+\newcommand*{\si@font@set@italic}{}
+\si@bool@new\si@font@set@text@bool
+\newcommand*{\si@font@det@set}{%
+  \si@bool@if@F\si@font@set@bool{%
+    \si@font@det@init
+    \si@bool@if@T\si@font@det@b@bool{%
+      \si@font@det@bold
+    }%
+    \si@bool@if@T\si@font@det@family@bool{%
+      \si@font@det@family
+    }%
+    \si@bool@if@T\si@font@det@it@bool{%
+      \si@font@det@italic
+    }%
+    \si@bool@if@T\si@font@det@mode@bool{%
+      \si@font@det@mode
+    }%
+  }%
+}
+\newcommand*{\si@font@det@init}{%
+  \si@bool@true\si@font@set@bool
+  \def\si@font@set@bold{\unboldmath\mdseries}%
+  \def\si@font@set@family{rm}%
+  \si@bool@false\si@font@set@text@bool
+  \def\si@font@set@italic{\upshape}%
+}
+\newcommand*{\si@font@det@bold}{%
+  \si@mode@maths@display@if@T{%
+    \si@bool@if@TF\si@font@det@maths@display@bool{%
+      \si@font@det@bold@maths
+    }{%
+      \si@font@det@bold@text
+    }%
+  }%
+  \si@mode@maths@inline@if@T{%
+    \si@bool@if@TF\si@font@det@maths@inline@bool{%
+      \si@font@det@bold@maths
+    }{%
+      \si@font@det@bold@text
+    }%
+  }%
+  \si@mode@maths@if@F{%
+    \si@font@det@bold@text
+  }%
+}
+\newcommand*{\si@font@det@bold@maths}{%
+  \def\si@tempa{bold}%
+  \si@meaning@eq@if@T\si@tempa\math@version{%
+    \def\si@font@set@bold{\boldmath\bfseries}%
+  }%
+}
+\newcommand*{\si@font@det@bold@text}{%
+  \def\si@tempa{b}%
+  \edef\si@tempb{\expandafter\@car\f@series\@nil}%
+  \si@meaning@eq@if@T\si@tempa\si@tempb{%
+    \def\si@font@set@bold{\boldmath\bfseries}%
+  }%
+}
+\newcommand*{\si@font@det@family}{%
+  \si@font@det@fam@text
+  \si@bool@if@T\si@font@det@maths@display@bool{%
+    \si@mode@maths@display@if@T{%
+      \si@font@det@fam@maths
+    }%
+  }%
+}
+\newcommand*{\si@font@det@fam@maths}{%
+  \def\si@font@set@family{rm}%
+  \si@num@if@TF{\the\fam=\si@font@fam@mathsf}{%
+    \def\si@font@set@family{sf}%
+  }{%
+    \si@num@if@T{\the\fam=\si@font@fam@mathtt}{%
+      \def\si@font@set@family{tt}%
+    }%
+  }%
+}
+\newcommand*{\si@font@det@fam@text}{%
+  \si@meaning@eq@if@T\f@family\si@font@fam@sfdefault{%
+    \def\si@font@set@family{sf}%
+  }%
+  \si@meaning@eq@if@T\f@family\si@font@fam@ttdefault{%
+    \def\si@font@set@family{tt}%
+  }%
+}
+\newcommand*{\si@font@det@italic}{%
+  \def\si@tempa{it}%
+  \si@meaning@eq@if@T\si@tempa\f@shape{%
+    \def\si@font@set@italic{\itshape}%
+  }%
+}
+\newcommand*{\si@font@det@mode}{%
+  \si@mode@maths@if@F{%
+    \si@bool@true\si@font@set@text@bool
+  }%
+}
+\newcommand*{\si@font@unit@maths@rm}{}
+\newcommand*{\si@font@unit@maths@sf}{}
+\newcommand*{\si@font@unit@maths@tt}{}
+\newcommand*{\si@font@unit@text@rm}{}
+\newcommand*{\si@font@unit@text@sf}{}
+\newcommand*{\si@font@unit@text@tt}{}
+\newcommand*{\si@font@num@maths@rm}{}
+\newcommand*{\si@font@num@maths@sf}{}
+\newcommand*{\si@font@num@maths@tt}{}
+\newcommand*{\si@font@num@text@rm}{}
+\newcommand*{\si@font@num@text@sf}{}
+\newcommand*{\si@font@num@text@tt}{}
+\si@bool@new\si@font@unit@textmode@bool
+\si@bool@new\si@font@num@textmode@bool
+\si@keys@family{font}
+\si@keys@family{font/units}
+\si@keys@family{font/numbers}
+\pgfkeys{
+  /siunitx/font,
+  maths rm/.style = {
+    /siunitx/font/units/maths rm = #1,
+    /siunitx/font/numbers/maths rm = #1
+  },
+  maths sf/.style = {
+    /siunitx/font/units/maths sf = #1,
+    /siunitx/font/numbers/maths sf = #1
+  },
+  maths tt/.style = {
+    /siunitx/font/units/maths tt = #1,
+    /siunitx/font/numbers/maths tt = #1
+  },
+  maths rm/.style = {
+    /siunitx/font/units/maths rm = #1,
+    /siunitx/font/numbers/maths rm = #1
+  },
+  maths sf/.style = {
+    /siunitx/font/units/maths sf = #1,
+    /siunitx/font/numbers/maths sf = #1
+  },
+  maths tt/.style = {
+    /siunitx/font/units/maths tt = #1,
+    /siunitx/font/numbers/maths tt = #1
+  },
+  mode/.is choice,
+  mode/.cd,
+    maths/.style = {
+      /siunitx/font/units/mode = maths,
+      /siunitx/font/numbers/mode = maths
+    },
+    math/.style  = {
+      /siunitx/font/units/mode = maths,
+      /siunitx/font/numbers/mode = maths
+    },
+    text/.style  = {
+      /siunitx/font/units/mode = text,
+      /siunitx/font/numbers/mode = text
+    },
+  /siunitx/font,
+  text rm/.style  = {
+    /siunitx/font/units/text rm = #1,
+    /siunitx/font/numbers/text rm = #1
+  },
+  text sf/.style  = {
+    /siunitx/font/units/text sf = #1,
+    /siunitx/font/numbers/text sf = #1
+  },
+  text tt/.style  = {
+    /siunitx/font/units/text tt = #1,
+    /siunitx/font/numbers/text tt = #1
+  },
+  /siunitx/font/units,
+  maths rm/.store in = {\si@font@unit@maths@rm},
+  maths sf/.store in = {\si@font@unit@maths@sf},
+  maths tt/.store in = {\si@font@unit@maths@tt},
+  maths rm/.store in = {\si@font@unit@maths@rm},
+  maths sf/.store in = {\si@font@unit@maths@sf},
+  maths tt/.store in = {\si@font@unit@maths@tt},
+  mode/.is choice,
+  mode/.cd,
+    maths/.code = {\si@bool@false\si@font@unit@textmode@bool},
+    math/.code  = {\si@bool@false\si@font@unit@textmode@bool},
+    text/.code  = {\si@bool@true\si@font@unit@textmode@bool},
+  /siunitx/font/units,
+  text rm/.store in  = {\si@font@unit@text@rm},
+  text sf/.store in  = {\si@font@unit@text@sf},
+  text tt/.store in  = {\si@font@unit@text@tt},
+  /siunitx/font/numbers,
+  maths rm/.store in = {\si@font@num@maths@rm},
+  maths sf/.store in = {\si@font@num@maths@sf},
+  maths tt/.store in = {\si@font@num@maths@tt},
+  maths rm/.store in = {\si@font@num@maths@rm},
+  maths sf/.store in = {\si@font@num@maths@sf},
+  maths tt/.store in = {\si@font@num@maths@tt},
+  mode/.is choice,
+  mode/.cd,
+    maths/.code = {\si@bool@false\si@font@num@textmode@bool},
+    math/.code  = {\si@bool@false\si@font@num@textmode@bool},
+    text/.code  = {\si@bool@true\si@font@num@textmode@bool},
+  /siunitx/font/numbers,
+  text rm/.store in  = {\si@font@num@text@rm},
+  text sf/.store in  = {\si@font@num@text@sf},
+  text tt/.store in  = {\si@font@num@text@tt},
+  /siunitx/font,
+  maths rm = \mathrm,
+  maths sf = \mathsf,
+  maths tt = \mathtt,
+  mode     = maths,
+  text rm  = \rmfamily,
+  text sf  = \sffamily,
+  text tt  = \ttfamily
+}
+\newcommand*{\si@print@type}{}
+\newcommand*{\si@print}[2]{%
+  \begingroup
+    \def\si@print@type{#1}%
+    \si@bool@if@F\si@font@set@bool{%
+      \si@font@det@set
+    }%
+    \si@bool@if@F\si@font@det@mode@bool{%
+      \si@bool@cs@if@TF{si@font@#1@textmode@bool}{%
+        \si@bool@true\si@font@set@text@bool
+      }{%
+        \si@bool@false\si@font@set@text@bool
+      }%
+    }%
+    \si@print@codes
+    \text{\si@print@print{#2}}%
+  \endgroup
+  \check@mathfonts
+}
+\newcommand*{\si@print@num}{%
+  \si@print{num}%
+}
+\newcommand*{\si@print@num@o}[1]{%
+  \expandafter\si@print@num\expandafter{#1}%
+}
+\newcommand*{\si@print@unit}{%
+  \si@print{unit}%
+}
+\newcommand*{\si@print@unit@o}[1]{%
+  \expandafter\si@print@unit\expandafter{#1}%
+}
+\si@catcode@set{45}{13}% -
+\si@catcode@set{94}{13}% ^
+\si@catcode@set{95}{13}% _
+\newcommand*{\si@print@codes}{%
+  \si@catcode@symbols
+  \si@catcode@set{94}{13}% ^
+  \si@catcode@set{95}{13}% _
+  \everyeof{\noexpand}%
+  \endlinechar\m@ne\relax
+  \si@bool@if@TF\si@font@set@text@bool{%
+    \si@catcode@set{45}{13}% -
+    \let-\si@print@minus
+    \let_\si@print@sb
+    \let^\si@print@sp
+    \let\textsubscript\si@print@sb
+    \let\textsuperscript\si@print@sp
+  }{%
+    \si@catcode@set{45}{12}% -
+    \let_\sb
+    \let^\sp
+    \let\textsubscript\sb
+    \let\textsuperscript\sp
+  }%
+}
+\si@catcode@set{45}{12}% -
+\si@catcode@set{94}{7}% ^
+\si@catcode@set{95}{8}% _
+\newcommand*{\si@print@maths}[1]{%
+  \ensuremath{%
+    \@nameuse{si@font@\si@print@type @maths@\si@font@set@family}{#1}%
+  }%
+}
+\newcommand*{\si@print@text}[1]{#1}
+\newcommand*{\si@print@print}[1]{%
+  \si@font@set@bold
+  \si@font@set@italic
+  \@nameuse{si@font@\si@print@type @text@\si@font@set@family}%
+  \si@bool@if@TF\si@font@set@text@bool{%
+    \si@print@text{\scantokens{#1}}%
+  }{%
+    \si@print@maths{\scantokens{#1}}%
+  }%
+}
+\newcommand*{\si@print@minus}{%
+  \text{\si@print@minus@symbol}%
+}
+\DeclareTextSymbolDefault{\si@print@minus@symbol}{TS1}
+\DeclareTextSymbol{\si@print@minus@symbol}{TS1}{61}
+\newcommand*{\si@print@sb}[1]{%
+  \ensuremath{_{\text{#1}}}%
+}
+\newcommand*{\si@print@sp}[1]{%
+  \ensuremath{^{\text{#1}}}%
+}
+\newcommand*{\si@num@pre@product}{}
+\newcommand*{\si@num@pre@quotient}{}
+\newcommand*{\si@num@pre@tokens}{}
+\si@keys@family{numbers/input}
+\pgfkeys{
+  /siunitx/numbers/input,
+  product/.store in        = {\si@num@pre@product},
+  quotient/.store in       = {\si@num@pre@quotient},
+  protect tokens/.store in = {\si@num@pre@tokens},
+  product          = x,
+  quotient         = /,
+  protect tokens   = \mp\pi\pm
+}
+\newcommand*{\si@num@pre@arg}{}
+\newcommand*{\si@num@pre@arg@den}{}
+\newcommand*{\si@num@pre@arg@held}{}
+\newcommand*{\si@num@pre@arg@num}{}
+\si@bool@new\si@num@pre@error@bool
+\newcommand*{\si@num@pre@process}[1]{%
+  \si@num@pre@init
+  \begingroup
+    \si@num@pre@protect@tokens
+    \protected@edef\@tempa{#1}%
+  \expandafter\endgroup\expandafter
+  \def\expandafter\si@num@pre@arg\expandafter{\@tempa}%
+  \si@num@pre@sep@prod
+  \si@num@pre@sep@quot
+}
+\newcommand*{\si@num@pre@error}{%
+  \si@bool@true\si@num@pre@error@bool
+  \si@log@error
+}
+\newcommand*{\si@num@pre@init}{%
+  \si@clear@macro\si@num@pre@arg
+  \si@clear@macro\si@num@pre@arg@den
+  \si@clear@macro\si@num@pre@arg@held
+  \si@clear@macro\si@num@pre@arg@num
+  \si@bool@false\si@num@pre@error@bool
+}
+\newcommand*{\si@num@pre@protect@tokens}{%
+  \si@loop@over@macro\si@num@pre@tokens\si@num@pre@protect@tokens@aux
+}
+\newcommand*{\si@num@pre@protect@tokens@aux}[1]{%
+  \let#1\relax
+}
+\newcommand*{\si@num@pre@sep@prod}{%
+  \si@loop@over@macro\si@num@pre@product\si@num@pre@sep@prod@aux
+}
+\newcommand*{\si@num@pre@sep@prod@aux}[1]{%
+  \si@in@if@T\si@num@pre@arg{#1}{%
+    \def\si@tempa##1#1##2\si@stop{%
+      \def\si@num@pre@arg{##1}%
+      \def\si@num@pre@arg@held{##2}%
+    }%
+    \expandafter\si@tempa\si@num@pre@arg\si@stop
+    \si@empty@if@T\si@num@pre@arg{%
+      \si@num@pre@error{Misplaced product token}{%
+        A number cannot begin with a product token.
+      }%
+    }%
+    \si@empty@if@T\si@num@pre@arg@held{%
+      \si@num@pre@error{Misplaced product token}{%
+        A number cannot end with a product token.
+      }%
+    }%
+    \si@loop@exit
+  }%
+}
+\newcommand*{\si@num@pre@sep@quot}{%
+  \si@loop@over@macro\si@num@pre@quotient\si@num@pre@sep@quot@aux
+}
+\newcommand*{\si@num@pre@sep@quot@aux}[1]{%
+  \si@in@if@T\si@num@pre@arg{#1}{%
+    \def\si@tempa##1#1##2\si@stop{%
+      \def\si@num@pre@arg@num{##1}%
+      \def\si@num@pre@arg@den{##2}%
+    }%
+    \expandafter\si@tempa\si@num@pre@arg\si@stop
+    \si@empty@if@T\si@num@pre@arg@num{%
+      \si@num@pre@error{Misplaced quotient token}{%
+        A number cannot begin with a quotient token.
+      }%
+    }%
+    \si@empty@if@T\si@num@pre@arg@den{%
+      \si@num@pre@error{Misplaced quotient token}{%
+        A number cannot end with a quotient token.
+      }%
+    }%
+    \si@in@if@T\si@num@pre@arg@den{#1}{%
+      \si@num@pre@error{Duplicate quotient token}{%
+        Only one quotient token can appear in a single number.
+      }%
+    }%
+    \si@loop@exit
+  }%
+}
+\newcommand*{\si@num@in@uncert@close}{}
+\newcommand*{\si@num@in@complex}{}
+\newcommand*{\si@num@in@decimal}{}
+\newcommand*{\si@num@in@digits}{}
+\newcommand*{\si@num@in@exponent}{}
+\newcommand*{\si@num@in@signs}{}
+\newcommand*{\si@num@in@symbols}{}
+\pgfkeys{
+  /siunitx/numbers/input,
+  close uncertainty/.store in = {\si@num@in@uncert@close},
+  complex roots/.store in     = {\si@num@in@complex},
+  decimal markers/.store in   = {\si@num@in@decimal},
+  digits/.store in            = {\si@num@in@digits},
+  exponent markers/.store in  = {\si@num@in@exponent},
+  ignore/.store in            = {\si@num@in@ignore},
+  open uncertainty/.store in  = {\si@num@in@uncert@open},
+  signs/.store in             = {\si@num@in@signs},
+  symbols/.store in           = {\si@num@in@symbols}, %(
+  close uncertainty = ),
+  complex roots     = ij,
+  decimal markers   = {.,},
+  digits            = 0123456789,
+  exponent markers  = dDeE,
+  ignore            = {},
+  open uncertainty  = (, %)
+  signs             = +-\mp\pm,
+  symbols           = \pi
+}
+\newcommand*{\si@num@in@mant}{}
+\newcommand*{\si@num@in@mant@sign}{}
+\newcommand*{\si@num@in@mant@int}{}
+\newcommand*{\si@num@in@mant@dec}{}
+\newcommand*{\si@num@in@mant@uncert}{}
+\newcommand*{\si@num@in@mant@uncert@int}{}
+\newcommand*{\si@num@in@mant@uncert@dec}{}
+\newcommand*{\si@num@in@mant@comp}{}
+\newcommand*{\si@num@in@mant@comp@sign}{}
+\newcommand*{\si@num@in@mant@comp@int}{}
+\newcommand*{\si@num@in@mant@comp@dec}{}
+\newcommand*{\si@num@in@mant@comp@uncert}{}
+\newcommand*{\si@num@in@mant@comp@uncert@int}{}
+\newcommand*{\si@num@in@mant@comp@uncert@dec}{}
+\newcommand*{\si@num@in@exp}{}
+\newcommand*{\si@num@in@exp@sign}{}
+\newcommand*{\si@num@in@exp@int}{}
+\newcommand*{\si@num@in@exp@dec}{}
+\newcommand*{\si@num@in@exp@uncert}{}
+\newcommand*{\si@num@in@exp@uncert@int}{}
+\newcommand*{\si@num@in@exp@uncert@dec}{}
+\newcommand*{\si@num@in@exp@comp}{}
+\newcommand*{\si@num@in@exp@comp@sign}{}
+\newcommand*{\si@num@in@exp@comp@int}{}
+\newcommand*{\si@num@in@exp@comp@dec}{}
+\newcommand*{\si@num@in@exp@comp@uncert}{}
+\newcommand*{\si@num@in@exp@comp@uncert@int}{}
+\newcommand*{\si@num@in@exp@comp@uncert@dec}{}
+\si@bool@new\si@num@in@mant@bool
+\si@bool@new\si@num@in@mant@dec@bool
+\si@bool@new\si@num@in@mant@uncert@dec@bool
+\si@bool@new\si@num@in@mant@comp@bool
+\si@bool@new\si@num@in@mant@comp@dec@bool
+\si@bool@new\si@num@in@mant@comp@uncert@dec@bool
+\si@bool@new\si@num@in@exp@bool
+\si@bool@new\si@num@in@exp@dec@bool
+\si@bool@new\si@num@in@exp@uncert@dec@bool
+\si@bool@new\si@num@in@exp@comp@bool
+\si@bool@new\si@num@in@exp@comp@dec@bool
+\si@bool@new\si@num@in@exp@comp@uncert@dec@bool
+\si@bool@new\si@num@in@symbols@bool
+\newcommand*{\si@num@in@arg}{}
+\si@bool@new\si@num@in@error@bool
+\newcommand*{\si@num@in@parse}[1]{%
+  \si@num@in@init
+  \si@num@in@rescan{#1}%
+  \si@empty@if@TF\si@num@in@arg{%
+    \si@bool@true\si@num@in@error@bool
+  }{%
+    \si@num@in@arg@loop
+    \si@num@in@try{\si@num@in@separate}%
+    \si@num@in@try{\si@num@in@finalise}%
+  }%
+}
+\newcommand*{\si@num@in@parse@o}[1]{%
+  \expandafter\si@num@in@parse\expandafter{#1}%
+}
+\newcommand*{\si@num@in@add}[1]{%
+  \si@add@right@cs@n{si@num@in@#1}%
+}
+\newcommand*{\si@num@in@arg@loop}{%
+  \si@expand@tlist\si@tempa{%
+    \si@num@in@signs
+    \si@num@in@ignore
+    \si@num@in@digits
+    \si@num@in@decimal
+    \si@num@in@exponent
+    \si@num@in@complex
+    \si@num@in@symbols
+    \si@num@in@uncert@open
+    \si@num@in@uncert@close
+  }%
+  \si@clear@macro\si@tempb
+  \si@loop@over@macro\si@num@in@arg\si@num@in@arg@loop@aux
+  \si@num@in@try{\let\si@num@in@arg\si@tempb}%
+}
+\newcommand*{\si@num@in@arg@loop@aux}[1]{%
+  \si@in@if@F\si@tempa{#1}{%
+    \si@num@in@throw{Invalid token `#1' in numerical input}{%
+      Only the tokens: \MessageBreak
+      \si@tempa \MessageBreak
+      are valid for numerical input.
+    }%
+    \si@loop@exit
+  }%
+  \si@in@if@F\si@num@in@ignore{#1}{%
+    \si@add@right@n\si@tempb{#1}%
+  }%
+  \si@in@if@T\si@num@in@symbols{#1}{%
+    \si@bool@true\si@num@in@symbols@bool
+  }%
+}
+\newcommand*{\si@num@in@finalise}{%
+  \si@num@in@final@check
+  \si@num@in@try{\si@num@in@final@tidy}%
+}
+\newcommand*{\si@num@in@final@check}{%
+  \si@bool@true\si@num@in@mant@bool
+  \si@empty@if@T\si@num@in@mant@dec{%
+    \si@empty@if@T\si@num@in@mant@int{%
+      \si@bool@false\si@num@in@mant@bool
+      \si@empty@if@F\si@num@in@mant@uncert{%
+        \si@num@in@throw{Uncertainty but no number}{%
+          The mantissa contains only an uncertainty.
+        }%
+      }%
+    }%
+  }%
+  \si@bool@if@T\si@num@in@mant@comp@bool{%
+    \si@empty@if@T\si@num@in@mant@comp@dec{%
+      \si@empty@if@T\si@num@in@mant@comp@int{%
+        \si@empty@if@F\si@num@in@mant@comp@uncert{%
+          \si@num@in@throw{Uncertainty but no number}{%
+            The complex mantissa contains only an uncertainty.
+          }%
+        }%
+      }%
+    }%
+  }%
+  \si@bool@true\si@num@in@exp@bool
+  \si@empty@if@T\si@num@in@exp@dec{%
+    \si@empty@if@T\si@num@in@exp@int{%
+      \si@bool@false\si@num@in@exp@bool
+      \si@empty@if@F\si@num@in@exp@uncert{%
+        \si@num@in@throw{Uncertainty but no number}{%
+          The exponent contains only an uncertainty.
+        }%
+      }%
+      \si@empty@if@F\si@num@in@exp@sign{%
+        \si@num@in@throw{Sign but no exponent}{%
+          The exponent contains only a sign.
+        }%
+      }%
+    }%
+  }%
+  \si@bool@if@T\si@num@in@exp@comp@bool{%
+    \si@empty@if@T\si@num@in@exp@comp@dec{%
+      \si@empty@if@T\si@num@in@exp@comp@int{%
+        \si@empty@if@F\si@num@in@exp@comp@uncert{%
+          \si@num@in@throw{Uncertainty but no number}{%
+            The complex exponent contains only an uncertainty.
+          }%
+        }%
+      }%
+    }%
+  }%
+  \si@bool@if@F\si@num@in@mant@bool{%
+    \si@bool@if@F\si@num@in@mant@comp@bool{%
+      \si@bool@if@F\si@num@in@exp@bool{%
+        \si@bool@if@F\si@num@in@exp@comp@bool{%
+          \si@num@in@throw{Empty numerical argument}{%
+            The given `number' contains no information.
+           }%
+        }%
+      }%
+    }%
+  }%
+}
+\newcommand*{\si@num@in@final@tidy}{%
+  \si@num@in@final@tidy@aux{mant}%
+  \si@num@in@final@tidy@aux{exp}%
+}
+\newcommand*{\si@num@in@final@tidy@aux}[1]{%
+  \si@num@in@remove@zeros{#1}%
+  \si@num@in@remove@zeros{#1@comp}%
+  \si@num@in@zero@sign{#1}%
+}
+\newcommand*{\si@num@in@init}{%
+  \si@bool@false\si@num@in@error@bool
+  \si@bool@false\si@num@in@symbols@bool
+  \si@loop@over@macro\si@num@in@init@names\si@num@in@init@aux
+  \si@bool@false\si@num@in@mant@bool
+  \si@bool@false\si@num@in@mant@dec@bool
+  \si@bool@false\si@num@in@mant@uncert@dec@bool
+  \si@bool@false\si@num@in@mant@comp@bool
+  \si@bool@false\si@num@in@mant@comp@dec@bool
+  \si@bool@false\si@num@in@mant@comp@uncert@dec@bool
+  \si@bool@false\si@num@in@exp@bool
+  \si@bool@false\si@num@in@exp@dec@bool
+  \si@bool@false\si@num@in@exp@uncert@dec@bool
+  \si@bool@false\si@num@in@exp@comp@bool
+  \si@bool@false\si@num@in@exp@comp@dec@bool
+  \si@bool@false\si@num@in@exp@comp@uncert@dec@bool
+}
+\newcommand*{\si@num@in@init@aux}[1]{%
+  \si@clear@cs{si@num@in@#1}%
+}
+\newcommand*{\si@num@in@init@names}{%
+  {mant}%
+  {mant@sign}%
+  {mant@int}%
+  {mant@dec}%
+  {mant@uncert}%
+  {mant@uncert@int}%
+  {mant@uncert@dec}%
+  {mant@comp}%
+  {mant@comp@sign}%
+  {mant@comp@int}%
+  {mant@comp@dec}%
+  {mant@comp@uncert}%
+  {mant@comp@uncert@int}%
+  {mant@comp@uncert@dec}%
+  {exp}%
+  {exp@sign}%
+  {exp@int}%
+  {exp@dec}%
+  {exp@uncert}%
+  {exp@uncert@int}%
+  {exp@uncert@dec}%
+  {exp@comp}%
+  {exp@comp@sign}%
+  {exp@comp@int}%
+  {exp@comp@dec}%
+  {exp@comp@uncert}%
+  {exp@comp@uncert@int}%
+  {exp@comp@uncert@dec}%
+}
+\newcommand*{\si@num@in@protect@tokens}{}
+\let\si@num@in@protect@tokens\si@num@pre@protect@tokens
+\newcommand*{\si@num@in@remove@zeros}[1]{%
+  \si@in@cs@if@T{si@num@in@#1@int}{0}{%
+    \def\si@tempa##10##2\si@stop{%
+      \si@empty@tlist@if@TF{##1}{%
+        \si@in@tlist@if@TF{##2}{0}{%
+          \si@tempa##2\si@stop
+        }{%
+          \@namedef{si@num@in@#1@int}{##2}%
+        }%
+      }{%
+        \@namedef{si@num@in@#1@int}{##10##2}%
+      }%
+    }%
+    \si@let@Nc\si@tempb{si@num@in@#1@int}%
+    \expandafter\si@tempa\si@tempb\si@stop
+    \si@empty@cs@if@T{si@num@in@#1@int}{%
+      \@namedef{si@num@in@#1@int}{0}%
+    }%
+  }%
+}
+\newcommand*{\si@num@in@rescan}[1]{%
+  \begingroup
+    \si@catcode@symbols
+    \si@catcode@set{9}{9}%   tab ignored
+    \si@catcode@set{32}{9}%  space ignored
+    \si@catcode@set{126}{9}% tilde ignored
+    \everyeof{\noexpand}%
+    \si@clear@macro{\,}%
+    \si@num@in@protect@tokens
+    \protected@edef\@tempa{\scantokens{#1}}%
+  \expandafter\endgroup\expandafter
+  \def\expandafter\si@num@in@arg\expandafter{\@tempa}%
+}
+\newcommand*{\si@num@in@separate}{%
+  \si@num@in@try{\si@num@in@sep@exp}%
+  \si@num@in@separate@aux{mant}%
+  \si@num@in@separate@aux{exp}%
+}
+\newcommand*{\si@num@in@separate@aux}[1]{%
+  \si@num@in@try{\si@num@in@sep@sign{#1}}%
+  \si@num@in@try{\si@num@in@sep@comp{#1}}%
+  \si@num@in@try{\si@num@in@sep@dec{#1}}%
+  \si@num@in@try{\si@num@in@sep@dec@comp{#1}}%
+  \si@num@in@try{\si@num@in@sep@uncert{#1}}%
+  \si@num@in@try{\si@num@in@sep@uncert{#1@comp}}%
+}
+\newcommand*{\si@num@in@sep@comp}[1]{%
+  \si@empty@cs@if@F{si@num@in@#1}{%
+    \si@empty@if@F\si@num@in@complex{%
+      \si@let@Nc\si@tempa{si@num@in@#1}%
+      \si@bool@false\si@tmp@bool
+      \si@loop@over@macro\si@num@in@complex\si@num@in@sep@comp@aux@i
+      \si@num@in@try{\si@num@in@sep@comp@aux@ii{#1}}%
+      \si@num@in@try{\si@num@in@sep@comp@aux@iii{#1}}%
+    }%
+  }%
+}
+\newcommand*{\si@num@in@sep@comp@aux@i}[1]{%
+  \def\si@tempb##1#1##2##3\si@stop{%
+    \si@no@value@if@F{##2}{%
+      \si@no@value@if@TF{##3}{%
+        \si@bool@true\si@tmp@bool
+        \def\si@tempa{##1}%
+        \si@loop@exit
+      }{%
+        \si@num@in@throw{Misplaced complex root}{%
+          The complex root token `#1' can only come at \MessageBreak
+          the end of a number.
+        }%
+        \si@loop@exit
+      }%
+    }%
+  }%
+  \expandafter\si@tempb\si@tempa#1\si@no@value\si@stop
+}
+\newcommand*{\si@num@in@sep@comp@aux@ii}[1]{%
+  \si@let@cN{si@num@in@#1@comp@bool}\si@tmp@bool
+  \si@let@cN{si@num@in@#1}\si@tempa
+  \si@bool@if@T\si@tmp@bool{%
+    \si@empty@if@F\si@tempa{%
+      \def\si@tempb##1{%
+        \si@in@if@TF\si@num@in@signs{##1}{%
+          \si@bool@if@TF\si@tmp@bool{%
+            \si@num@in@throw{Duplicate sign found}{%
+              Only a single sign can be given \MessageBreak
+              in the complex part of a number.
+            }%
+            \si@loop@exit
+          }{%
+            \si@num@in@add{#1@comp@sign}{##1}%
+            \si@bool@true\si@tmp@bool
+          }%
+        }{%
+          \si@bool@if@TF\si@tmp@bool{%
+            \si@num@in@add{#1@comp}{##1}%
+          }{%
+            \si@num@in@add{#1}{##1}%
+          }%
+        }%
+      }%
+      \si@bool@false\si@tmp@bool
+      \si@clear@cs{si@num@in@#1}%
+      \si@loop@over@macro\si@tempa\si@tempb
+    }%
+  }%
+}
+\newcommand*{\si@num@in@sep@comp@aux@iii}[1]{%
+  \si@bool@cs@if@TF{si@num@in@#1@comp@bool}{%
+    \si@bool@if@F\si@tmp@bool{%
+      \si@let@cc{si@num@in@#1@comp@sign}{si@num@in@#1@sign}%
+      \si@clear@cs{si@num@in@#1@sign}%
+      \si@let@cc{si@num@in@#1@comp}{si@num@in@#1}%
+      \si@clear@cs{si@num@in@#1}%
+    }%
+  }{%
+    \expandafter\si@loop@over@macro\csname si@num@in@#1\endcsname
+      \si@num@in@sep@aux@iv
+  }%
+}
+\newcommand*{\si@num@in@sep@aux@iv}[1]{%
+  \si@in@if@T\si@num@in@signs{#1}{%
+    \si@num@in@throw{Duplicate sign found}{%
+      Only a single sign can be given \MessageBreak
+      in the real part of a number.
+    }%
+    \si@loop@exit
+  }%
+}
+\newcommand*{\si@num@in@sep@dec}[1]{%
+  \si@empty@cs@if@F{si@num@in@#1}{%
+    \si@num@in@sep@dec@aux@i{#1}%
+  }%
+}
+\newcommand*{\si@num@in@sep@dec@comp}[1]{%
+  \si@bool@cs@if@T{si@num@in@#1@comp@bool}{%
+    \si@empty@cs@if@TF{si@num@in@#1@comp}{%
+      \si@let@cc{si@num@in@#1@comp@int}{si@num@in@#1@comp}%
+      \si@let@cN{si@num@in@#1@comp}%
+    }{%
+      \si@num@in@sep@dec@aux@i{#1@comp}%
+    }%
+  }%
+}
+\newcommand*{\si@num@in@sep@dec@aux@i}[1]{%
+  \si@let@Nc\si@tempa{si@num@in@#1}%
+  \si@clear@macro\si@tempb
+  \si@bool@false\si@tmp@bool
+  \si@clear@cs{si@num@in@#1}%
+  \si@loop@over@macro\si@num@in@decimal\si@num@in@sep@dec@aux@ii
+  \si@num@in@try{\si@let@cN{si@num@in@#1@int}\si@tempa}%
+  \si@num@in@try{\si@let@cN{si@num@in@#1@dec}\si@tempb}%
+  \si@num@in@try{\si@let@cN{si@num@in@#1@dec@bool}\si@tmp@bool}%
+}
+\newcommand*{\si@num@in@sep@dec@aux@ii}[1]{%
+  \si@in@if@T\si@tempa{#1}{%
+    \si@bool@true\si@tmp@bool
+    \def\si@tempb##1#1##2\si@stop{%
+      \def\si@tempa{##1}%
+      \def\si@tempb{##2}%
+    }%
+    \expandafter\si@tempb\si@tempa\si@stop
+    \si@in@if@T\si@tempb{#1}{%
+      \si@num@in@throw{Duplicate decimal token found}{%
+        Only a single decimal marker token can be given \MessageBreak
+        in numerical input.
+      }%
+    }%
+    \si@loop@exit
+  }%
+}
+\newcommand*{\si@num@in@sep@exp}{%
+  \let\si@num@in@mant\si@num@in@arg
+  \si@loop@over@macro\si@num@in@exponent\si@num@in@sep@exp@aux
+}
+\newcommand*{\si@num@in@sep@exp@aux}[1]{%
+  \si@in@if@T\si@num@in@arg{#1}{%
+    \def\si@tempa##1#1##2\si@stop{%
+      \def\si@num@in@mant{##1}%
+      \def\si@num@in@exp{##2}%
+    }%
+    \expandafter\si@tempa\si@num@in@arg\si@stop
+    \si@in@if@T\si@num@in@exp{#1}{%
+      \si@num@in@throw{Duplicate exponent token found}{%
+        Only a single exponent marker token can be given \MessageBreak
+        in numerical input.
+      }%
+    }%
+    \si@loop@exit
+  }%
+}
+\newcommand*{\si@num@in@sep@sign}[1]{%
+  \si@empty@cs@if@F{si@num@in@#1}{%
+    \si@replace@all@in@cs{si@num@in@#1}{-+}{\mp}%
+    \si@replace@all@in@cs{si@num@in@#1}{+-}{\pm}%
+    \expandafter\expandafter\expandafter\si@num@in@sep@sign@aux
+      \csname si@num@in@#1\endcsname\si@stop{#1}%
+  }%
+}
+\newcommand*{\si@num@in@sep@sign@aux}{}
+\def\si@num@in@sep@sign@aux#1#2\si@stop#3{%
+  \si@in@if@TF\si@num@in@signs{#1}{%
+    \@namedef{si@num@in@#3@sign}{#1}%
+    \@namedef{si@num@in@#3}{#2}%
+  }{%
+    \@namedef{si@num@in@#3}{#1#2}%
+  }%
+}
+\newcommand*{\si@num@in@sep@uncert}[1]{%
+  \si@empty@cs@if@TF{si@num@in@#1@dec}{%
+    \si@empty@cs@if@F{si@num@in@#1@int}{%
+      \si@num@in@sep@uncert@aux@i{#1}{int}%
+    }%
+  }{%
+    \si@num@in@sep@uncert@aux@i{#1}{dec}%
+    \si@num@in@sep@uncert@check@int{#1}%
+  }%
+}
+\newcommand*{\si@num@in@sep@uncert@aux@i}[2]{%
+  \si@let@Nc\si@tempa{si@num@in@#1@#2}%
+  \si@loop@over@macro\si@num@in@uncert@close\si@num@in@sep@uncert@aux@ii
+  \si@num@in@try{\si@num@in@sep@uncert@aux@iii{#1}{#2}}%
+}
+\newcommand*{\si@num@in@sep@uncert@aux@ii}[1]{%
+  \def\si@tempb##1#1##2##3\si@stop{%
+    \si@no@value@if@F{##2}{%
+      \si@no@value@if@TF{##3}{%
+        \si@bool@true\si@tmp@bool
+        \def\si@tempa{##1}%
+        \si@loop@exit
+      }{%
+        \si@num@in@throw{Misplaced closing uncertainty token}{%
+          The closing uncertainty token `#1' can only \MessageBreak
+          come at the end of a number.
+        }%
+        \si@loop@exit
+      }%
+    }%
+  }%
+  \si@bool@false\si@tmp@bool
+  \expandafter\si@tempb\si@tempa#1\si@no@value\si@stop
+  \si@bool@if@T\si@tmp@bool{%
+    \si@loop@exit
+  }%
+}
+\newcommand*{\si@num@in@sep@uncert@aux@iii}[2]{%
+  \si@bool@if@TF\si@tmp@bool{%
+    \si@bool@false\si@tmp@bool
+    \si@loop@over@macro\si@num@in@uncert@open
+      \si@num@in@sep@uncert@aux@iv
+    \si@num@in@try{\si@num@in@sep@uncert@aux@v{#1}{#2}}%
+  }{%
+    \si@loop@over@macro\si@num@in@uncert@open
+      \si@num@in@sep@uncert@aux@vi
+  }%
+}
+\newcommand*{\si@num@in@sep@uncert@aux@iv}[1]{%
+  \si@in@if@T\si@tempa{#1}{%
+    \si@bool@true\si@tmp@bool
+    \def\si@tempb##1#1##2\si@stop{%
+      \def\si@tempa{##1}%
+      \def\si@tempb{##2}%
+    }%
+    \expandafter\si@tempb\si@tempa\si@stop
+    \si@in@if@T\si@tempb{#1}{%
+      \si@num@in@throw{Duplicate opening uncertainty token found}{%
+        Only a single opening uncertainty token can be \MessageBreak
+        given in numerical input.
+      }%
+    }%
+    \si@loop@exit
+  }%
+}
+\newcommand*{\si@num@in@sep@uncert@aux@v}[2]{%
+  \si@bool@if@TF\si@tmp@bool{%
+    \si@let@cN{si@num@in@#1@#2}\si@tempa
+    \si@let@cN{si@num@in@#1@uncert}\si@tempb
+    \si@empty@if@T\si@tempb{%
+      \si@num@in@throw{Empty uncertainty given}{%
+        The number given contains an empty uncertainty.
+      }%
+    }%
+  }{%
+    \si@num@in@throw{%
+      Closing uncertainty token without matching opening%
+    }{%
+      The final token of a the number is a closing \MessageBreak
+      uncertainty token, but no opening token was found \MessageBreak
+      in this part of the number.
+    }%
+  }%
+}
+\newcommand*{\si@num@in@sep@uncert@aux@vi}[1]{%
+  \si@in@if@T\si@tempa{#1}{%
+    \si@num@in@throw{%
+      Opening uncertainty token without matching closing%
+    }{%
+      The opening uncertainty token `#1' was found with no \MessageBreak
+      matching closing token.
+    }%
+    \si@loop@exit
+  }%
+}
+\newcommand*{\si@num@in@sep@uncert@check@int}[1]{%
+  \def\si@num@in@sep@uncert@check@int@aux##1{%
+    \si@in@cs@if@T{si@num@in@#1@int}{##1}{%
+      \si@num@in@throw{Uncertainty in integer part}{%
+        The opening uncertainty token `##1' was found in the
+        \MessageBreak integer part of the input, but a decimal part
+        was also given.
+      }%
+      \si@loop@exit
+    }%
+  }%
+  \si@loop@over@macro\si@num@in@uncert@open
+    \si@num@in@sep@uncert@check@int@aux
+  \si@loop@over@macro\si@num@in@uncert@close
+    \si@num@in@sep@uncert@check@int@aux
+}
+\newcommand*{\si@num@in@throw}{%
+  \si@bool@true\si@num@in@error@bool
+  \si@log@error
+}
+\newcommand*{\si@num@in@try}{%
+  \si@bool@if@F\si@num@in@error@bool
+}
+\newcommand*{\si@num@in@zero@sign}[1]{%
+  \si@bool@cs@if@TF{si@num@in@#1@bool}{%
+    \si@num@in@zero@sign@aux@i{#1}%
+  }{%
+    \si@num@in@zero@sign@aux@i{#1@comp}%
+  }%
+}
+\newcommand*{\si@num@in@zero@sign@aux@i}[1]{%
+  \si@empty@cs@if@TF{si@num@in@#1@int}{%
+    \si@num@in@zero@sign@aux@ii{#1}%
+  }{%
+    \def\si@tempa{0}%
+    \si@meaning@eq@cs@if@T{si@tempa}{si@num@in@#1@int}{%
+      \si@num@in@zero@sign@aux@ii{#1}%
+    }%
+  }%
+}
+\newcommand*{\si@num@in@zero@sign@aux@ii}[1]{%
+  \si@empty@cs@if@TF{si@num@in@#1@dec}{%
+    \si@clear@cs{si@num@in@#1@sign}%
+  }{%
+    \def\si@tempa{0}%
+    \def\si@tempb##1{%
+      \si@in@if@F\si@tempa{##1}{%
+        \si@bool@false\si@tmp@bool
+      }%
+    }%
+    \si@bool@true\si@tmp@bool
+    \si@loop@over@cs{si@num@in@#1@dec}\si@tempb
+    \si@bool@if@T\si@tmp@bool{%
+      \si@clear@cs{si@num@in@#1@sign}%
+    }%
+  }%
+}
+\newcommand*{\si@num@post@sign@token}{}
+\si@bool@new\si@num@post@plus@bool
+\si@bool@new\si@num@post@rnd@figures@bool
+\si@bool@new\si@num@post@rnd@places@bool
+\si@bool@new\si@num@post@sign@bool
+\si@bool@new\si@num@post@zero@dec@bool
+\si@bool@new\si@num@post@zero@exp@bool
+\si@bool@new\si@num@post@zero@int@bool
+\newcount\si@num@post@figures
+\newcount\si@num@post@places
+\newcommand*{\si@num@post@dec}{}
+\newcommand*{\si@num@post@int}{}
+\si@bool@new\si@num@post@carry@bool
+\si@bool@new\si@num@post@sig@bool
+\newcommand*{\si@num@post@rnd@tens}{}
+\newcount\si@num@post@rnd@cnt
+\newcount\si@num@post@dec@cnt
+\newcount\si@num@post@uncert@cnt
+\newcommand*{\si@num@post@rnd@check}[2]{%
+  \@nameuse{si@num@post@#1}#2\relax
+  \expandafter\ifnum\csname si@num@post@#1\endcsname<\z@\relax
+    \si@log@error{Invalid input for rounding digits}{%
+      The input for option 'numbers/process/round #1' \MessageBreak
+      must be a positive integer.
+    }%
+  \fi
+}
+\si@keys@family{numbers/process}
+\pgfkeys{
+  /siunitx/numbers/process,
+  add zero decimal/.is siunitx switch      = {num@post@zero@dec},
+  add zero integer/.is siunitx switch      = {num@post@zero@int},
+  explicit sign/.store in                  = {\si@num@post@sign@token},
+  include explicit sign/.is siunitx switch = {num@post@sign},
+  retain explicit plus/.is siunitx switch  = {num@post@plus},
+  retain zero exponent/.is siunitx switch  = {num@post@zero@exp},
+  round mode/.is choice,
+  round mode/.cd,
+    figures/.code = {%
+      \si@bool@true\si@num@post@rnd@figures@bool
+      \si@bool@false\si@num@post@rnd@places@bool
+    },
+    off/.code     = {%
+      \si@bool@false\si@num@post@rnd@figures@bool
+      \si@bool@false\si@num@post@rnd@places@bool
+    },
+    places/.code  = {%
+      \si@bool@false\si@num@post@rnd@figures@bool
+      \si@bool@true\si@num@post@rnd@places@bool
+    },
+  /siunitx/numbers/process,
+  round figures/.code = {\si@num@post@rnd@check{figures}{#1}},
+  round places/.code  = {\si@num@post@rnd@check{places}{#1}},
+  add zero decimal      = true,
+  add zero integer      = true,
+  explicit sign         = +,
+  include explicit sign = false,
+  retain explicit plus  = false,
+  retain zero exponent  = false,
+  round mode            = off,
+  round figures         = 2,
+  round places          = 2
+}
+\newcommand*{\si@num@post@process}{%
+  \si@num@post@sign
+  \si@num@post@zero@fill
+  \si@num@post@exponent
+  \si@bool@if@F\si@num@in@symbols@bool{%
+    \si@num@post@round
+    \si@bool@if@F\si@num@post@rnd@figures@bool{%
+      \si@bool@if@F\si@num@post@rnd@places@bool{%
+        \si@num@post@uncert
+      }%
+    }%
+  }%
+}
+\newcommand*{\si@num@post@add@sign}[1]{%
+  \si@bool@cs@if@TF{si@num@in@#1@bool}{%
+    \si@num@post@add@sign@aux{#1}%
+  }{%
+    \si@bool@cs@if@T{si@num@in@#1@comp@bool}{%
+      \si@num@post@add@sign@aux{#1@comp}%
+    }%
+  }%
+}
+\newcommand*{\si@num@post@add@sign@aux}[1]{%
+  \si@empty@cs@if@T{si@num@in@#1@sign}{%
+    \@namedef{si@num@in@#1@sign}{\si@num@post@sign@token}%
+  }%
+}
+\newcommand*{\si@num@post@exponent}{%
+  \si@bool@if@F\si@num@post@zero@exp@bool{%
+    \si@expand@tlist\si@tempa{%
+      \si@num@in@exp@int
+      \si@num@in@exp@dec
+      \si@num@in@exp@comp@int
+      \si@num@in@exp@comp@dec
+    }%
+    \si@in@if@T\si@tempa{0}{%
+      \def\si@tempb##10000##2\si@stop{%
+        \si@empty@tlist@if@T{##1}{%
+          \def\si@num@in@exp@int{}%
+          \def\si@num@in@exp@dec{}%
+          \def\si@num@in@exp@comp@int{}%
+          \def\si@num@in@exp@comp@dec{}%
+          \si@bool@false\si@num@in@exp@bool
+          \si@bool@false\si@num@in@exp@comp@bool
+        }%
+      }%
+      \expandafter\si@tempb\si@tempa0000\si@stop
+    }%
+  }%
+}
+\newcommand*{\si@num@post@plus}[1]{%
+  \si@bool@cs@if@TF{si@num@in@#1@bool}{%
+    \si@num@post@plus@aux{#1}%
+  }{%
+    \si@bool@cs@if@T{si@num@in@#1@comp@bool}{%
+      \si@num@post@plus@aux{#1@comp}%
+    }%
+  }%
+}
+\newcommand*{\si@num@post@plus@aux}[1]{%
+  \def\si@tempa{+}%
+  \si@meaning@eq@cs@if@T{si@num@in@#1@sign}{si@tempa}{%
+    \si@clear@cs{si@num@in@#1@sign}%
+  }%
+}
+\newcommand*{\si@num@post@sign}{%
+  \si@bool@if@F\si@num@post@plus@bool{%
+    \si@num@post@plus{mant}%
+    \si@num@post@plus{exp}%
+  }%
+  \si@bool@if@T\si@num@post@sign@bool{%
+    \si@num@post@add@sign{mant}%
+    \si@num@post@add@sign{exp}%
+  }%
+}
+\newcommand*{\si@num@post@round}{%
+  \si@num@post@round@aux{figures}%
+  \si@num@post@round@aux{places}%
+}
+\newcommand*{\si@num@post@round@aux}[1]{%
+  \si@bool@cs@if@T{si@num@post@rnd@#1@bool}{%
+    \@nameuse{si@num@post@rnd@#1}{mant}%
+    \@nameuse{si@num@post@rnd@#1}{mant@comp}%
+    \@nameuse{si@num@post@rnd@#1}{exp}%
+    \@nameuse{si@num@post@rnd@#1}{exp@comp}%
+  }%
+}
+\newcommand*{\si@num@post@rnd@dec}[1]{%
+  \si@num@if@F{\si@num@post@rnd@cnt>\@ne}{%
+    \si@tempcnt\expandafter\@car\si@num@post@dec\@nil\relax
+    \si@bool@if@T\si@num@post@carry@bool{%
+      \advance\si@tempcnt\@ne\relax
+    }%
+    \si@bool@false\si@num@post@carry@bool
+    \si@num@if@TF{\si@num@post@rnd@cnt=\@ne}{%
+      \si@num@if@T{\si@tempcnt>4}{%
+        \si@bool@true\si@num@post@carry@bool
+      }%
+    }{%
+      \si@num@if@T{\si@tempcnt=10}{%
+        \si@bool@true\si@num@post@carry@bool
+        \si@tempcnt\z@\relax
+      }%
+      \si@edef@c{si@num@in@#1@dec}{%
+        \the\si@tempcnt
+        \@nameuse{si@num@in@#1@dec}%
+      }%
+    }%
+  }%
+  \advance\si@num@post@rnd@cnt\m@ne\relax
+  \edef\si@num@post@dec{\expandafter\@cdr\si@num@post@dec\@nil}%
+}
+\newcommand*{\si@num@post@rnd@figures}[1]{%
+  \si@num@post@rnd@cnt\z@\relax
+  \si@bool@false\si@num@post@sig@bool
+  \si@clear@macro\si@num@post@dec
+  \si@clear@macro\si@num@post@int
+  \si@whiledo@empty@cs@F{si@num@in@#1@int}{%
+    \si@num@post@rnd@figures@aux@i{#1}{int}%
+  }%
+  \si@whiledo@empty@cs@F{si@num@in@#1@dec}{%
+    \si@num@post@rnd@figures@aux@i{#1}{dec}%
+  }%
+  \si@bool@if@TF\si@num@post@sig@bool{%
+    \si@num@if@TF{\si@num@post@rnd@cnt>\si@num@post@figures}{%
+      \si@num@post@rnd@figures@aux@ii{#1}%
+    }{%
+      \si@num@post@rnd@figures@aux@iii{#1}%
+    }%
+  }{%
+    \@namedef{si@num@in@#1@int}{0}%
+    \si@clear@cs{si@num@in@#1@dec}%
+    \si@bool@cs@false{si@num@in@#1@dec@bool}%
+  }%
+}
+\newcommand*{\si@num@post@rnd@figures@aux@i}[2]{%
+  \si@tempcnt\expandafter\expandafter\expandafter\@car
+    \csname si@num@in@#1@#2\endcsname\@nil\relax
+  \si@edef@c{si@num@post@#2}{%
+    \the\si@tempcnt
+    \@nameuse{si@num@post@#2}%
+  }%
+  \si@bool@if@F\si@num@post@sig@bool{%
+    \si@num@if@F{\si@tempcnt=\z@}{%
+      \si@bool@true\si@num@post@sig@bool
+    }%
+  }%
+  \si@bool@if@T\si@num@post@sig@bool{%
+    \advance\si@num@post@rnd@cnt\@ne\relax
+  }%
+  \si@edef@c{si@num@in@#1@#2}{%
+    \expandafter\expandafter\expandafter\@cdr
+      \csname si@num@in@#1@#2\endcsname\@nil
+  }%
+}
+\newcommand*{\si@num@post@rnd@figures@aux@ii}[1]{%
+  \advance\si@num@post@rnd@cnt-\si@num@post@figures\relax
+  \si@whiledo@empty@F\si@num@post@dec{%
+    \si@num@post@rnd@dec{#1}%
+  }%
+  \si@whiledo@empty@F\si@num@post@int{%
+    \si@num@post@rnd@figures@int{#1}
+  }%
+  \si@bool@if@T\si@num@post@carry@bool{%
+    \si@edef@c{si@num@in@#1@int}{%
+      1%
+      \@nameuse{si@num@in@#1@int}%
+    }%
+    \si@empty@cs@if@F{si@num@in@#1@dec}{%
+      \si@reverse@cs{si@num@in@#1@dec}%
+      \si@edef@c{si@num@in@#1@dec}{%
+        \expandafter\expandafter\expandafter\@cdr
+          \csname si@num@in@#1@dec\endcsname\@nil
+      }%
+      \si@reverse@cs{si@num@in@#1@dec}%
+    }%
+  }%
+}
+\newcommand*{\si@num@post@rnd@figures@aux@iii}[1]{%
+  \advance\si@num@post@rnd@cnt-\si@num@post@figures\relax
+  \si@num@post@rnd@cnt-\si@num@post@rnd@cnt\relax
+  \si@reverse@macro\si@num@post@dec
+  \si@reverse@macro\si@num@post@int
+  \si@let@cN{si@num@in@#1@dec}\si@num@post@dec
+  \si@let@cN{si@num@in@#1@int}\si@num@post@int
+  \si@num@post@rnd@pad{#1}%
+}
+\newcommand*{\si@num@post@rnd@figures@int}[1]{%
+  \si@num@if@T{\si@num@post@rnd@cnt>\z@}{%
+    \si@edef@c{si@num@in@#1@int}{%
+      0%
+      \@nameuse{si@num@in@#1@int}%
+    }%
+  }%
+  \si@num@if@F{\si@num@post@rnd@cnt>\@ne}{%
+    \si@tempcnt\expandafter\@car\si@num@post@int\@nil\relax
+    \si@bool@if@T\si@num@post@carry@bool{%
+      \advance\si@tempcnt\@ne\relax
+    }%
+    \si@bool@false\si@num@post@carry@bool
+    \si@num@if@TF{\si@num@post@rnd@cnt=\@ne}{%
+      \si@num@if@T{\si@tempcnt>4}{%
+        \si@bool@true\si@num@post@carry@bool
+      }%
+    }{%
+      \si@num@if@T{\si@tempcnt=10}{%
+        \si@bool@true\si@num@post@carry@bool
+        \si@tempcnt\z@\relax
+      }%
+      \si@edef@c{si@num@in@#1@int}{%
+        \the\si@tempcnt
+        \@nameuse{si@num@in@#1@int}%
+      }%
+    }%
+  }%
+  \advance\si@num@post@rnd@cnt\m@ne\relax
+  \edef\si@num@post@int{\expandafter\@cdr\si@num@post@int\@nil}%
+}
+\newcommand*{\si@num@post@rnd@pad}[1]{%
+  \si@whiledo@num@T{\si@num@post@rnd@cnt>\z@}{%
+    \si@edef@c{si@num@in@#1@dec}{%
+      \@nameuse{si@num@in@#1@dec}%
+      0%
+    }%
+    \advance\si@num@post@rnd@cnt\m@ne\relax
+  }%
+}
+\newcommand*{\si@num@post@rnd@places}[1]{%
+  \si@num@if@TF{\si@num@post@places=\z@}{%
+    \si@clear@cs{si@num@in@#1@dec}%
+    \si@bool@cs@false{si@num@in@#1@dec@bool}%
+  }{%
+    \si@num@post@rnd@places@aux@i{#1}%
+  }%
+}
+\newcommand*{\si@num@post@rnd@places@aux@i}[1]{%
+  \si@empty@cs@if@T{si@num@in@#1@dec}{%
+    \@namedef{si@num@in@#1@dec}{0}%
+  }%
+  \si@num@post@rnd@cnt\si@elt@count@cs{si@num@in@#1@dec}\relax
+  \expandafter\expandafter\expandafter\ifnum
+    \csname si@num@in@#1@dec\endcsname=\z@\relax
+    \si@num@post@rnd@cnt\si@num@post@places\relax
+    \si@clear@cs{si@num@in@#1@dec}%
+    \expandafter\si@num@post@rnd@pad
+  \else
+    \expandafter\si@num@post@rnd@places@aux@ii
+  \fi
+  {#1}%
+}
+\newcommand*{\si@num@post@rnd@places@aux@ii}[1]{%
+  \advance\si@num@post@rnd@cnt-\si@num@post@places\relax
+  \si@num@if@TF{\si@num@post@rnd@cnt<\z@}{%
+    \si@num@post@rnd@cnt-\si@num@post@rnd@cnt\relax
+    \si@num@post@rnd@pad{#1}%
+  }{%
+    \si@num@post@rnd@places@init{#1}%
+    \si@num@post@rnd@places@aux@iii{#1}%
+  }%
+}
+\newcommand*{\si@num@post@rnd@places@aux@iii}[1]{%
+  \si@empty@if@TF\si@num@post@dec{%
+    \si@whiledo@empty@F\si@num@post@int{%
+      \si@num@post@rnd@places@int{#1}%
+    }%
+    \si@bool@if@T\si@num@post@carry@bool{%
+      \si@edef@c{si@num@in@#1@int}{%
+        1%
+        \@nameuse{si@num@in@#1@int}%
+      }%
+    }%
+  }{%
+    \si@num@post@rnd@dec{#1}%
+    \si@num@post@rnd@places@aux@iii{#1}%
+  }%
+}
+\newcommand*{\si@num@post@rnd@places@int}[1]{%
+  \si@tempcnt\expandafter\@car\si@num@post@int\@nil\relax
+  \edef\si@num@post@int{\expandafter\@cdr\si@num@post@int\@nil}%
+  \si@bool@if@T\si@num@post@carry@bool{%
+    \advance\si@tempcnt\@ne\relax
+  }%
+  \si@bool@false\si@num@post@carry@bool
+  \si@num@if@T{\si@tempcnt=10}{%
+    \si@bool@true\si@num@post@carry@bool
+    \si@tempcnt\z@\relax
+  }%
+  \si@edef@c{si@num@in@#1@int}{%
+    \the\si@tempcnt
+    \@nameuse{si@num@in@#1@int}%
+  }%
+}
+\newcommand*{\si@num@post@rnd@places@init}[1]{%
+  \si@let@Nc\si@num@post@dec{si@num@in@#1@dec}%
+  \si@let@Nc\si@num@post@int{si@num@in@#1@int}%
+  \si@reverse@macro\si@num@post@dec
+  \si@reverse@macro\si@num@post@int
+  \si@clear@cs{si@num@in@#1@dec}%
+  \si@clear@cs{si@num@in@#1@int}%
+  \si@bool@false\si@num@post@carry@bool
+}
+\newcommand*{\si@num@post@zero@fill}{%
+  \si@bool@if@T\si@num@post@zero@int@bool{%
+    \si@num@post@zero@fill@aux{mant}{int}%
+    \si@num@post@zero@fill@aux{mant@comp}{int}%
+    \si@num@post@zero@fill@aux{exp}{int}%
+    \si@num@post@zero@fill@aux{exp@comp}{int}%
+  }%
+  \si@bool@if@T\si@num@post@zero@dec@bool{%
+    \si@num@post@zero@fill@aux{mant}{dec}%
+    \si@num@post@zero@fill@aux{mant@comp}{dec}%
+    \si@num@post@zero@fill@aux{exp}{dec}%
+    \si@num@post@zero@fill@aux{exp@comp}{dec}%
+  }%
+}
+\newcommand*{\si@num@post@zero@fill@aux}[2]{%
+  \si@bool@cs@if@T{si@num@in@#1@dec@bool}{%
+    \si@empty@cs@if@T{si@num@in@#1@#2}{%
+      \@namedef{si@num@in@#1@#2}{0}%
+    }%
+  }%
+}
+\newcommand*{\si@num@post@uncert}{%
+  \si@num@post@uncert@aux@i{mant}%
+  \si@num@post@uncert@aux@i{exp}%
+}
+\newcommand*{\si@num@post@uncert@aux@i}[1]{%
+  \si@num@post@uncert@aux@ii{#1}%
+  \si@num@post@uncert@aux@ii{#1@comp}%
+}
+\newcommand*{\si@num@post@uncert@aux@ii}[1]{%
+  \si@bool@cs@if@TF{si@num@in@#1@dec@bool}{%
+    \si@num@post@uncert@dec{#1}%
+  }{%
+    \si@num@post@uncert@int{#1}%
+  }%
+}
+\newcommand*{\si@num@post@uncert@dec}[1]{%
+  \si@empty@cs@if@F{si@num@in@#1@uncert}{%
+    \si@bool@cs@true{si@num@in@#1@uncert@dec@bool}%
+    \si@num@post@dec@cnt\si@elt@count@cs{si@num@in@#1@dec}\relax
+    \si@num@post@uncert@cnt\si@elt@count@cs{si@num@in@#1@uncert}\relax
+    \si@num@if@TF{\si@num@post@uncert@cnt>\si@num@post@dec@cnt}{%
+      \si@num@post@uncert@dec@aux@i{#1}%
+    }{%
+      \si@num@post@uncert@dec@aux@ii{#1}%
+    }%
+  }%
+}
+\newcommand*{\si@num@post@uncert@dec@aux@i}[1]{%
+  \def\si@tempa##1{%
+    \si@num@if@TF{\si@num@post@uncert@cnt>\si@num@post@dec@cnt}{%
+      \si@add@right@cs@n{si@num@in@#1@uncert@int}{##1}%
+    }{%
+      \si@add@right@cs@n{si@num@in@#1@uncert@dec}{##1}%
+    }%
+    \advance\si@num@post@uncert@cnt\m@ne\relax
+  }%
+  \si@loop@over@cs{si@num@in@#1@uncert}\si@tempa
+}
+\newcommand*{\si@num@post@uncert@dec@aux@ii}[1]{%
+  \def\si@tempa{%
+    \si@add@right@cs@n{si@num@in@#1@uncert@dec}{0}%
+    \advance\si@num@post@uncert@cnt\@ne\relax
+  }%
+  \si@whiledo@num@T{\si@num@post@uncert@cnt<\si@num@post@dec@cnt}{%
+    \si@tempa
+  }%
+  \def\si@tempa##1{%
+    \si@add@right@cs@o{si@num@in@#1@uncert@dec}{##1}%
+  }%
+  \expandafter\si@tempa\expandafter
+    {\csname si@num@in@#1@uncert\endcsname}%
+  \si@bool@if@T\si@num@post@zero@int@bool{%
+    \@namedef{si@num@in@#1@uncert@int}{0}%
+  }%
+}
+\newcommand*{\si@num@post@uncert@int}[1]{%
+  \si@let@cc{si@num@in@#1@uncert@int}{si@num@in@#1@uncert}%
+}
+\newcommand*{\si@num@out@bracket@close}{}
+\newcommand*{\si@num@out@bracket@open}{}
+\newcommand*{\si@num@out@complex@root}{}
+\newcommand*{\si@num@out@decimal}{}
+\newcommand*{\si@num@out@exp@base}{}
+\newcommand*{\si@num@out@exp@prod}{}
+\newcommand*{\si@num@out@group@sep}{}
+\newcommand*{\si@num@out@uncert@close}{}
+\newcommand*{\si@num@out@uncert@open}{}
+\newcommand*{\si@num@out@uncert@space}{}
+\si@bool@new\si@num@out@bracket@use@bool
+\si@bool@new\si@num@out@group@digits@bool
+\si@bool@new\si@num@out@group@four@bool
+\si@bool@new\si@num@out@tight@bool
+\si@bool@new\si@num@out@uncert@sep@bool
+\newcommand*{\si@num@out@mant}{}
+\newcommand*{\si@num@out@mant@sign}{}
+\newcommand*{\si@num@out@mant@int}{}
+\newcommand*{\si@num@out@mant@dec}{}
+\newcommand*{\si@num@out@mant@uncert}{}
+\newcommand*{\si@num@out@mant@uncert@dec}{}
+\newcommand*{\si@num@out@mant@uncert@int}{}
+\newcommand*{\si@num@out@mant@comp}{}
+\newcommand*{\si@num@out@mant@comp@sign}{}
+\newcommand*{\si@num@out@mant@comp@int}{}
+\newcommand*{\si@num@out@mant@comp@dec}{}
+\newcommand*{\si@num@out@mant@comp@uncert}{}
+\newcommand*{\si@num@out@mant@comp@uncert@dec}{}
+\newcommand*{\si@num@out@mant@comp@uncert@int}{}
+\newcommand*{\si@num@out@exp}{}
+\newcommand*{\si@num@out@exp@sign}{}
+\newcommand*{\si@num@out@exp@int}{}
+\newcommand*{\si@num@out@exp@dec}{}
+\newcommand*{\si@num@out@exp@uncert}{}
+\newcommand*{\si@num@out@exp@uncert@dec}{}
+\newcommand*{\si@num@out@exp@uncert@int}{}
+\newcommand*{\si@num@out@exp@comp}{}
+\newcommand*{\si@num@out@exp@comp@sign}{}
+\newcommand*{\si@num@out@exp@comp@int}{}
+\newcommand*{\si@num@out@exp@comp@dec}{}
+\newcommand*{\si@num@out@exp@comp@uncert}{}
+\newcommand*{\si@num@out@exp@comp@uncert@dec}{}
+\newcommand*{\si@num@out@exp@comp@uncert@int}{}
+\newcommand*{\si@num@out@result}{}
+\si@bool@new\si@num@out@mant@parts@bool
+\si@bool@new\si@num@out@mant@comp@parts@bool
+\si@bool@new\si@num@out@exp@parts@bool
+\si@bool@new\si@num@out@exp@comp@parts@bool
+\si@bool@new\si@num@out@mant@comp@bool
+\si@bool@new\si@num@out@exp@comp@bool
+\si@bool@new\si@num@out@mant@bool
+\si@keys@family{numbers/output}
+\pgfkeys{
+  /siunitx/numbers/output,
+  close bracket/.store in                 = {\si@num@out@bracket@close},
+  close uncertainty/.store in             = {\si@num@out@uncert@close},
+  complex root/.store in                  = {\si@num@out@complex@root},
+  decimal marker/.store in                = {\si@num@out@decimal},
+  exponent base/.store in                 = {\si@num@out@exp@base},
+  exponent product/.store in              = {\si@num@out@exp@prod},
+  group digits/.is siunitx switch         = {num@out@group@digits},
+  group four digits/.is siunitx switch    = {num@out@group@four},
+  group separator/.store in               = {\si@num@out@group@sep},
+  open bracket/.store in                  = {\si@num@out@bracket@open},
+  open uncertainty/.store in              = {\si@num@out@uncert@open},
+  separate uncertainty/.is siunitx switch = {num@out@uncert@sep},
+  tight spacing/.is siunitx switch        = {num@out@tight},
+  uncertainty space/.store in             = {\si@num@out@uncert@space},
+  use brackets/.is siunitx switch         = {num@out@bracket@use}, %(
+  close bracket        = ),% (
+  close uncertainty    = ),
+  complex root         = i,
+  decimal marker       = .,
+  exponent base        = 10,
+  exponent product     = \times,
+  group digits         = true,
+  group four digits    = false,
+  group separator      = {\,},
+  open bracket         = (, %)
+  open uncertainty     = (, %)
+  separate uncertainty = false,
+  tight spacing        = false,
+  use brackets         = true,
+  uncertainty space    = {},
+}
+\newcommand*{\si@num@out@process}{%
+  \si@num@out@init
+  \si@num@out@core
+  \si@num@out@complex
+  \si@empty@if@F\si@num@out@mant{%
+    \si@bool@true\si@num@out@mant@bool
+  }%
+  \si@num@out@sign{mant}%
+  \si@num@out@sign{exp}%
+  \si@num@out@exponent
+}
+\newcommand*{\si@num@out@add}[1]{%
+  \si@add@right@cs@n{si@num@out@#1}%
+}
+\newcommand*{\si@num@out@add@C}[2]{%
+  \expandafter\si@num@out@add@C@aux\expandafter
+    {\csname si@num@out@#2\endcsname}{#1}%
+}
+\newcommand*{\si@num@out@add@C@aux}[2]{%
+  \si@add@right@cs@o{si@num@out@#2}{#1}%
+}
+\newcommand*{\si@num@out@add@maths}[2]{%
+  \si@empty@if@F#2{%
+    \expandafter\si@num@out@add@maths@aux\expandafter{#2}{#1}%
+  }%
+}
+\newcommand*{\si@num@out@add@maths@aux}[2]{%
+  \si@num@out@add{#2}{\ensuremath{#1}}%
+}
+\newcommand*{\si@num@out@add@pm}[1]{%
+  \si@bool@if@TF\si@num@out@tight@bool{%
+    \si@num@out@add@maths{#1}{{\pm}}%
+  }{%
+    \def\si@tempa{\pm}%
+    \si@num@out@add@maths{#1}{\si@tempa}%
+  }%
+}
+\newcommand*{\si@num@out@bracket@comp}[1]{%
+  \si@bool@cs@if@T{si@num@out@#1@comp@bool}{%
+    \si@bool@cs@false{si@num@out@#1@parts@bool}%
+    \si@bool@cs@false{si@num@out@#1@comp@parts@bool}%
+  }%
+  \si@num@out@brackets@aux@i{#1}{comp}%
+}
+\newcommand*{\si@num@out@bracket@parts}[1]{%
+  \si@num@out@brackets@aux@i{#1}{parts}%
+}
+\newcommand*{\si@num@out@brackets@aux@i}[2]{%
+  \si@empty@cs@if@F{si@num@out@#1}{%
+    \si@bool@if@T\si@num@out@bracket@use@bool{%
+      \si@bool@cs@if@T{si@num@out@#1@#2@bool}{%
+        \si@num@out@bracket@aux@ii{#1}%
+        \si@bool@cs@false{si@num@out@#1@#2@bool}%
+      }%
+    }%
+  }%
+}
+\newcommand*{\si@num@out@bracket@aux@ii}[1]{%
+  \si@add@left@cs@o{si@num@out@#1}\si@num@out@bracket@open
+  \si@add@right@cs@o{si@num@out@#1}\si@num@out@bracket@close
+}
+\newcommand*{\si@num@out@complex}{%
+  \si@num@out@complex@aux{mant}%
+  \si@num@out@complex@aux{exp}%
+}
+\newcommand*{\si@num@out@complex@aux}[1]{%
+  \si@num@out@bracket@parts{#1@comp}%
+  \si@bool@cs@if@T{si@num@in@#1@comp@bool}{%
+    \si@num@out@add@maths{#1@comp}{\si@num@out@complex@root}%
+    \si@num@out@bracket@parts{#1}%
+    \si@empty@cs@if@F{si@num@out@#1}{%
+      \si@num@out@sign{#1@comp}%
+      \si@bool@cs@true{si@num@out@#1@comp@bool}%
+    }%
+  }%
+  \si@num@out@add@C{#1}{#1@comp}%
+}
+\newcommand*{\si@num@out@copy}[1]{%
+  \expandafter\si@num@out@copy@aux\csname si@num@in@#1\endcsname{#1}%
+}
+\newcommand*{\si@num@out@copy@aux}[2]{%
+  \si@add@right@cs@o{si@num@out@#2}{#1}%
+}
+\newcommand*{\si@num@out@copy@maths}[1]{%
+  \expandafter\si@num@out@copy@maths@aux
+    \csname si@num@in@#1\endcsname{#1}%
+}
+\newcommand*{\si@num@out@copy@maths@aux}[2]{%
+  \si@num@out@add@maths{#2}#1%
+}
+\newcommand*{\si@num@out@core}{%
+  \si@num@out@core@aux@i{mant}%
+  \si@num@out@core@aux@i{exp}%
+}
+\newcommand*{\si@num@out@core@aux@i}[1]{%
+  \si@num@out@core@aux@ii{#1}%
+  \si@num@out@core@aux@ii{#1@comp}%
+}
+\newcommand*{\si@num@out@core@aux@ii}[1]{%
+  \si@bool@cs@if@T{si@num@in@#1@bool}{%
+    \si@num@out@group@digits{#1}%
+    \si@empty@cs@if@F{si@num@in@#1@uncert}{%
+      \si@num@out@uncert{#1}%
+    }%
+  }%
+}
+\newcommand*{\si@num@out@exponent}{%
+  \si@bool@if@T\si@num@out@mant@bool{%
+    \si@empty@cs@if@F{si@num@out@exp}{%
+      \si@num@out@bracket@comp{mant}%
+      \si@num@out@bracket@parts{mant}%
+    }%
+  }%
+  \si@num@out@add@C{result}{mant}%
+  \si@bool@if@T\si@num@out@mant@bool{%
+    \si@empty@cs@if@F{si@num@out@exp}{%
+      \si@bool@if@TF\si@num@out@tight@bool{%
+        \expandafter\def\expandafter\si@tempa\expandafter
+          {\expandafter{\si@num@out@exp@prod}}%
+        \si@num@out@add@maths{result}\si@tempa
+      }{%
+        \si@num@out@add@maths{result}{\si@num@out@exp@prod}%
+      }%
+    }%
+  }%
+  \si@empty@cs@if@F{si@num@out@exp}{%
+    \si@num@out@add@C{result}{exp@base}%
+    \edef\si@num@out@exp{%
+      ^{\expandafter\unexpanded\expandafter{\si@num@out@exp}}%
+    }%
+   \si@num@out@add@C{result}{exp}%
+  }%
+}
+\newcommand*{\si@num@out@group@digits}[1]{%
+  \si@num@out@copy{#1@dec}%
+  \si@num@out@copy{#1@int}%
+  \si@bool@if@T\si@num@out@group@digits@bool{%
+    \si@bool@if@F\si@num@in@symbols@bool{%
+      \si@num@out@group@digits@aux@i{#1}{dec}%
+      \si@num@out@group@digits@aux@i{#1}{int}%
+    }%
+  }%
+  \si@num@out@add@C{#1}{#1@int}%
+  \si@bool@cs@if@T{si@num@in@#1@dec@bool}{%
+    \si@num@out@add@maths{#1}{\si@num@out@decimal}%
+    \si@num@out@add@C{#1}{#1@dec}%
+  }%
+}
+\newcommand*{\si@num@out@group@digits@aux@i}[2]{%
+  \si@empty@cs@if@F{si@num@in@#1@#2}{%
+    \si@bool@if@TF\si@num@out@group@four@bool{%
+      \si@num@out@group@digits@aux@ii{#1}{#2}%
+    }{%
+      \si@num@out@group@five@if@T{si@num@in@#1@#2}{%
+        \si@num@out@group@digits@aux@ii{#1}{#2}%
+      }%
+    }%
+  }%
+}
+\newcommand*{\si@num@out@group@digits@aux@ii}[2]{%
+  \si@clear@cs{si@num@out@#1@#2}%
+  \@nameuse{si@num@out@group@#2}{#1}%
+}
+\newcommand*{\si@num@out@group@dec}[1]{%
+  \def\si@num@out@group@dec@aux##1##2##3##4{%
+    \si@empty@tlist@if@TF{##2}{%
+      \si@num@out@add{#1@dec}{##1}%
+    }{%
+      \si@empty@tlist@if@TF{##3}{%
+        \si@num@out@add{#1@dec}{##1##2}%
+      }{%
+        \si@num@out@add{#1@dec}{##1##2##3}%
+        \si@empty@tlist@if@F{##4}{%
+          \si@num@out@add@maths{#1@dec}{\si@num@out@group@sep}%
+          \si@num@out@group@dec@aux##4%
+        }%
+      }%
+    }%
+  }%
+  \expandafter\expandafter\expandafter\si@num@out@group@dec@aux
+    \csname si@num@in@#1@dec\endcsname{}{}{}%
+}
+\newcommand*{\si@num@out@group@dec@aux}{}
+\newcommand*{\si@num@out@group@five@if@T}[1]{%
+  \expandafter\expandafter\expandafter\si@num@out@group@five@if@aux
+    \csname #1\endcsname\@empty\@empty\@empty\@empty\si@stop
+}
+\newcommand*{\si@num@out@group@five@if@aux}{}
+\def\si@num@out@group@five@if@aux#1#2#3#4#5\si@stop{%
+  \edef\si@tempa{#5}%
+  \si@empty@if@F\si@tempa
+}
+\newcommand*{\si@num@out@group@int}[1]{%
+  \def\si@num@out@group@int@aux@iii##1##2##3##4{%
+    \si@num@out@add{#1@int}{##1##2##3}%
+    \si@stop@if@F{##4}{%
+      \si@num@out@add@maths{#1@int}{\si@num@out@group@sep}%
+      \si@num@out@group@int@aux@iii##4%
+    }%
+  }%
+  \expandafter\si@num@out@group@int@aux@i
+    \csname si@num@in@#1@int\endcsname
+}
+\newcommand*{\si@num@out@group@int@aux@i}[1]{%
+  \expandafter\si@num@out@group@int@aux@ii\expandafter
+    {\expandafter}#1{}{}{}%
+}
+\newcommand*{\si@num@out@group@int@aux@ii}[4]{%
+  \si@empty@tlist@if@TF{#2}{%
+    \si@num@out@group@int@aux@iii#1\si@stop
+  }{%
+    \si@empty@tlist@if@TF{#3}{%
+      \si@num@out@group@int@aux@iii{}{}#1#2\si@stop
+    }{%
+      \si@empty@tlist@if@TF{#4}{%
+        \si@num@out@group@int@aux@iii{}#1#2#3\si@stop
+      }{%
+        \si@num@out@group@int@aux@ii{#1#2#3#4}%
+      }%
+    }%
+  }%
+}
+\newcommand*{\si@num@out@group@int@aux@iii}{}
+\newcommand*{\si@num@out@init}{%
+  \si@loop@over@macro\si@num@in@init@names\si@num@out@init@aux
+  \si@clear@macro\si@num@out@result
+  \si@bool@false\si@num@out@mant@parts@bool
+  \si@bool@false\si@num@out@mant@comp@parts@bool
+  \si@bool@false\si@num@out@exp@parts@bool
+  \si@bool@false\si@num@out@exp@comp@parts@bool
+  \si@bool@false\si@num@out@mant@comp@bool
+  \si@bool@false\si@num@out@exp@comp@bool
+  \si@bool@false\si@num@out@mant@bool
+}
+\newcommand*{\si@num@out@init@aux}[1]{%
+  \si@clear@cs{si@num@out@#1}%
+}
+\newcommand*{\si@num@out@sign}[1]{%
+  \si@bool@if@TF\si@num@out@tight@bool{%
+    \si@let@Nc\si@tempa{si@num@in@#1@sign}%
+    \expandafter\def\expandafter\si@tempa\expandafter
+      {\expandafter{\si@tempa}}%
+    \si@num@out@add@maths{#1@sign}\si@tempa
+  }{%
+    \si@num@out@copy@maths{#1@sign}%
+  }%
+  \si@num@out@sign@aux@i{#1}%
+}
+\newcommand*{\si@num@out@sign@aux@i}[1]{%
+  \expandafter\si@num@out@sign@aux@ii
+    \csname si@num@out@#1@sign\endcsname{si@num@out@#1}%
+}
+\newcommand*{\si@num@out@sign@aux@ii}[2]{%
+  \si@add@left@cs@o{#2}{#1}%
+}
+\newcommand*{\si@num@out@uncert}[1]{%
+  \si@bool@if@TF\si@num@out@uncert@sep@bool{%
+    \si@bool@cs@true{si@num@out@#1@parts@bool}%
+    \si@num@out@group@digits{#1@uncert}%
+    \si@num@out@add@pm{#1}%
+    \si@num@out@add@C{#1}{#1@uncert}%
+  }{%
+    \si@num@out@add@maths{#1@uncert}{\si@num@out@uncert@open}%
+    \si@num@out@copy{#1@uncert}%
+    \si@num@out@add@maths{#1@uncert}{\si@num@out@uncert@close}%
+    \si@num@out@add@maths{#1}{\si@num@out@uncert@space}%
+    \si@num@out@add@C{#1}{#1@uncert}%
+  }%
+}
+\newcommand*{\si@num@print}{%
+  \si@print@num@o{\si@num@out@result}% \opt
+}
+\newcommand*{\si@tab@rewrite@check@cellspace}{%
+  \@ifpackageloaded{cellspace}{%
+    \si@log@info{Changing cellspace column letter to C}%
+    \newcolumntype{C}[1]{>{\bcolumn##1\@nil}##1<{\ecolumn}}%
+    \def\si@tempa##1\NC@do S##2\si@stop{%
+      \NC@list{##1##2}%
+    }%
+    \expandafter\si@tempa\the\NC@list\si@stop
+    \let\NC@find@S\@undefined
+  }{}%
+}
+\AtBeginDocument{\si@tab@rewrite@check@cellspace}
+\newcommand*{\si@tab@rewrite@create}[1]{%
+  \edef\si@tempa{\noexpand\NC@do #1\the\NC@list}%
+  \newcolumntype{#1}{}%
+  \NC@list\expandafter{\si@tempa}%
+  \expandafter\renewcommand\expandafter*\expandafter{%
+    \csname NC@rewrite@#1\endcsname
+  }[1][]{%
+    \edef\si@tempa{%
+      \the\@temptokena
+      >{\noexpand\si@tab@collect@begin[\unexpanded{##1}]{#1}}%
+      c%
+      <{\noexpand\si@tab@print@out}%
+    }%
+    \@temptokena\expandafter{\si@tempa}%
+    \NC@find
+  }%
+}
+\AtBeginDocument{%
+  \si@tab@rewrite@create{S}%
+  \si@tab@rewrite@create{s}%
+}
+\newcommand*{\si@tab@collect@after}{}
+\newcommand*{\si@tab@collect@before}{}
+\newcommand*{\si@tab@collect@body}{}
+\newcommand*{\si@tab@collect@num}{}
+\si@bool@new\si@tab@collect@after@bool
+\si@bool@new\si@tab@collect@before@bool
+\newcommand*{\si@tab@collect@begin}[2][]{%
+  \begingroup
+    \sisetup{#1}%
+    \def\si@tab@collect@body{}%
+    \@nameuse{si@tab@collect@begin@#2}%
+    \si@tab@collect@get
+}
+\newcommand*{\si@tab@collect@begin@s}{%
+  \si@bool@false\si@tab@collect@before@bool
+  \let\si@tab@collect@token\si@tab@collect@token@s
+  \let\si@tab@print@out\si@tab@print@out@s
+  \def\si@tab@collect@braced##1{%
+    \si@add@right@n\si@tab@collect@body{{##1}}%
+    \si@tab@collect@next
+  }%
+}
+\newcommand*{\si@tab@collect@begin@S}{%
+  \def\si@tab@collect@after{}%
+  \def\si@tab@collect@before{}%
+  \si@bool@true\si@tab@collect@before@bool
+  \let\si@tab@collect@token\si@tab@collect@token@S
+  \let\si@tab@print@out\si@tab@print@out@S
+  \si@expand@tlist\si@tab@collect@num{%
+    \si@num@in@ignore
+    \si@num@in@signs
+    \si@num@in@digits
+    \si@num@in@decimal
+    \si@num@in@exponent
+    \si@num@in@complex
+    \si@num@in@symbols
+    \si@num@in@uncert@open
+    \si@num@in@uncert@close
+  }%
+  \def\si@tab@collect@braced##1{%
+    \si@bool@if@TF\si@tab@collect@before@bool{%
+      \si@add@right@n\si@tab@collect@before{##1}%
+    }{%
+      \si@bool@false\si@tab@collect@before@bool
+      \si@bool@true\si@tab@collect@after@bool
+      \si@add@right@n\si@tab@collect@after{##1}%
+    }%
+    \si@tab@collect@next
+  }%
+}
+\newcommand*{\si@tab@collect@braced}{}
+\newcommand*{\si@tab@collect@expand}[1]{%
+  \edef\si@tempa{%
+    \expandafter\si@tab@collect@expand@aux@i\meaning#1:->\si@stop
+  }%
+  \si@meaning@eq@if@TF\si@tempa\si@tab@collect@expand@aux@ii{%
+    \si@tab@collect@before
+    \def\si@tab@collect@before{}%
+    \expandafter\def\expandafter\si@tab@collect@next\expandafter{%
+      \expandafter\si@tab@collect@get#1%
+    }%
+  }{%
+    \si@bool@if@TF\si@tab@collect@before@bool{%
+      \si@add@right@n\si@tab@collect@before{#1}%
+    }{%
+      \si@bool@true\si@tab@collect@after@bool
+      \si@bool@false\si@tab@collect@before@bool
+      \si@add@right@n\si@tab@collect@after{#1}%
+    }%
+  }%
+}
+\newcommand*{\si@tab@collect@expand@aux@i}{}
+\def\si@tab@collect@expand@aux@i#1:->#2\si@stop{#1}
+\newcommand*{\si@tab@collect@expand@aux@ii}{}
+\edef\si@tab@collect@expand@aux@ii{%
+  \expandafter\si@tab@collect@expand@aux@i\meaning
+    \si@tab@collect@expand@aux@ii:->\si@stop
+}%
+\newcommand*{\si@tab@collect@get}{%
+  \let\si@tab@collect@next\si@tab@collect@get
+  \futurelet\si@tempa\si@tab@collect@get@aux
+}
+\newcommand*{\si@tab@collect@get@aux}{%
+  \si@meaning@eq@if@TF\si@tempa\bgroup{%
+    \si@tab@collect@braced
+  }{%
+    \si@tab@collect@unbraced
+  }%
+}
+\newcommand*{\si@tab@collect@newline}{%
+  \si@tab@print@out
+  \tabularnewline
+}
+\newcommand*{\si@tab@collect@next}{}
+\newcommand*{\si@tab@collect@token}{}
+\newcommand*{\si@tab@collect@token@s}[1]{%
+  \si@add@right@n\si@tab@collect@body{#1}%
+}
+\newcommand*{\si@tab@collect@token@S}[1]{%
+  \si@bool@if@TF\si@tab@collect@after@bool{%
+    \si@add@right@n\si@tab@collect@after{#1}%
+  }{%
+    \si@in@if@TF\si@tab@collect@num{#1}{%
+      \si@bool@false\si@tab@collect@before@bool
+      \si@add@right@n\si@tab@collect@body{#1}%
+    }{%
+      \si@tab@collect@expand{#1}%
+    }%
+  }%
+}
+\newcommand*{\si@tab@collect@unbraced}[1]{%
+  \si@meaning@eq@if@F{#1}\ignorespaces{%
+    \si@meaning@eq@if@F{#1}\unskip{%
+      \si@tab@collect@unbraced@aux{#1}%
+    }%
+  }%
+  \si@tab@collect@next
+}
+\newcommand*{\si@tab@collect@unbraced@aux}[1]{%
+  \def\si@tempa##1{%
+    \si@meaning@eq@if@T{#1}##1{%
+      \let\si@tab@collect@next##1%
+    }%
+  }%
+  \si@tempa\csname
+  \si@tempa\end
+  \si@tempa\endtabular
+  \si@tempa\si@tab@print@out
+  \si@tempa\relax
+  \si@meaning@eq@if@T\si@tab@collect@next\si@tab@collect@get{%
+    \si@meaning@eq@if@TF{#1}\tabularnewline{%
+      \let\si@tab@collect@next\si@tab@collect@newline
+    }{%
+      \si@tab@collect@token{#1}%
+    }%
+  }%
+}
+\si@keys@family{tables}
+\pgfkeys{
+  /siunitx/tables,
+  align exponents/.is siunitx switch     = {},
+  align uncertainties/.is siunitx switch = {},
+  number position/.is choice,
+  number position/.cd,
+    center/.code           = {},
+    centre/.code           = {},
+    decimal centred/.code  = {},
+    decimal centered/.code = {},
+    left/.code             = {},
+    right/.code            = {},
+  /siunitx/tables,
+  number format/.code = {},
+  position/.is choice,
+  position/.cd,
+    center/.style = {
+     /siunitx/tables/number position = center,
+     /siunitx/tables/text position   = center,
+     /siunitx/tables/unit position   = center,
+    },
+    centre/.style = {
+     /siunitx/tables/number position = centre,
+     /siunitx/tables/text position   = centre,
+     /siunitx/tables/unit position   = centre,
+    },
+    left/.style   = {
+     /siunitx/tables/number position = left,
+     /siunitx/tables/text position   = left,
+     /siunitx/tables/unit position   = left,
+    },
+    right/.style  = {
+     /siunitx/tables/number position = right,
+     /siunitx/tables/text position   = right,
+     /siunitx/tables/unit position   = right,
+    },
+  /siunitx/tables,
+  text position/.is choice,
+  text position/.cd,
+    center/.code = {},
+    centre/.code = {},
+    none/.code   = {},
+    left/.code   = {},
+    right/.code  = {},
+  /siunitx/tables,
+  unit position/.is choice,
+  unit position/.cd,
+    center/.code = {},
+    centre/.code = {},
+    none/.code   = {},
+    left/.code   = {},
+    right/.code  = {},
+  /siunitx/tables,
+  number position = centre,
+  text position   = centre,
+  unit position   = centre
+}
+\newcommand*{\si@tab@print@out}{}
+\newcommand*{\si@tab@print@out@s}{%
+    \si@tab@collect@body
+  \endgroup
+}
+\newcommand*{\si@tab@print@out@S}{%
+    \si@tab@collect@before
+    \si@tab@collect@body
+    \si@tab@collect@after
+  \endgroup
+}
+\newcommand*{\si@unit@def@list}{}
+\newcommand*{\si@unit@def@prefix@list}{}
+\newcommand*{\si@unit@def@power@list}{}
+\newcommand*{\si@unit@def@qual@list}{}
+\newcommand*{\si@unit@def@unit@list}{}
+\newcommand*{\si@unit@def@list@combine}{%
+  \si@expand@tlist\si@unit@def@list{%
+    \si@unit@def@power@list
+    \si@unit@def@prefix@list
+    \si@unit@def@qual@list
+    \si@unit@def@unit@list
+  }%
+  \si@add@right@n\si@unit@def@list{%
+    \per
+    \raiseto
+    \tothe
+  }%
+}
+\AtBeginDocument{\si@unit@def@list@combine}
+\newcommand*{\si@unit@def@power}[2]{%
+  \si@add@right@n\si@unit@def@power@list{#1}%
+  \@namedef{si@unit@literal@\string#1}##1{##1\textsuperscript{#2}}%
+  \@namedef{si@unit@macro@\string#1}{%
+    \def\si@unit@parse@power@last{#2}%
+  }%
+}
+\newcommand*{\si@unit@def@power@post}[2]{%
+  \si@add@right@n\si@unit@def@power@list{#1}%
+  \@namedef{si@unit@literal@\string#1}{\textsuperscript{#2}}%
+  \@namedef{si@unit@macro@\string#1}{%
+    \def\si@unit@parse@power@current{#2}%
+    \si@unit@parse@store{power}{null}%
+  }%
+}
+\newcommand*{\si@unit@def@prefix}[3]{%
+  \si@add@right@n\si@unit@def@prefix@list{#1}%
+  \@namedef{si@unit@literal@\string#1}{#2}%
+  \@namedef{si@unit@number@\string#1}{#3}%
+  \@namedef{si@unit@macro@\string#1}{%
+    \si@unit@parse@store{prefix}{#2}%
+  }%
+}
+\newcommand*{\si@unit@def@prefix@binary}[1]{%
+  \si@unit@def@prefix{#1}%
+}
+\newcommand*{\si@unit@def@qual}[2]{%
+  \si@add@right@n\si@unit@def@qual@list{#1}%
+  \@namedef{si@unit@literal@\string#1}{\text{ }(#2)}%
+  \@namedef{si@unit@macro@\string#1}{%
+    \si@unit@parse@store{qual}{#2}%
+  }%
+}
+\newcommand*{\si@unit@def@unit}[3]{%
+  \si@add@right@n\si@unit@def@unit@list{#1}%
+  \si@empty@tlist@if@TF{#2}{%
+    \si@let@cN{si@unit@options@\string#1}\@undefined
+  }{%
+    \@namedef{si@unit@options@\string#1}{#2}%
+  }%
+  \@namedef{si@unit@literal@\string#1}{#3}%
+  \@namedef{si@unit@macro@\string#1}{%
+    \si@csname@if@TF{si@unit@macro@\expandafter\string\@car#3\@nil}{%
+      #3%
+    }{%
+      \si@unit@parse@store{unit}{#3}%
+    }%
+  }%
+}
+\si@bool@new\si@unit@create@body@bool
+\si@bool@new\si@unit@create@opt@bool
+\si@bool@new\si@unit@create@overwrite@bool
+\si@bool@new\si@unit@create@prespace@bool
+\si@bool@new\si@unit@create@xspace@bool
+\si@keys@family{units/creation}
+\pgfkeys{
+  /siunitx/units/creation,
+  add leading space/.is siunitx switch       = {unit@create@prespace},
+  allow in body/.is siunitx switch           = {unit@create@body},
+  allow optional argument/.is siunitx switch = {unit@create@opt},
+  overwrite macros/.is siunitx switch        = {unit@create@overwrite},
+  use xspace/.is siunitx switch              = {unit@create@xspace},
+  add leading space       = false,
+  allow in body           = false,
+  allow optional argument = false,
+  overwrite macros        = false,
+  use xspace              = false
+}
+\newcommand*{\si@unit@create@body}{%
+  \si@bool@if@T\si@unit@create@body@bool{%
+    \si@unit@create@macros
+  }%
+}
+\AtBeginDocument{\si@unit@create@body}
+\newcommand*{\si@unit@create@macros}{%
+  \si@bool@if@T\si@unit@create@xspace@bool{%
+    \RequirePackage{xspace}%
+  }%
+  \si@bool@if@T\si@unit@create@overwrite@bool{%
+    \si@loop@over@macro\si@unit@def@list\si@unit@create@undefine
+  }%
+  \si@bool@if@TF\si@unit@create@opt@bool{%
+    \si@loop@over@macro\si@unit@def@list\si@unit@create@optional
+  }{%
+    \si@loop@over@macro\si@unit@def@list\si@unit@create@plain
+  }%
+}
+\newcommand*{\si@unit@create@optional}[1]{%
+  \ifdefined#1\else
+    \edef\si@tempa{%
+      \unexpanded{\si@newcommand*{#1}[1][]}{%
+        \si@bool@if@T\si@unit@create@prespace@bool{%
+          \unexpanded{\si@empty@tlist@if@T{##1}}{%
+            \unexpanded{\ensuremath{\si@unit@out@unit@sep}}%
+          }%
+        }%
+        \unexpanded{\SI{##1}{#1}}%
+        \si@bool@if@T\si@unit@create@xspace@bool{%
+          \noexpand\xspace
+        }%
+      }%
+    }%
+    \expandafter\si@tempa
+  \fi
+}
+\newcommand*{\si@unit@create@plain}[1]{%
+  \ifdefined#1\else
+    \edef\si@tempa{%
+      \unexpanded{\si@newcommand*{#1}}{%
+        \si@bool@if@T\si@unit@create@prespace@bool{%
+          \unexpanded{\ensuremath{\si@unit@out@unit@sep}}%
+        }%
+        \unexpanded{\si{#1}}%
+        \si@bool@if@T\si@unit@create@xspace@bool{%
+          \noexpand\xspace
+        }%
+      }%
+    }%
+    \expandafter\si@tempa
+  \fi
+}
+\newcommand*{\si@unit@create@undefine}[1]{%
+  \let#1\@undefined
+}
+\@namedef{si@unit@literal@\string\per}{/}
+\@namedef{si@unit@macro@\string\per}{%
+  \si@bool@true\si@unit@parse@per@last@bool
+  \def\si@unit@parse@power@last{1}%
+}
+\@namedef{si@unit@literal@\string\raiseto}#1#2{
+  #2\textsuperscript{#1}%
+}
+\@namedef{si@unit@macro@\string\raiseto}#1{%
+  \def\si@unit@parse@power@last{#1}%
+}
+\@namedef{si@unit@literal@\string\tothe}#1{%
+  \textsuperscript{#1}%
+}
+\@namedef{si@unit@macro@\string\tothe}#1{%
+  \def\si@unit@parse@power@current{#1}%
+  \si@unit@parse@store{power}{null}%
+}
+\newcommand*{\si@unit@in@parse}[1]{%
+  \si@empty@tlist@if@F{#1}{%
+    \si@unit@in@process@if@TF{#1}{%
+      \si@unit@parse@unit{#1}%
+    }{%
+      \si@bool@if@TF\si@unit@out@lit@allow@bool{%
+        \si@unit@out@literal{#1}%
+      }{%
+        \si@log@error{Literal units disabled}{%
+          You gave the literal input `#1' for a unit\MessageBreak
+          but literal unit output is disabled.
+        }%
+      }%
+    }%
+  }%
+}
+\newcommand*{\si@unit@in@process@if@TF}[1]{%
+  \begingroup
+    \si@loop@over@macro\si@unit@def@list\si@unit@in@process@aux
+    \let\raiseto\@gobble
+    \let\tothe\@gobble
+    \protected@edef\@tempa{#1}%
+  \expandafter\endgroup
+  \expandafter\def\expandafter\si@tempa\expandafter{\@tempa}%
+  \si@empty@if@TF\si@tempa
+}
+\newcommand*{\si@unit@in@process@aux}[1]{%
+  \si@clear@macro#1%
+}
+\newcommand*{\si@unit@parse@block}{}
+\newcommand*{\si@unit@parse@block@den}{}
+\newcount\si@unit@parse@block@cnt
+\newcount\si@unit@parse@block@den@cnt
+\si@bool@new\si@unit@parse@per@current@bool
+\si@bool@new\si@unit@parse@per@last@bool
+\newcommand*{\si@unit@parse@power@current}{}
+\newcommand*{\si@unit@parse@power@last}{}
+\si@bool@new\si@unit@parse@qual@sub@bool
+\newcommand*{\si@unit@parse@queue}{}
+\newcommand*{\si@unit@parse@queue@den}{}
+\newcommand*{\si@unit@parse@sep}{}
+\si@bool@new\si@unit@parse@sticky@bool
+\newcommand*{\si@unit@parse@type@last}{}
+\newcommand*{\si@unit@parse@type@last@den}{}
+\newcommand*{\si@unit@parse@type@prefix}{prefix}
+\newcommand*{\si@unit@parse@type@power}{power}
+\newcommand*{\si@unit@parse@type@qual}{qual}
+\newcommand*{\si@unit@parse@type@unit}{unit}
+\si@bool@new\si@unit@parse@fraction@bool
+\newcommand*{\si@unit@parse@qual@format}{}
+\si@keys@family{units/output}
+\pgfkeys{
+  /siunitx/units/output,
+  print as fraction/.is siunitx switch = {unit@parse@fraction},
+  qualifier format/.is choice,
+  qualifier format/.cd,
+    brackets/.code  = {%
+      \def\si@unit@parse@qual@format##1{(##1)}%
+      \si@bool@false\si@unit@parse@qual@sub@bool
+    },
+    space/.code     = {%
+      \def\si@unit@parse@qual@format##1{\text{ }##1}%
+      \si@bool@false\si@unit@parse@qual@sub@bool
+    },
+    subscript/.code = {%
+      \def\si@unit@parse@qual@format##1{_{##1}}%
+      \si@bool@true\si@unit@parse@qual@sub@bool
+    },
+  /siunitx/units/output,
+  sticky per/.is siunitx switch         = {unit@parse@sticky},
+  print as fraction = false,
+  qualifier format  = subscript,
+  sticky per        = false,
+}
+\newcommand*{\si@unit@parse@unit}[1]{%
+  \si@unit@parse@init
+  \si@unit@parse@options{#1}%
+  \si@unit@out@sep@print
+  #1%
+  \si@unit@parse@store@unit{stop}%
+  \si@print@unit@o{\si@unit@parse@queue}% TEMP
+}
+\newcommand*{\si@unit@parse@block@new}[1]{%
+  \si@empty@if@F\si@unit@parse@power@current{%
+    \si@unit@parse@store@power{null}%
+  }%
+  \si@unit@parse@block@trans
+  \let\si@unit@parse@per@current@bool\si@unit@parse@per@last@bool
+  \let\si@unit@parse@power@current\si@unit@parse@power@last
+  \si@clear@macro\si@unit@parse@power@last
+  \si@bool@if@TF\si@unit@parse@sticky@bool{%
+    \si@bool@if@T\si@unit@parse@per@last@bool{%
+      \def\si@unit@parse@power@last{1}%
+    }%
+  }{%
+    \si@bool@false\si@unit@parse@per@last@bool
+  }%
+  \@namedef{si@unit@parse@block\si@unit@parse@queue@use}{#1}%
+}
+\newcommand*{\si@unit@parse@block@trans}{%
+  \si@empty@cs@if@F{si@unit@parse@queue\si@unit@parse@queue@use}{%
+    \si@add@right@cs@o{si@unit@parse@queue\si@unit@parse@queue@use}{%
+      \si@unit@parse@sep
+    }%
+  }%
+  \expandafter\si@unit@parse@block@add@aux\expandafter{%
+    \csname si@unit@parse@block\si@unit@parse@queue@use\endcsname
+  }%
+}
+\newcommand*{\si@unit@parse@block@add@aux}[1]{%
+  \si@add@right@cs@o{si@unit@parse@queue\si@unit@parse@queue@use}{#1}%
+}
+\newcommand*{\si@unit@parse@bracket}[1]{%
+  \si@bool@if@T\si@unit@out@bracket@use@bool{%
+    \si@add@left@cs@o{si@unit@parse@#1}\si@unit@out@bracket@open
+    \si@add@right@cs@o{si@unit@parse@#1}\si@unit@out@bracket@close
+  }%
+}
+\newcommand*{\si@unit@parse@init}{%
+  \si@loop@over@macro\si@unit@def@list\si@unit@parse@init@aux
+  \si@clear@macro\si@unit@parse@current
+  \si@clear@macro\si@unit@parse@current@den
+  \si@clear@macro\si@unit@parse@power@current
+  \si@clear@macro\si@unit@parse@power@last
+  \si@clear@macro\si@unit@parse@queue
+  \si@clear@macro\si@unit@parse@queue@den
+  \def\si@unit@parse@type@last{start}%
+  \def\si@unit@parse@type@last@den{start}%
+  \expandafter\def\expandafter\si@unit@parse@sep\expandafter{%
+    \expandafter\ensuremath\expandafter{\si@unit@out@unit@sep}%
+  }%
+  \si@unit@parse@block@cnt\z@\relax
+  \si@unit@parse@block@den@cnt\z@\relax
+  \si@bool@false\si@unit@parse@per@last@bool
+  \si@bool@false\si@unit@parse@per@current@bool
+}
+\newcommand*{\si@unit@parse@init@aux}[1]{%
+  \si@let@Nc#1{si@unit@macro@\string#1}%
+}
+\newcommand*{\si@unit@parse@last@if@F}[1]{%
+  \si@meaning@eq@cs@if@F
+    {si@unit@parse@type@last\si@unit@parse@queue@use}%
+    {si@unit@parse@type@#1}%
+}
+\newcommand*{\si@unit@parse@last@if@T}[1]{%
+  \si@meaning@eq@cs@if@T
+    {si@unit@parse@type@last\si@unit@parse@queue@use}%
+    {si@unit@parse@type@#1}%
+}
+\newcommand*{\si@unit@parse@last@if@TF}[1]{%
+  \si@meaning@eq@cs@if@TF
+    {si@unit@parse@type@last\si@unit@parse@queue@use}%
+    {si@unit@parse@type@#1}%
+}
+\newcommand*{\si@unit@parse@options}[1]{%
+  \si@csname@if@T{si@unit@options@\expandafter\string\@car#1\@nil}{%
+    \edef\si@tempa{%
+      \expandafter\expandafter\expandafter\unexpanded
+      \expandafter\expandafter\expandafter{%
+        \csname si@unit@options@\expandafter\string\@car#1\@nil
+          \endcsname
+      },%
+      \expandafter\unexpanded\expandafter{\si@unit@internal@opts}%
+    }%
+    \expandafter\sisetup\expandafter{\si@tempa}%
+  }%
+}
+\newcommand*{\si@unit@parse@queue@use}{%
+  \si@bool@if@T\si@unit@parse@fraction@bool{%
+    \si@bool@if@T\si@unit@parse@per@current@bool{@den}%
+  }%
+}
+\newcommand*{\si@unit@parse@store}[2]{%
+  \@nameuse{si@unit@parse@store@#1}{#2}%
+}
+\newcommand*{\si@unit@parse@store@add@n}[1]{%
+  \si@add@right@cs@n{si@unit@parse@block\si@unit@parse@queue@use}{#1}%
+}
+\newcommand*{\si@unit@parse@store@add@o}[1]{%
+  \si@add@right@cs@o{si@unit@parse@block\si@unit@parse@queue@use}{#1}%
+}
+\newcommand*{\si@unit@parse@store@power}[1]{%
+  \si@unit@parse@last@if@T{qual}{%
+    \si@bool@if@F\si@unit@parse@qual@sub@bool{%
+      \si@unit@parse@bracket{block\si@unit@parse@queue@use}%
+    }%
+    \si@unit@parse@store@power@aux
+  }%
+  \si@unit@parse@last@if@T{unit}{%
+    \si@unit@parse@store@power@aux
+  }%
+  \si@clear@macro\si@unit@parse@power@current
+}
+\newcommand*{\si@unit@parse@store@power@aux}{%
+  \si@unit@parse@store@type{power}%
+  \si@bool@if@T\si@unit@parse@per@current@bool{%
+    \si@bool@if@F\si@unit@parse@fraction@bool{%
+      \si@unit@parse@store@power@inv
+    }%
+  }%
+  \def\si@tempa{1}%
+  \si@meaning@eq@if@F\si@unit@parse@power@current\si@tempa{%
+    \si@unit@parse@store@add@o{%
+      \expandafter^\expandafter{\si@unit@parse@power@current}%
+    }%
+  }%
+}
+\newcommand*{\si@unit@parse@store@power@inv}{%
+  \si@in@if@TF\si@unit@parse@power@current{-}{%
+    \def\si@tempa##1-##2\si@stop{%
+      \def\si@unit@parse@power@current{##2}%
+    }%
+  }{%
+    \si@add@left@n\si@unit@parse@power@current{-}%
+  }%
+}
+\newcommand*{\si@unit@parse@store@prefix}[1]{%
+  \si@unit@parse@last@if@F{prefix}{%
+    \si@unit@parse@store@type{prefix}%
+    \si@unit@parse@block@new{#1}%
+  }%
+}
+\newcommand*{\si@unit@parse@store@qual}[1]{%
+  \si@unit@parse@last@if@T{unit}{%
+    \si@unit@parse@store@add@o{\si@unit@parse@qual@format{#1}}%
+    \si@unit@parse@store@type{qual}%
+  }%
+}
+\newcommand*{\si@unit@parse@store@type}[1]{%
+  \si@let@cc{si@unit@parse@type@last\si@unit@parse@queue@use}%
+    {si@unit@parse@type@#1}%
+}
+\newcommand*{\si@unit@parse@store@unit}[1]{%
+  \si@count@incr@cs{si@unit@parse@block\si@unit@parse@queue@use @cnt}%
+  \si@unit@parse@last@if@TF{prefix}{%
+    \si@unit@parse@store@type{unit}%
+    \si@unit@parse@store@add@n{#1}%
+  }{%
+    \si@unit@parse@store@type{unit}%
+    \si@unit@parse@block@new{#1}%
+  }%
+}
+\newcommand*{\si@unit@out@literal@unit}{}
+\newcommand*{\si@unit@out@bracket@close}{}
+\newcommand*{\si@unit@out@bracket@open}{}
+\si@bool@new\si@unit@out@bracket@use@bool
+\si@bool@new\si@unit@out@break@bool
+\si@bool@new\si@unit@out@lit@allow@bool
+\newcommand*{\si@unit@out@num@sep}{}
+\newcommand*{\si@unit@out@unit@sep}{}
+\newcommand*{\si@unit@out@unit@space}{}
+\pgfkeys{
+  /siunitx/units/output,
+  allow literal units/.is siunitx switch = {unit@out@lit@allow},
+  allow number-unit breaks/.is siunitx switch = {unit@out@break},
+  close bracket/.store in                = \si@unit@out@bracket@close,
+  inter-unit separator/.store in         = \si@unit@out@unit@sep,
+  inter-unit space/.store in             = \si@unit@out@unit@space,
+  number-unit separator/.store in        = \si@unit@out@num@sep,
+  open bracket/.store in                 = \si@unit@out@bracket@open,
+  use brackets/.is siunitx switch        = {unit@out@bracket@use}, %(
+  allow literal units   = true,
+  allow number-unit breaks = false,
+  close bracket         = ),
+  inter-unit separator  = \,,
+  inter-unit space      = \,,
+  number-unit separator = \,,
+  open bracket          = (, %
+  use brackets          = true
+}
+\newcommand*{\si@unit@out@literal}[1]{%
+  \si@loop@over@macro\si@unit@def@list\si@unit@out@literal@aux
+  \si@unit@out@literal@print{#1}%
+}
+\newcommand*{\si@unit@out@literal@aux}[1]{%
+  \si@let@Nc#1{si@unit@literal@\string#1}%
+}
+\si@catcode@set{46}{13}% .
+\si@catcode@set{38}{13}% &
+\newcommand*{\si@unit@out@literal@print}[1]{%
+  \def\si@unit@out@literal@unit{#1}%
+  \si@unit@out@replace@fullstops\si@unit@out@literal@unit
+  \si@unit@out@replace@tildes\si@unit@out@literal@unit
+  \begingroup
+    \si@catcode@set{38}{13}% &
+    \si@catcode@set{126}{13}% ~
+    \let.\si@unit@out@unit@sep
+    \let&\si@unit@out@unit@space
+    \protected@edef\si@unit@out@literal@unit{\si@unit@out@literal@unit}%
+    \si@print@unit@o{\si@unit@out@literal@unit}%
+  \endgroup
+}
+\si@catcode@set{46}{12}% .
+\si@lccode@set{38}{46}% & -> .
+\lowercase{%
+  \newcommand*{\si@unit@out@replace@fullstops}[1]{%
+    \si@replace@all@in#1{.}{&}%
+  }
+}
+\si@lccode@set{38}{0}% & -> &
+\newcommand*{\si@unit@out@replace@tildes}[1]{%
+  \si@replace@all@in#1{~}{&}%
+}
+\si@catcode@set{38}{4}% &
+\newcommand*{\si@unit@out@sep@print}{%
+  \ensuremath{%
+    \si@bool@if@TF\si@unit@out@break@bool{%
+      \allowbreak
+    }{%
+      \nobreak
+    }%
+    \si@unit@out@num@sep
+  }%
+}
+\si@bool@new\si@symbol@redefine@bool
+
+\si@keys@family{symbols}
+\pgfkeys{
+  /siunitx/symbols,
+  redefine symbols/.is siunitx switch = {symbol@redefine},
+  redefine symbols = true
+}
+\newcommand*{\si@symbol@redefine}{%
+  \si@bool@if@T\si@symbol@redefine@bool{%
+    \@ifpackageloaded{textcomp}{%
+      \sisetup{
+        symbols/maths/degree = \text{\textdegree},
+        symbols/text/degree  = \textdegree
+      }%
+      \@ifpackageloaded{mathptmx}{}{%
+        \sisetup{
+          symbols/text/micro = \textmu,
+          symbols/text/ohm   = \textomega
+        }%
+      }%
+      \def\si@tempa{OT1}%
+      \si@meaning@eq@if@T\si@tempa\encodingdefault{%
+        \sisetup{
+          symbols/maths/angstrom = \text{\capitalring{A}},
+          symbols/text/angstrom  = \capitalring{A}
+        }%
+      }%
+    }{}%
+    \@ifpackageloaded{upgreek}{%
+      \sisetup{
+        symbols/maths/ohm = \Upomega
+      }
+    }{}%
+  }%
+}
+\AtBeginDocument{\si@symbol@redefine}
+\newcommand*{\si@symbol@maths@angstrom}{}
+\newcommand*{\si@symbol@maths@arcminute}{}
+\newcommand*{\si@symbol@maths@arcsecond}{}
+\newcommand*{\si@symbol@maths@celsius}{}
+\newcommand*{\si@symbol@maths@degree}{}
+\newcommand*{\si@symbol@maths@micro}{}
+\newcommand*{\si@symbol@maths@ohm}{}
+%%\begin{macro}{\si@symbol@text@angstrom}
+\newcommand*{\si@symbol@text@angstrom}{}
+\newcommand*{\si@symbol@text@arcminute}{}
+\newcommand*{\si@symbol@text@arcsecond}{}
+\newcommand*{\si@symbol@text@celsius}{}
+\newcommand*{\si@symbol@text@degree}{}
+\newcommand*{\si@symbol@text@micro}{}
+\newcommand*{\si@symbol@text@ohm}{}
+\si@keys@family{symbols/maths}
+\pgfkeys{
+  /siunitx/symbols/maths,
+  angstrom/.store in  = \si@symbol@maths@angstrom,
+  arcminute/.store in = \si@symbol@maths@arcminute,
+  arcsecond/.store in = \si@symbol@maths@arcsecond,
+  celsius/.store in   = \si@symbol@maths@celsius,
+  degree/.store in    = \si@symbol@maths@degree,
+  micro/.store in     = \si@symbol@maths@micro,
+  ohm/.store in       = \si@symbol@maths@ohm,
+  angstrom  = \text{\AA},
+  arcminute = {}^{\prime},
+  arcsecond = {}^{\prime\prime},
+  celsius   = {}^{\circ}\kern-\scriptspace C,
+  degree    = {}^{\circ},
+  micro     = \si@symbol@maths@mu,
+  ohm       = \text{\ensuremath{\Omega}}
+}
+\si@keys@family{symbols/math}
+\pgfkeys{
+  /siunitx/symbols/math,
+  angstrom/.store in  = \si@symbol@maths@angstrom,
+  arcminute/.store in = \si@symbol@maths@arcminute,
+  arcsecond/.store in = \si@symbol@maths@arcsecond,
+  celsius/.store in   = \si@symbol@maths@celsius,
+  degree/.store in    = \si@symbol@maths@degree,
+  micro/.store in     = \si@symbol@maths@micro,
+  ohm/.store in       = \si@symbol@maths@ohm,
+}
+\si@keys@family{symbols/text}
+\pgfkeys{
+  /siunitx/symbols/text,
+  angstrom/.store in  = \si@symbol@text@angstrom,
+  arcminute/.store in = \si@symbol@text@arcminute,
+  arcsecond/.store in = \si@symbol@text@arcsecond,
+  celsius/.store in   = \si@symbol@text@celsius,
+  degree/.store in    = \si@symbol@text@degree,
+  micro/.store in     = \si@symbol@text@micro,
+  ohm/.store in       = \si@symbol@text@ohm,
+  angstrom  = \AA,
+  arcminute = \ensuremath{{}^{\prime}},
+  arcsecond = \ensuremath{{}^{\prime\prime}},
+  celsius   = \ensuremath{{}^{\circ}}\kern-\scriptspace C,
+  degree    = \ensuremath{{}^{\circ}},
+  micro     = \si@symbol@text@mu,
+  ohm       = \ensuremath{\Omega}
+}
+\newcommand*{\si@symbol@new}[1]{%
+  \expandafter\si@newcommand\expandafter*\expandafter{%
+    \csname SIUnitSymbol#1\endcsname
+  }{%
+    \si@mode@maths@if@TF{%
+      \lowercase{\@nameuse{si@symbol@maths@#1}}%
+    }{%
+      \lowercase{\@nameuse{si@symbol@text@#1}}%
+    }%
+  }%
+}
+\si@symbol@new{Angstrom}
+\si@symbol@new{Arcminute}
+\si@symbol@new{Arcsecond}
+\si@symbol@new{Celsius}
+\si@symbol@new{Degree}
+\si@symbol@new{Micro}
+\si@symbol@new{Ohm}
+\DeclareFontEncoding{TS1}{}{}
+\DeclareFontSubstitution{TS1}{cmr}{m}{n}
+\DeclareTextSymbol{\si@symbol@text@mu}{TS1}{181}
+\DeclareTextSymbolDefault{\si@symbol@text@mu}{TS1}
+\newcommand*{\si@symbol@check@upgreek}{%
+  \@ifpackageloaded{upgreek}{%
+    \let\si@symbol@maths@mu\upmu
+  }{%
+    \DeclareFontFamily{OML}{eur}{\skewchar\font127}%
+    \DeclareFontShape{OML}{eur}{m}{n}%
+      {<-6> eurm5 <6-8> eurm7 <8-> eurm10}{}%
+    \DeclareSymbolFont{si@symbol}{OML}{eur}{m}{n}%
+    \DeclareMathSymbol{\si@symbol@maths@mu}{\mathord}{si@symbol}{22}%
+  }%
+}
+\AtBeginDocument{\si@symbol@check@upgreek}
+\newcommand*{\DeclareSIPower}{%
+  \@ifstar{%
+    \si@unit@def@power@post
+  }{%
+    \si@unit@def@power
+  }%
+}
+\newcommand*{\DeclareSIPrefix}{%
+  \@ifstar{%
+    \si@unit@def@prefix@binary
+  }{%
+    \si@unit@def@prefix
+  }%
+}
+\newcommand*{\DeclareSIQualifier}{%
+  \si@unit@def@qual
+}
+\newcommand*{\DeclareSIUnit}[2][]{%
+  \si@unit@def@unit{#2}{#1}%
+}
+\@onlypreamble\DeclareSIPower
+\@onlypreamble\DeclareSIPrefix
+\@onlypreamble\DeclareSIQualifier
+\@onlypreamble\DeclareSIUnit
+\si@newcommand*{\sisetup}[1]{%
+  \pgfqkeys{/siunitx}{#1}%
+}
+\si@newcommand*{\num}[2][]{%
+  \begingroup
+    \sisetup{#1}%
+    \si@num@internal{#2}%
+  \endgroup
+}
+\newcommand*{\si@num@internal}[1]{%
+  \si@num@pre@process{#1}%
+  \si@bool@if@F\si@num@pre@error@bool{%
+    \si@num@in@parse@o{\si@num@pre@arg}%
+    \si@bool@if@F\si@num@in@error@bool{%
+      \si@num@post@process
+      \si@num@out@process
+      \si@num@print
+    }%
+  }%
+}
+\si@newcommand*{\SI}[2][]{%
+  \begingroup
+    \def\si@tempa{{#1}{#2}}%
+    \si@unit@internal@i
+}
+\newcommand*{\si@unit@internal@i}[2][]{%
+  \expandafter\si@unit@internal@ii\si@tempa{#1}{#2}%
+}
+\newcommand*{\si@unit@internal@ii}[4]{% TEMP
+    \sisetup{#1}%
+    \def\si@unit@internal@opts{#1}%
+    \si@unit@in@parse{#3}%
+    \si@num@internal{#2}%
+    \si@bool@if@F\si@num@in@error@bool{%
+      \si@empty@tlist@if@T{#4}{%
+        \let\si@unit@out@sep@print\relax
+      }%
+    }%
+    \si@unit@in@parse{#4}%
+  \endgroup
+}
+\newcommand*{\si@unit@internal@opts}{}
+\si@newcommand*{\si}[2][]{%
+  \begingroup
+    \sisetup{#1}%
+    \si@unit@in@parse{#2}%
+  \endgroup
+}
+\DeclareSIUnit{\kilogram}{\kilo\gram}
+\DeclareSIUnit{\metre}{m}
+\DeclareSIUnit{\meter}{\metre}
+\DeclareSIUnit{\mole}{mol}
+\DeclareSIUnit{\second}{s}
+\DeclareSIUnit{\ampere}{A}
+\DeclareSIUnit{\kelvin}{K}
+\DeclareSIUnit{\candela}{cd}
+\DeclareSIUnit{\gram}{g}
+\DeclareSIPrefix{\yocto}{y}{-24}
+\DeclareSIPrefix{\zepto}{z}{-21}
+\DeclareSIPrefix{\atto}{a}{-18}
+\DeclareSIPrefix{\femto}{f}{-15}
+\DeclareSIPrefix{\pico}{p}{-12}
+\DeclareSIPrefix{\nano}{n}{-9}
+\DeclareSIPrefix{\micro}{\SIUnitSymbolMicro}{-6}
+\DeclareSIPrefix{\milli}{m}{-3}
+\DeclareSIPrefix{\centi}{c}{-2}
+\DeclareSIPrefix{\deci}{d}{-1}
+\DeclareSIPrefix{\deca}{da}{1}
+\DeclareSIPrefix{\deka}{da}{1}
+\DeclareSIPrefix{\hecto}{h}{2}
+\DeclareSIPrefix{\kilo}{k}{3}
+\DeclareSIPrefix{\mega}{M}{6}
+\DeclareSIPrefix{\giga}{G}{9}
+\DeclareSIPrefix{\tera}{T}{12}
+\DeclareSIPrefix{\peta}{P}{15}
+\DeclareSIPrefix{\exa}{E}{18}
+\DeclareSIPrefix{\zetta}{Z}{21}
+\DeclareSIPrefix{\yotta}{Y}{24}
+\DeclareSIUnit{\becquerel}{Bq}
+\DeclareSIUnit{\celsius}{\SIUnitSymbolCelsius}
+\DeclareSIUnit{\coulomb}{C}
+\DeclareSIUnit{\farad}{F}
+\DeclareSIUnit{\gray}{Gy}
+\DeclareSIUnit{\hertz}{Hz}
+\DeclareSIUnit{\henry}{H}
+\DeclareSIUnit{\joule}{J}
+\DeclareSIUnit{\katal}{kat}
+\DeclareSIUnit{\lumen}{lm}
+\DeclareSIUnit{\lux}{lx}
+\DeclareSIUnit{\newton}{N}
+\DeclareSIUnit{\ohm}{\SIUnitSymbolOhm}
+\DeclareSIUnit{\pascal}{Pa}
+\DeclareSIUnit{\radian}{rad}
+\DeclareSIUnit{\siemens}{S}
+\DeclareSIUnit{\sievert}{Sv}
+\DeclareSIUnit{\steradian}{sr}
+\DeclareSIUnit{\tesla}{T}
+\DeclareSIUnit{\volt}{V}
+\DeclareSIUnit{\watt}{W}
+\DeclareSIUnit{\weber}{Wb}
+\DeclareSIUnit[units/output/number-unit separator={}]
+  {\arcmin}{\arcminute}
+\DeclareSIUnit[units/output/number-unit separator={}]
+  {\arcminute}{\SIUnitSymbolArcminute}
+\DeclareSIUnit[units/output/number-unit separator={}]
+  {\arcsecond}{\SIUnitSymbolArcsecond}
+\DeclareSIUnit{\day}{d}
+\DeclareSIUnit[units/output/number-unit separator={}]
+  {\degree}{\SIUnitSymbolDegree}
+\DeclareSIUnit{\hectare}{ha}
+\DeclareSIUnit{\hour}{h}
+\DeclareSIUnit{\litre}{l}
+\DeclareSIUnit{\liter}{L}
+\DeclareSIUnit{\minute}{min}
+\DeclareSIUnit{\percent}{\char37}
+\DeclareSIUnit{\tonne}{t}
+\DeclareSIUnit{\astronomicalunit}{ua}
+\DeclareSIUnit{\atomicmassunit}{u}
+\DeclareSIUnit{\electronvolt}{eV}
+\DeclareSIUnit{\dalton}{Da}
+\DeclareSIUnit{\clight}{\text{\ensuremath{c_{0}}}}
+\DeclareSIUnit{\electronmass}{\text{\ensuremath{m_{\text{e}}}}}
+\DeclareSIUnit{\planckbar}{\text{\ensuremath{\hbar}}}
+\DeclareSIUnit{\elementarycharge}{\text{\ensuremath{e}}}
+\DeclareSIUnit{\bohr}{\text{\ensuremath{a_{0}}}}
+\DeclareSIUnit{\hartree}{\text{\ensuremath{E_{\textup{h}}}}}
+\DeclareSIUnit{\angstrom}{\SIUnitSymbolAngstrom}
+\DeclareSIUnit{\bar}{bar}
+\DeclareSIUnit{\barn}{b}
+\DeclareSIUnit{\bel}{B}
+\DeclareSIUnit{\decibel}{\deci\bel}
+\DeclareSIUnit{\knot}{kn}
+\DeclareSIUnit{\mmHg}{mmHg}
+\DeclareSIUnit{\nauticalmile}{M}
+\DeclareSIUnit{\neper}{Np}
+\DeclareSIPower{\square}{2}
+\DeclareSIPower*{\squared}{2}
+\DeclareSIPower{\cubic}{3}
+\DeclareSIPower*{\cubed}{3}
+\si@catcode@restore
+\si@lccode@restore
+%% 
+%% Copyright (C) 2008-2009 by
+%%   Joseph Wright <joseph.wright@morningstar2.co.uk>
+%% 
+%% It may be distributed and/or modified under the conditions of
+%% the LaTeX Project Public License (LPPL), either version 1.3c of
+%% this license or (at your option) any later version.  The latest
+%% version of this license is in the file:
+%% 
+%%    http://www.latex-project.org/lppl.txt
+%% 
+%% This work is "maintained" (as per LPPL maintenance status) by
+%%   Joseph Wright.
+%% 
+%% This work consists of the file  siunitx.dtx
+%%           and the derived files siunitx.pdf,
+%%                                 siunitx.sty and
+%%                                 siunitx.ins.
+%% 
+%%
+%% End of file `siunitx.sty'.

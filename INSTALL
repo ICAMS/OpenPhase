@@ -1,0 +1,129 @@
+The modules that are currently available use only standard features of the C++, 
+but it requires the FFTW3 external library (www.fftw.org). The Makefiles are 
+configured to use GNU g++ compiler and the code should compile on any Linux 
+platform with g++ version 9.0 and later. The library should also compile with 
+any other C++ compiler which fully implements C++17 standard and is currently 
+tested with g++, clang++, Intel icpc and DPC++ compilers. To change the compiler
+just use 'make CXX=<preferred_compiler_name>' which works for the g++, clang++ 
+and DPC++ compilers. If you decide to use Intel icpc compiler you should 
+manually change corresponding lines in the Makefile.
+
+In order to compile the OpenPhase library just run 'make' in the distribution 
+root directory. This will compile the library and place it into the ./lib 
+directory. In order to compile examples run 'make examples'. Examples are 
+located in the ./examples directory. In order to run them you should navigate 
+into the examples directory and follow the instructions in the README file.
+In order to compile the benchmarks to test the library run 'make benchmarks'. 
+In order to run them enter the ./benchmarks directory and follow the 
+instructions in the README file.
+
+By using 'make SETTINGS="<option1> <option2> ..."' additional compile options 
+can be added. Note that the OpenMP parallelism is enabled by default.
+Currently the following options exist:
+
+serial:         No OpenMP parallelization.
+mpi-parallel:   Compiles OpenPhase with MPI support.
+debug:          Compiles OpenPhase with debug information and enables additional 
+                output and checks via the DEBUG flag.
+silent:         Disables most of the console output from the library.
+
+The library assumes that each module that requires user input will read it 
+from a dedicated input file. The input files (with the .opi file extension) are
+located in the corresponding example directories.
+
+Technical description of the library implementation can be obtained using 
+"doxygen" (http://www.stack.nl/~dimitri/doxygen/). Just run 'doxygen' command 
+in the distribution root directory. The documentation will be created in 
+the ./documentation directory. We have commented most of the header files 
+and some of the implementation details, but this is not yet completed.
+A detailed manual for the library should be available from the project's 
+web page (www.openphase.rub.de) in the near future.
+
+
+CMake short manual
+-------------------
+-------------------
+This is a short description on how to compile OpenPhase with cmake.
+
+1. Dependencies
+---------------
+
+Linux:
+    1. 1nstall gcc version 9.0 or newer
+    2. Install cmake version 3.10 or newer
+    3. Install fftw3
+
+Windows:
+    1. Install Microsoft Visual Studio 2022 or newer
+    2. Install Intel One API 2023 or newer
+    3. Install Intel One MKL
+    4. Install cmake version 3.10 or newer
+    5. Install ninja
+    6. Add installed binaries and libraries to PATH environment variable
+    7. Start Intel One API command prompt
+
+2. Building
+-----------
+
+Linux:
+
+    mkdir build
+    cd build
+    cmake ..
+    cmake --build .
+
+or using release mode (debug mode is default)
+
+    mkdir build
+    cd build
+    cmake -DCMAKE_BUILD_TYPE=Release ..
+    cmake --build .
+
+or using clang compiler
+
+    mkdir build
+    cd build
+    cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release ..
+    cmake --build .
+
+Windows:
+    
+    mkdir build
+    cd build
+    cmake -G Ninja -DCMAKE_CXX_COMPILER=icx ..
+    cmake --build .
+
+or supressing warnings
+
+    mkdir build
+    cd build
+    cmake -G Ninja -DCMAKE_CXX_COMPILER=icx -DCMAKE_CXX_FLAGS="-w" ..
+    cmake --build .
+    
+
+DO NOT specify compilers in CMakeLists.txt! Use the way suggest above or set
+your environment variables CC and CXX accordingly!
+
+Note that CMake has only to be executed again if a CMakeLists.txt file changes.
+
+
+2. Testing
+----------
+
+    make test
+
+3. Installing
+-------------
+
+    make install
+
+Note that the standard install prefix is /usr/local so that /usr/local/lib has
+to be added LB_LIBRARY_PATH. A custom install prefix be specified:
+
+    make DESTDIR=/home/john install
+
+4. Packing
+----------
+
+    make package
+    make package_source

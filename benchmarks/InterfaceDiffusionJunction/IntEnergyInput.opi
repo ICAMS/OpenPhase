@@ -1,0 +1,13 @@
+$Sigma_00  Interface energy       : 1.00
+$Sigma_01  Interface energy       : 1.25
+$Sigma_02  Interface energy       : 1.50
+$Sigma_11  Interface energy       : 1.75
+$Sigma_12  Interface energy       : 2.00
+$Sigma_22  Interface energy       : 2.25
+
+$Eps_00    Interface anisotropy   : 0.1
+$Eps_01    Interface anisotropy   : 0.2
+$Eps_02    Interface anisotropy   : 0.3
+$Eps_11    Interface anisotropy   : 0.4
+$Eps_12    Interface anisotropy   : 0.5
+$Eps_22    Interface anisotropy   : 0.6

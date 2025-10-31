@@ -1,0 +1,341 @@
+This file is part of the OpenPhase (R) software library.
+
+Copyright (c) 2009-2022 Ruhr-Universitaet Bochum,
+              Universitaetsstrasse 150, D-44801 Bochum, Germany
+          AND 2018-2022 OpenPhase Solutions GmbH,
+              Wasserstrasse 494, D-44795 Bochum, Germany.
+
+All rights reserved.
+
+
+DEVELOPMENT VERSION, DO NOT PUBLISH OR DISTRIBUTE.
+
+
+OpenPhase (R) is a joint development of Interdisciplinary Centre for
+Advanced Materials Simulation (ICAMS), Ruhr University Bochum
+and OpenPhase Solutions GmbH.
+
+File created :  2017
+Main contributors : Muhammad Adil Ali; Johannes Görler
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+!!!All values in MKS (or properly scaled) units please!!!
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@RunTimeControl
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$SimTtl         Simulation title                        : Superalloys
+$nSteps         Number of time steps                    : 60000
+$FTime          Output to disk every (tSteps)           : 1000
+$STime          Output to screen every (tSteps)         : 100
+$dt             Initial time step                       : 12
+$nOMP           Number of OpenMP threads                : 1
+$Restrt         Restart switch (Yes/No)                 : No
+$tStart         Restart at time step                    : 0
+$tRstrt         Restart output every (tSteps)           : 10000
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GridParameters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Nx             System size in X direction              : 64
+$Ny             System size in Y direction              : 64
+$Nz             System size in Z direction              : 64
+$IWidth         Interface width (in grid points)        : 4.5
+$dx             Grid spacing                            : 30e-9
+$Resolution                                             : Single
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Settings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Comp_0         Chemical Component 0                    : Al
+$Comp_1         Chemical Component 1                    : Ni
+$Phase_0        Name of Phase 0                         : gamma
+$Phase_1        Name of Phase 1                         : gamma'
+
+Nvariants_0    Number of symmetry variants of gamma    : 1
+Nvariants_1    Number of symmetry variants of gamma'   : 1
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@LocSuperalloys
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Microstructure      Matrix/Precipitate/Multiple        : Multiple
+$CreepStart                                             : 5000
+$MergingtStep                                           : 1000
+$Variants            Number of Variants                 : 1
+$AddaptiveShearRate                                     : 1e-2
+$Elasticity                                             : Yes
+$AnIsotropy        Interfacial Anisotropy Faceted 100   : No
+$InterfaceCoherencyLoss    Coherency loss by DD         : No
+$CoherencyLossDDValue      Critical Value of DD         : 7e13
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@BoundaryConditions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$BC0X   X axis beginning boundary condition  : Periodic
+$BCNX   X axis far end boundary condition    : Periodic
+$BC0Y   Y axis beginning boundary condition  : Periodic
+$BCNY   Y axis far end boundary condition    : Periodic
+$BC0Z   Z axis beginning boundary condition  : Periodic
+$BCNZ   Z axis far end boundary condition    : Periodic
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@DrivingForce
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Average            Driving force averaging    : Yes
+$dGClearingMode                                : Manual
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@ElasticProperties
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Mechanical boundary conditions :
+AppliedStrain
+AppliedStress
+FreeBoundaries
+
+$BCX    Boundary condition in X direction  : FreeBoundaries
+$BCY    Boundary condition in Y direction  : FreeBoundaries
+$BCZ    Boundary condition in Z direction  : FreeBoundaries
+
+$BCXY   Boundary condition in XY direction : AppliedStress
+$BCXZ   Boundary condition in XZ direction : FreeBoundaries
+$BCYZ   Boundary condition in YZ direction : FreeBoundaries
+
+$BCValueX    Mixed Value X                 : 0.0
+$BCValueY    Mixed Value Y                 : 0.0
+$BCValueZ    Mixed Value Z                 : 0.0
+
+$BCValueXY   Mixed Value XY                : 0.0
+$BCValueXZ   Mixed Value XZ                : 0.0
+$BCValueYZ   Mixed Value YZ                : 0.0
+
+$EModel Elasticity model : Khachaturyan
+$SMode  Strain mode      : GreenLagrange
+
+$ChemoMechanicalCoupling  : No
+$ThermoMechanicalCoupling : No
+
+$C_0 :
+215.5e9   162e9   162e9      0      0      0
+  162e9 215.5e9   162e9      0      0      0
+  162e9   162e9 215.5e9      0      0      0
+      0       0       0 77.6e9      0      0
+      0       0       0      0 77.6e9      0
+      0       0       0      0      0 77.6e9
+
+$U_0 :
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+$C_1 :
+222.7e9 164.2e9 164.2e9      0      0      0
+164.2e9 222.7e9 164.2e9      0      0      0
+164.2e9 164.2e9 222.7e9      0      0      0
+      0       0       0 85.6e9      0      0
+      0       0       0      0 85.6e9      0
+      0       0       0      0      0 85.6e9
+
+$U_1 :
+0.997 0.0 0.0
+0.0 0.997 0.0
+0.0 0.0 0.997
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@EquilibriumPartitionDiffusion
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$RefElement    Reference Element             : Ni
+
+$Cs_0_1  Intersection Concentration          : 0.23
+$Ts_0_1  Intersection Temperature 01         : 1823.0
+
+$ML_0_1  Solvus Slope gamma-gamma'           : 10300
+$ML_1_0  Solvus Slope gamma'-gamma           : 0
+
+$DC_0  Diffusion Coefficient of A1           : 1.83e-17
+$DC_1  Diffusion Coefficient of L12          : 1.83e-17
+
+$AE_0  Diffusion activation energy of gamma  : 0.0
+$AE_1  Diffusion activation energy of gamma' : 0.0
+
+$EF_0  Entropy of Fusion                     : 0.0
+$EF_1  Entropy of Fusion                     : -0.4e5
+
+$Flag_0 Stoichiometry flag                   : No
+$Flag_1 Stoichiometry flag                   : Yes
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Composition
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Comp_0   Name of the component                : Al
+
+$Vm_0_AL  Molar Volume                         : 7.0e-6
+$Vm_1_AL  Molar Volume                         : 7.0e-6
+
+$C0_0_AL  Initial Concentration                : 0.21
+$C0_1_AL  Initial Concentration                : 0.23
+
+$C0_0_NI  Initial Concentration                : 0.80
+$C0_1_NI  Initial Concentration                : 0.77
+
+$CMIN_0_AL  Lower Phase Concentration Limit    : 0.10
+$CMAX_0_AL  Upper Phase Concentration Limit    : 0.30
+
+$CMIN_0_NI  Lower Phase Concentration Limit    : 0.90
+$CMAX_0_NI  Upper Phase Concentration Limit    : 0.70
+
+$CMIN_1_AL  Lower Phase Concentration Limit    : 0.23
+$CMAX_1_AL  Upper Phase Concentration Limit    : 0.23
+
+$CMIN_1_NI  Lower Phase Concentration Limit    : 0.77
+$CMAX_1_NI  Upper Phase Concentration Limit    : 0.77
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InterfaceProperties
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$EnergyModel_0_0           Interface energy model         : FACETED
+$NfacetFamilies_0_0        No of facets                   : 1
+$Facet_0_0_0               Family of Facet                : 1 0 0
+$SigmaF_0_0_0              Interface energy               : 0.0
+$EpsilonEF_0_0_0           Interface anisotropy           : 0.0
+
+$EnergyModel_0_1           Interface energy model         : FACETED
+$NfacetFamilies_0_1        No of type of facets           : 1
+$Facet_0_1_0               Family of Facets               : 1 0 0
+$SigmaF_0_1_0              Interface energy               : 0.05
+$EpsilonEF_0_1_0           Interface anisotropy           : 0.45
+
+$EnergyModel_1_1           Interface energy model         : FACETED
+$NfacetFamilies_1_1        No of type of facets           : 1
+$Facet_1_1_0               Family of Facets               : 1 0 0
+$SigmaF_1_1_0              Interface energy               : 0.15
+$EpsilonEF_1_1_0           Interface anisotropy           : 0.55
+
+$Mu_0_1                    Interface mobility             : 2.65e-17
+$Q_0_1                     Activation energy              : 0.0
+
+$Mu_0_0                    Interface mobility             : 2.65e-17
+$Q_0_0                     Activation energy              : 0.0
+
+$Mu_1_1                    Interface mobility             : 2.65e-17
+$Q_1_1                     Activation energy              : 0.0
+
+$TripleJunctionFactor                                     : 1.0
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Orientations
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$rotationflag     Consider elastic rotations   :   No
+$globalconvention   Glob rotation convention   :   ZXZ
+
+$globalQ1           Global Euler Angle 1       :   0.0
+$globalQ2           Global Euler Angle 2       :   0.0
+$globalQ3           Global Euler Angle 3       :   0.0
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@CrystalPlasticity
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+NN, Cubic, FCC, BCC, HCP, PartialFCC, HCPBasal, HCPPrismatic,
+HCPPyramidal, HCPPyramidal_1st, HCPPyramidal_2nd,
+HCPTT1, HCPTT2, HCPCP1, HCPCT2
+
+$CPModel     Phenomenological / Physical  : Physical
+
+$CPModes_0      Slip / Twin [Mode]        : Slip
+$CPModes_1      Slip / Twin [Mode]        : Slip
+
+$SlipModes_0    Slip Systems              : FCC
+$SlipModes_1    Slip Systems              : PartialFCC
+
+$Hardening_0                              : Yes
+$Hardening_1                              : Yes
+
+$n_0                                      : 5.0
+$n_1                                      : 5.0
+
+$Sliprate_0                               : 5e-13
+$Sliprate_1                               : 5e-15
+
+$HardExponent_0                           : 0.8
+$HardExponent_1                           : 0.8
+
+$Burgers_0                                : 0.3e-9
+$Burgers_1                                : 0.3e-9
+
+$MaxAllowedShearIncrement                 : 0.02
+
+[Mode][Phase]
+$CRSS_0_0                                 : 30e6
+$CRSS_1_0                                 : 10e8
+
+$sCRSS_0_0                                : 3e8
+$sCRSS_1_0                                : 1e12
+
+$IniHard_0_0     Initial Hardening_0      : 2e10
+$IniHard_1_0     Initial Hardening_1      : 10e10
+
+$Latent_0_0      Latent Hardening_0       : 0.3
+$Latent_1_0      Latent Hardening_1       : 0.3
+
+----------------------------Physical---------------------------------
+
+$GNDswitch_0                              : Yes
+$GNDswitch_1                              : Yes
+
+$TaylorFactor_0                           : 0.3
+$TaylorFactor_1                           : 0.3
+
+$C1_0                                     : 1e10
+$C1_1                                     : 1e10
+
+$C2_0                                     : 2000
+$C2_1                                     : 2000
+
+$C4_0                                     : 0.0
+$C4_1                                     : 0.0
+
+$ShearModulus_0                           : 77.6e9
+$ShearModulus_1                           : 85.6e9
+
+$PhaseDD_0                                : 1e11
+$PhaseDD_1                                : 1e11
+
+$SmoothSwitch                             : Yes
+$MaxSmoothIterations                      : 4
+$MinValueToSmooth                         : 5e-4
+
+-------------------------Merging Precipitate--------------------------
+
+$MergingAllowed_1_1     Merging allowed (Yes/ No)               : Yes
+$CriticalValue_1_1      Critical Value of DD at interface       : 1e13
+$OverlapFactor_1_1      Overlapping multiply factor             : 1.0
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@DamageModelCreep
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$MaxDamage                                : 0.99
+
+$Damaging0                                : No
+$Damaging1                                : No
+
+$n0                                       : 2
+$n1                                       : 2
+
+$A0                                       : 1e-20
+$A1                                       : 5e-21
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Temperature
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$T0     Initial System Temperature          : 1223.0

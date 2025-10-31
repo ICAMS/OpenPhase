@@ -1,0 +1,258 @@
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+
+@RunTimeControl
+
+$SimTtl   Simulation title                        : Eutectoid transformation in Fe-C (pearlite formation)
+$nSteps   Number of time Steps                    : 1000000
+$FTime    Output to disk every (tSteps)           : 10000
+$STime    Output to screen every (tSteps)         : 10000
+$LUnits   Units of length                         : m
+$TUnits   Units of time                           : s
+$MUnits   Units of mass                           : kg
+$EUnits   Energy units                            : J
+$nOMP     Number of OpenMP threads                : 4
+$dt       Initial time Step                       : 1.0e-8
+$Restrt   Restart switch (Yes/No)                 : No
+$tStart   Restart at time step                    : 0
+$tRstrt   Restart output every (tSteps)           : 10000
+
+@GridParameters
+
+$Nx       System size in X direction              : 81
+$Ny       System size in Y direction              : 0
+$Nz       System size in Z direction              : 201
+$IWidth   Interface width (in grid points)        : 5
+$dx       Grid spacing                            : 3e-9
+
+@Settings
+
+$Comp_0   Chemical Component 0 :   C
+$Comp_1   Chemical Component 1 :   Fe
+
+$Phase_0  Name of Phase 0     :   Austenite
+$Phase_1  Name of Phase 1     :   Ferrite
+$Phase_2  Name of Phase 2     :   Cementite
+
+@DrivingForce
+
+$Average        Driving force averaging     : Yes
+$CutOff_0_1     Driving force cutoff        : 0.95
+$CutOff_0_2     Driving force cutoff        : 0.95
+$CutOff_1_2     Driving force cutoff        : 0.95
+
+@BoundaryConditions
+
+$BC0X   X axis beginning boundary condition  : Periodic
+$BCNX   X axis far end boundary condition    : Periodic
+
+$BC0Y   Y axis beginning boundary condition  : Periodic
+$BCNY   Y axis far end boundary condition    : Periodic
+
+$BC0Z   Z axis beginning boundary condition  : NoFlux
+$BCNZ   Z axis far end boundary condition    : NoFlux
+
+@EquilibriumPartitionDiffusion
+
+
+$RefElement   Reference Element              : Fe
+
+$Cs_0_1  Intersection Concentration          : 0.0
+$Cs_0_2  Intersection Concentration          : 0.25
+$Cs_1_2  Intersection Concentration          : 0.25
+
+$Ts_0_1  Intersection Temperature 01         : 1185
+$Ts_0_2  Intersection Temperature 02         : 2615
+$Ts_1_2  Intersection Temperature 12         : 38350
+
+$ML_0_1  Solvus Slope                        : -5347
+$ML_0_2  Solvus Slope                        : 7500
+$ML_1_2  Solvus Slope                        : 150000
+
+$ML_1_0  Solvus Slope                        : -185000
+$ML_2_0  Solvus Slope                        : 0
+$ML_2_1  Solvus Slope                        : 0
+
+$DC_0   Diffusion Coefficient of Austenite  : 1.5e-5
+$DC_1   Diffusion Coefficient of Ferrite    : 2.2e-4
+$DC_2   Diffusion Coefficient of Cementite  : 1.5e-5
+
+$AE_0   Diffusion activation energy of Austenite: 142100
+$AE_1   Diffusion activation energy of Ferrite  : 122500
+$AE_2   Diffusion activation energy of Cementite: 142100
+
+$EF_0   Entropy of Fusion of Austenite      : 0.0e5
+$EF_1   Entropy of Fusion of Ferrite        : -3.5e5
+$EF_2   Entropy of Fusion of Cementite      : -11.1e5
+
+$Flag_0 Stoichiometry flag of Austenite     : No
+$Flag_1 Stoichiometry flag of Ferrite       : No
+$Flag_2 Stoichiometry flag of Cementite     : Yes
+
+$ConsiderChemicalPotential                  : Yes
+
+@Composition
+
+$C0_0_C  Initial Concentration              : 0.0346
+$C0_1_C  Initial Concentration              : 0.001
+$C0_2_C  Initial Concentration              : 0.25
+
+$CMIN_0_C  Lower Phase Concentration Limit  : 0.0
+$CMAX_0_C  Upper Phase Concentration Limit  : 1.0
+
+$CMIN_1_C  Lower Phase Concentration Limit  : 0.0
+$CMAX_1_C  Upper Phase Concentration Limit  : 1.0
+
+$CMIN_2_C  Lower Phase Concentration Limit  : 0.25
+$CMAX_2_C  Upper Phase Concentration Limit  : 0.25
+
+$C0_0_FE  Initial Concentration              : 0.9754
+$C0_1_FE  Initial Concentration              : 0.999
+$C0_2_FE  Initial Concentration              : 0.75
+
+$CMIN_0_FE  Lower Phase Concentration Limit  : 0.0
+$CMAX_0_FE  Upper Phase Concentration Limit  : 1.0
+
+$CMIN_1_FE  Lower Phase Concentration Limit  : 0.0
+$CMAX_1_FE  Upper Phase Concentration Limit  : 1.0
+
+$CMIN_2_FE  Lower Phase Concentration Limit  : 0.75
+$CMAX_2_FE  Upper Phase Concentration Limit  : 0.75
+
+@InterfaceProperties
+
+$EnergyModel_0_1 Interface energy model : Iso
+$Sigma_0_1  Interface energy       : 0.6
+
+$EnergyModel_0_2 Interface energy model : Iso
+$Sigma_0_2  Interface energy       : 0.6
+
+$EnergyModel_1_2 Interface energy model : Iso
+$Sigma_1_2  Interface energy       : 0.6
+
+$EnergyModel_0_0 Interface energy model : Iso
+$Sigma_0_0  Interface energy       : 0.6
+
+$EnergyModel_1_1 Interface energy model : Iso
+$Sigma_1_1  Interface energy       : 0.6
+
+$EnergyModel_2_2 Interface energy model : Iso
+$Sigma_2_2  Interface energy       : 0.6
+
+
+$MobilityModel_0_1 Interface mobility model : Iso
+$Mu_0_1      Interface mobility      : 4.11e-5
+$Q_0_1      Activation energy       : 140000.0
+
+$MobilityModel_0_2 Interface mobility model : Iso
+$Mu_0_2      Interface mobility      : 4.11e-5
+$Q_0_2      Activation energy       : 140000.0
+
+$MobilityModel_1_2 Interface mobility model : Iso
+$Mu_1_2      Interface mobility      : 4.11e-8
+$Q_1_2      Activation energy       : 140000.0
+  
+$MobilityModel_0_0 Interface mobility model : Iso
+$Mu_0_0      Interface mobility      : 4.11e-5
+$Q_0_0      Activation energy       : 140000.0
+
+$MobilityModel_1_1 Interface mobility model : Iso
+$Mu_1_1      Interface mobility      : 4.11e-5
+$Q_1_1      Activation energy       : 140000.0
+
+$MobilityModel_2_2 Interface mobility model : Iso
+$Mu_2_2      Interface mobility      : 0.0
+$Q_2_2      Activation energy       : 0.0
+
+
+@ElasticProperties
+
+Mechanical boundary conditions:
+Applied Strain
+Applied Stress
+Free Boundaries
+
+$BCX    Boundary condition in X direction:  Free Boundaries
+$BCY    Boundary condition in Y direction:  Free Boundaries
+$BCZ    Boundary condition in Z direction:  Free Boundaries
+
+$BCValueX   Mixed Value X   : 0
+$BCValueY   Mixed Value Y   : 0
+$BCValueZ   Mixed Value Z   : 0
+
+$Comp_0     Name of the component       : C
+$Comp_1     Name of the component       : Fe
+
+$CREF_C_0   Reference concentration     : 0.0346
+$CREF_C_1   Reference concentration     : 0.001
+$CREF_C_2   Reference concentration     : 0.25
+
+$EModel Elasticity model : Steinbach
+
+$C11_0 : 245e9
+$C12_0 : 150e9
+$C13_0 : 150e9
+$C22_0 : 245e9
+$C23_0 : 150e9
+$C33_0 : 245e9
+$C44_0 : 120e9
+$C55_0 : 120e9
+$C66_0 : 120e9
+
+$U_0 :
+1.0 0.0 0.0 
+0.0 1.0 0.0 
+0.0 0.0 1.0
+
+$C11_1 : 225e9
+$C12_1 : 130e9
+$C13_1 : 130e9
+$C22_1 : 225e9
+$C23_1 : 130e9
+$C33_1 : 225e9
+$C44_1 : 105e9
+$C55_1 : 105e9
+$C66_1 : 105e9
+
+$U_1 :
+0.9987 0.0 0.0 
+0.0 1.0 0.0 
+0.0 0.0 1.0
+
+$C11_2 : 395e9
+$C12_2 : 158e9
+$C13_2 : 169e9
+$C22_2 : 347e9
+$C23_2 : 163e9
+$C33_2 : 325e9
+$C44_2 : 18e9
+$C55_2 : 134e9
+$C66_2 : 135e9
+
+$U_2 :
+1.019 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+$ChemoMechanicalCoupling  : Yes
+
+$Lambda_0_C :
+0.26 0 0
+0 0 0
+0 0 0
+
+$ThermoMechanicalCoupling  : No
+
+@Temperature
+
+$T0     Initial System Temperature          : 970.0
+
+$R0X    X coordinate of the reference point : 0
+$R0Y    Y coordinate of the reference point : 0
+$R0Z    Z coordinate of the reference point : 0
+
+$DT_DRX X component of the temp. gradient   : 0
+$DT_DRY Y component of the temp. gradient   : 0
+$DT_DRZ Z component of the temp. gradient   : 0
+
+$DT_Dt  Cooling(-) or heating(+) rate       : 0

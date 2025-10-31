@@ -1,0 +1,65 @@
+\section{Settings}
+\label{sec:module_settings}
+% Define box and box title style
+\tikzstyle{mybox} = [draw=black, fill=RUBgrau!20, very thick, rectangle, rounded corners, inner sep=10pt, inner ysep=20pt]
+\tikzstyle{fancytitle} =[fill=RUBblau!100, text=white, rectangle, rounded corners,draw=black]
+
+\begin{tikzpicture}
+\node[mybox] (box)
+{
+\begin{minipage}{1\textwidth}
+\begin{description}
+    \item[What it does] Reads and stores the most general calculation informations, mostly given in the input file. 
+    \item[Header File] Settings.h
+    \item[Requires] Nothing
+    \item[Input file] ProjectInput.opi\footnotemark
+    \item[Examples] /examples/HeatEquationSolver, ...
+\end{description}
+\end{minipage}
+};
+\node[fancytitle, right=12pt] at (box.north west) {Module in brief...};
+\end{tikzpicture}
+\footnotetext{All following input file names in the 'Module in brief' boxes can be altered by the user.}
+\paragraph{Input parameters and input file} The settings module reads in the calculation parameters from an input file, typically ProjectInput/ProjectInput.opi. The following list provides an explanation of the required input parameters. Mandatory entries are underlined.
+\begin{description}
+ \item[\underline{\$Nx}, \underline{\$Ny}, \underline{\$Nz}] Sets the number of grid points in the x, y and z direction, respectively. The minimum dimension size is one, the maximum is typically limited by the amount of memory. Can be accessed via \cvar{Settings.Nx}.
+ \item[\$nSteps] Number of time steps. Accessible via \cvar{Settings.nSteps}. The use of this parameter can be convenient in a typical simulation setup such as 
+\begin{lstlisting}[frame=single]
+for(int tStep = 0; tStep < Settings.nSteps; tStep++)
+{
+	// increment operations
+}
+\end{lstlisting}
+ \item[\$FTime, \$FDisk] Sets parameters useful for the amount of data output to disk and screen. They can be accessed via the variables \cvar{Settings.tFileWrite} and \cvar{Settings.tScreenWrite}. Usefully, the 
+\begin{lstlisting}[frame=single]
+if (!(tStep%Settings.tFileWrite))
+{
+    PhaseField.WriteVTK(tStep);
+}
+\end{lstlisting}
+
+\item[\underline{\$dx}] Sets the distance between two calculation points of the regular grid. Note, that this value is the same for all spacial directions. Can be accessed via \cvar{Settings.dx}.
+\item[\underline{\$IWidth}] Definition of the interface with in grid points which is stored as \cvar{Settings.eta}. Note that the small strain elasto-plastic framework of OpenPhase also works in the sharp interface limit, i.e. $\cvar{Settings.eta} = 0$.
+\item[\underline{\$dt}] Sets the initial time step. Can be accessed via \cvar{Settings.dt}. Note that some modules might use an internal time stepping scheme.
+\item[\underline{\$nOMP}] Sets the maximum number of used threads for parallelization with OpenMPI \citeopref{open_mpi}. The domain is then splitted along the x-axis, which should be considered when non-cubic computation grids are created. In addition, some initializations are specifically optimized for this domain decomposition.
+\item[\underline{\$nPhses}] Sets the number of thermodynamic phases (but not the number of grains/phase-fields) and can be accessed via \cvar{Settings.nPhases}. Typically, material parameters have to be given for \cvar{Settings.nPhases} in further input files such as ElasticProperties.opi.
+\end{description}
+
+
+% -------------------------------------------------------------------------
+
+\CallGraphSettings
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[framed, node distance = 2cm, auto]
+    \node [block] (constructor) {\cmethod{Constructor}};
+    \node [block, below of=constructor] (init) {\cmethod{Initialize(...)}};
+        \node [block, below of=init] (readinput) {\cmethod{ReadInput(Settings.opi)}};
+    
+    % Draw edges
+    \path [line] (constructor) -- (init);
+    \path [line] (init) -- (readinput);
+\end{tikzpicture}
+\caption{Call graph for module \nameref{sec:module_settings}}
+\end{figure}

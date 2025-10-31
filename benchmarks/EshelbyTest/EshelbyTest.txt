@@ -1,0 +1,19 @@
+Eshelby Test description
+
+In this simulation the following elasticity data are used:
+Eigenstrain: 	1%
+Poisson ratio: 	0.3
+Elasticity modulus: 	208 GPa
+
+which correspond to the set of elastic constants:
+
+C11 = 280 GPa,
+C12 = 120 GPa,
+C44 =  80 GPa.
+
+The system size is 129x129x129 grid points and the interface width is 5 grid points. 
+Boundary conditions are periodic which are imposed by the spectral elasticity solver. 
+
+The output data in vtk format are written in the VTK directory and can be directly 
+visualized using Paraview software (www.paraview.org). 
+

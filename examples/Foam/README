@@ -1,0 +1,7 @@
+This is a README file for the Foam example.
+
+In order to run the simulation you should run ./Foam 
+ProjectInput.opi file contains the necessary input file for the simulation. 
+Results will be placed into the /VTK directory and can be visualized 
+using ParaView (www.paraview.org).
+

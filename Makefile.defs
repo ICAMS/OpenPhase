@@ -1,0 +1,166 @@
+#   This file is part of the OpenPhase (R) software library.
+#  
+#  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+#                Universitaetsstrasse 150, D-44801 Bochum, Germany
+#            AND 2018-2025 OpenPhase Solutions GmbH,
+#                Universitaetsstrasse 136, D-44799 Bochum, Germany.
+#  
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#     
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# Makefile definitions for OpenPhase project.
+
+MAKE := make SETTINGS="$(SETTINGS)"
+
+OBJDIR = /obj
+OBJCLOSEDDIR = /obj_closed
+LIBDIR = /lib
+LIBPHASE = OpenPhase
+LIBPHASE_CLOSED = OpenPhaseClosed
+THERMOCALCLIB = OpenPhaseThermoCalc
+PANDATLIB = OpenPhasePanEngine
+EXTENSIONSLIB = OpenPhaseExtensions
+
+INCLUDES = -I$(DEPTH)/include
+#INCLUDES += -I$(DEPTH)/include_closed
+INCLUDES += -I$(DEPTH)/external
+EXTERNAL_INCLUDES  = -I$(DEPTH)/external
+EXTERNAL_INCLUDES += -I$(DEPTH)/external/WinBase64
+EXTERNAL_LIBS  = $(DEPTH)/external/miniz.o
+EXTERNAL_LIBS += $(DEPTH)/external/WinBase64/libbase64.o
+
+ifneq ($(CXX),)
+    CXX = g++
+endif
+
+CXXFLAGS = -fopenmp -Wall -Wextra -Wno-unused-parameter -std=c++17 -fPIC
+STDLIBS = -lfftw3_omp -lfftw3 -lgomp
+
+COMPVER = $(shell $(CXX) -dumpversion)
+ifneq ($(findstring debug, $(SETTINGS)),)
+    CXXFLAGS += -Og -g -DDEBUG
+else
+    CXXFLAGS += -O3 -DNDEBUG
+endif
+ifneq ($(findstring silent, $(SETTINGS)),)
+    CXXFLAGS += -DSILENT
+endif
+ifneq ($(findstring no-openmp, $(SETTINGS)),)
+    CXXFLAGS := $(filter-out -fopenmp, $(CXXFLAGS))
+    CXXFLAGS += -Wno-unknown-pragmas
+    STDLIBS := $(filter-out -lfftw3_omp, $(STDLIBS))
+    STDLIBS := $(filter-out -lgomp, $(STDLIBS))
+endif
+ifneq ($(findstring H5, $(SETTINGS)),)
+    CXXFLAGS += -DH5OP
+    RUNPATH  += -Wl,-rpath='$$ORIGIN/$(DEPTH)/hdf5/hdf5/lib'
+endif
+ifneq ($(findstring mpi-parallel, $(SETTINGS)),)
+    OBJDIR    = /objmpi
+    OBJCLOSEDDIR = /objmpi_closed
+    LIBPHASE := $(LIBPHASE)MPI
+    LIBPHASE_CLOSED := $(LIBPHASE_CLOSED)MPI
+	LIBOPMPI  = -lmpi_wrapper
+    STDLIBS  := -L$(DEPTH)/lib $(LIBOPMPI) -lfftw3_mpi $(STDLIBS)
+    CXXFLAGS += -DMPI_PARALLEL
+    INCLUDES := -I$(DEPTH)/mpi_wrapper $(INCLUDES)
+endif
+ifneq ($(findstring gpu, $(SETTINGS)),)
+    CXX       = clang++
+    CXXFLAGS += -DGPU
+    OBJDIR    = /objgpu
+    LIBPHASE := $(LIBPHASE)GPU
+endif
+ifneq ($(findstring static, $(SETTINGS)),)
+    LIBNAME = lib$(LIBPHASE).a
+    LIBNAME_CLOSED = lib$(LIBPHASE_CLOSED).a
+    LIBSOP = -L$(DEPTH)/lib$(LIBPHASE).a
+    ifneq ($(findstring academic, $(SETTINGS)),)
+    	CXXFLAGS += -DACADEMIC
+    else
+#        LIBSOP += -L$(DEPTH)/lib$(LIBPHASE_CLOSED).a
+    endif
+else
+    LIBNAME = lib$(LIBPHASE).so
+    LIBNAME_CLOSED = lib$(LIBPHASE_CLOSED).so
+    LIBSOP = -l$(LIBPHASE)
+    ifneq ($(findstring academic, $(SETTINGS)),)
+    	CXXFLAGS += -DACADEMIC
+    else
+#        LIBSOP += -l$(LIBPHASE_CLOSED)
+    endif
+    RUNPATH += -Wl,-rpath='$$ORIGIN/$(DEPTH)/lib' -Wl,-z,origin
+endif
+
+ifneq ($(findstring DH5OP, $(CXXFLAGS)),)
+    INCLUDES += -I$(DEPTH)/HighFive/include/highfive -I$(DEPTH)/hdf5/hdf5/include
+    LDFLAGS  += -L$(DEPTH)/hdf5/hdf5/lib
+    LIBSOP   += $(DEPTH)/hdf5/hdf5/lib/libhdf5.so
+    STDLIBS  += -L$(DEPTH)/hdf5/hdf5/lib
+    STDLIBS  += $(DEPTH)/hdf5/hdf5/lib/libhdf5.so -Wl,-rpath='$$ORIGIN' -Wl,-z,origin
+    STDLIBS2 += $(DEPTH)/hdf5/hdf5/lib/libhdf5.so -Wl,-rpath='$$ORIGIN' -Wl,-z,origin
+endif
+
+ifneq ($(findstring ops, $(SETTINGS)),)
+    INCLUDES += -I$(DEPTH)/../OPCoreExtensions/include
+endif
+
+ifneq ($(findstring nosentinel, $(SETTINGS)),)
+    STDLIBS := $(filter-out $(DEPTH)/external/Sentinel/C/x86_64/libhasp_linux_x86_64_96982.a, $(STDLIBS))
+	CXXFLAGS += -DNOSENTINEL
+endif
+
+AROPTIONS = -rvs
+SOOPTIONS = -shared -fPIC -g
+
+# Timer
+COMPILE_START_TIME := $(shell date +\(%j\*24\*60\*60+%H\*60\*60+%M\*60+%S\))
+COMPILE_CURRENT_TIME = `date  +\(%j\*24\*60\*60+%H\*60\*60+%M\*60+%S\)`
+
+define print_header
+@echo "---------------------------------"
+@echo "Compiling OpenPhase..."
+@echo "Start: " $(shell date)
+@echo "Compiler: " $(CXX) $(COMPVER)
+@echo "Settings: " $(SETTINGS)
+@echo "CXXFLAGS: " $(CXXFLAGS)
+@echo "STDLIBS: " $(STDLIBS)
+@echo "Mode: $(1)"
+@echo "---------------------------------"
+endef
+
+define print_ending
+@echo "---------------------------------"
+@echo "End: " $(shell date)
+@CT=$(1) && \
+printf "Compilation total time: %.2d:%.2d (min:sec)" \
+`echo "($$CT - $(2))/60" | bc` \
+`echo "($$CT - $(2))%60" | bc`
+@echo ""
+@echo "Compilation done."
+@echo "---------------------------------"
+endef
+
+BUILD_INFO_HEADER = include/BuildInfo.h
+GIT_COMMIT_SHA = $(shell git rev-parse HEAD)
+BUILD_TIME = $(shell date --iso-8601=seconds)
+define build_info_header
+@echo "Creating build info header"
+@echo "#ifndef BUILD_INFO_H" > ${BUILD_INFO_HEADER}
+@echo "#define BUILD_INFO_H" >> ${BUILD_INFO_HEADER}
+@echo "#define GIT_COMMIT_SHA \"${GIT_COMMIT_SHA}\"" >> ${BUILD_INFO_HEADER}
+@echo "#define BUILD_TIME \"${BUILD_TIME}\"" >> ${BUILD_INFO_HEADER}
+@echo "#endif" >> ${BUILD_INFO_HEADER}
+@echo "---------------------------------"
+endef

@@ -1,0 +1,156 @@
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@RunTimeControl
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$SimTtl     Simulation Title                       : SolidPhaseSintering
+$nSteps     Number of Time Steps                   : 100000
+$tRstrt     Restart output every (tSteps)          : 1000
+$FTime      Output to disk every (tSteps)          : 100
+$STime      Output to screen every (tSteps)        : 10
+$dt         Initial Time Step                      : 2.40e-2
+
+$Restrt                                            : No
+
+$nOMP       Number of OpenMP Threads               : 10
+
+$LogScreen  Logarithmic output to screen           : No
+$LogVTK     Logarithmic output to VTK              : No
+$LogScreenF Outputs to screen per decade = 10 x    : 10
+$LogVTKF    Outputs to VTK    per decade = 10 x    : 1
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GridParameters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Nx         System Size in X Direction            : 128
+$Ny         System Size in Y Direction            : 128
+$Nz         System Size in Z Direction            : 0
+$dx         Grid Spacing [m]                      : 1.0e-7
+$Bcells     Boundary Cells                        : 2
+$IWidth     Interface Width (in grid points)      : 5
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Settings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Comp_0     Chemical Component 0                  : Fe
+$Phase_0    Name of Phase 0                       : Vapor
+$Phase_1    Name of Phase 1                       : Gamma
+$State_0    Aggregate state of phase Vapor        : Gas
+$State_1    Aggregate state of phase Gamma        : Solid
+$MassDensity_0  Equilibrium density of Vapor [kg/m^3] : 2.00e-14
+$MassDensity_1  Equilibrium density of Gamma [kg/m^3] : 7874
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@ProjectInput
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$RandomSeed Random number seed                      : 1234567890
+
+$Rho        Initial Relative Density                : 0.64
+$AvR        Mean particle radius                    : 0.50e-6
+$StdR       Standard deviation of particle radius   : 0.25e-6
+
+$SX         Initial sintered body size X [m]        : 11e-6
+$SY         Initial sintered body size Y [m]        : 11e-6
+$SZ         Initial sintered body size Z [m]        : 11e-6
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@AnalysisSintering
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$BBSX       Bounding box size size X [m]           : 10e-6
+$BBSY       Bounding box size size Y [m]           : 10e-6
+$BBSZ       Bounding box size size Z [m]           : 10e-6
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@BoundaryConditions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Boundary Condition Options: Periodic, Fixed, NoFlux
+% NoFlux corresponds to mirroring boundary conditions
+
+$BC0X    X axis beginning boundary condition    : Periodic
+$BCNX    X axis far end boundary condition      : Periodic
+$BC0Y    Y axis beginning boundary condition    : Periodic
+$BCNY    Y axis far end boundary condition      : Periodic
+$BC0Z    Z axis beginning boundary condition    : Periodic
+$BCNZ    Z axis far end boundary condition      : Periodic
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InterfaceProperties
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Mu_0_0     Interface mobility Vapor_Vapor [m^2 s/Kg]    : 0.000
+$Mu_0_1     Interface mobility Vapor_GAMMA [m^2 s/Kg]    : 1.00e-14
+$Mu_1_1     Interface mobility GAMMA_GAMMA [m^2 s/Kg]    : 1.00e-14
+
+$Sigma_0_0  Interface energy Vapor_Vapor [kg/s^2]        : 0.000
+$Sigma_0_1  Interface energy Vapor_GAMMA [kg/s^2]        : 0.500
+$Sigma_1_1  Interface energy GAMMA_GAMMA [kg/s^2]        : 0.250
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GrandPotentialDensity
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Gravity                                            : No
+
+$OMEGA_0     Vapor phase model                      : Parabolic
+$K0_0_FE     Bulk Modulus of Fe Vapor [Pa]          : 1.0e-1
+$C0_0_FE     Equilibrium moles per volume [mol/m^3] : 1.0
+
+$OMEGA_1     Solid phase model                      : Parabolic
+$K0_1_FE     Bulk Modulus of Solid Fe (160e9)[Pa]   : 1.60e9
+$C0_1_FE     Equilibrium moles per volume [mol/m^3] : 140984
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GrandPotentialSolver
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$MASS_FE        Molar Mass of Fe [kg/mol]                         : 0.055845
+
+$CI_0_FE        Initial moles per volume of Fe in vapor [mol/m^3] : 1
+$CI_1_FE        Initial moles per volume of Fe in gamma [mol/m^3] : 140984
+
+$M0_0_FE        Chemical mobility of Fe in vapor [m^2/s]          : 1.00e-12
+$M0_1_FE        Chemical mobility of Fe in gamma [m^2/s]          : 1.00e-12
+
+$IM             Use Interface Mobility Coefficient                : No
+$dMdc           Phase Mobility Concentration Coupling             : No
+
+$Implicit       Use semi implicit Euler scheme                    : No
+$MAXI           Maximum of iterations                             : 1000
+$ACC            Relative Accuracy of chemical potential           : 1.0e-08
+
+$TOC            Conserve total amount of components               : Yes
+$TOCMAXI        Maximum of iterations                             : 10
+$TOCACC         Relative Accuracy                                 : 1.0e-10
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InteractionSolidSolid
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Model    Solid-Solid interaction model              : Wang
+$SWang    Solid-Solid interaction strength [Pa]      : 1e-15
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InteractionSolidFluid
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Inertia      Consider inertia of rigid bodies                 : No
+$Rotations    Consider rotations rigid bodies                  : Yes
+
+$TauTrans     Rigid body translation time parameter [s]        : 1
+$TauRot       Rigid body rotation time parameter [s]           : 1
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Temperature
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$T0    Sintering temperature [K]    : 1300

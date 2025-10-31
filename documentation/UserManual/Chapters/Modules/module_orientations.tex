@@ -1,0 +1,159 @@
+\section{Orientations}
+\label{sec:module_orientations}
+% Define box and box title style
+\tikzstyle{mybox} = [draw=black, fill=RUBgrau!20, very thick, rectangle, rounded corners, inner sep=10pt, inner ysep=20pt]
+\tikzstyle{fancytitle} =[fill=RUBblau!100, text=white, rectangle, rounded corners,draw=black]
+
+\begin{tikzpicture}
+\node[mybox] (box)
+{
+\begin{minipage}{1\textwidth}
+\begin{description}
+\item[What it does] Reads, outputs and stores local and global, absolute and incremental  rotation informations. Provides methods to calculate Euler angles. 
+\item[Requires] \nameref{sec:module_settings}
+\item[Header File] Orientations.h
+\item[Input file] Orientations.opi
+\item[Examples] /benchmarks/EshelbyTestWithPlasticity, ...
+\end{description}
+\end{minipage}
+};
+\node[fancytitle, right=12pt] at (box.north west) {Module in brief...};
+\end{tikzpicture}
+\paragraph{Purpose and structure} The Orientations module is intended to store local and global orientations, provide output routines and manages the calculation from rotation matrices to Euler angles or quaternions. This class is required
+\begin{itemize}
+\item if rotated grains should be considered in a calculation using elasticity. In this case, an orientations object has to be passed to functions \cmethod{ElasticProperties.SetGrainsProperties()}, \cmethod{ElasticityModule.SetEffectiveEigenstrains()} and  \cmethod{ElasticityModule.SetEffectiveElasticConstants()}.
+\item if plasticity should be used. 
+\end{itemize}
+This class is \textbf{not} required
+\begin{itemize}
+\item if Eigenstrain and stiffness tensors are given in a rotated representation in the input file.
+\item if no elasticity is used. Still, grain orientations can be set (see below) which allow anisotropic phase-field and diffusion calculation. FIXED CONVENTION USED!
+\end{itemize}
+
+The local orientation of a material point is stored as a 3x3 rotation matrix, that rotates lattice properties from the fixed origin x-y-z coordinate system into the local one\footnote{The rotation from of a point in a fixed coordinate system is called 'active'}. Three different contributions are considered
+\begin{equation*}
+\RB(\xB) = \RB^{glob}\RB^{grain}\RB^{elastic}(\xB)
+\end{equation*}
+Here, $\RB^{glob}$ a global rotation matrix that is applied to each material point with the same magnitude. It can be given in the input-file (see below) or changed throughout the calculation. Furthermore, $\RB^{grain}$ is the grain rotation with respect to the reference frame rotated by $\RB^{glob}$. In opposite to $\RB^{glob}$ and $\RB^{elastic}$, $\RB^{grain}$ is stored as a phase-field parameter and can be accessed via \cvar{PhaseField.FieldsStatistics[alpha].Orientation} (returns an object of type Angles) and changed via \cvar{PhaseField.FieldsStatistics[alpha].Orientation[GrainIndex].set(Q1, Q2, Q3, 'Con1', 'Con2', 'Con3')}. The latter three parameters (see description below). The calculation and integration of $\RB^{elastic}$, is described in \nameref{sec:module_spectralelasticsolver}.
+
+\begin{equation*}
+R_{\hat n}(\alpha) = \begin{pmatrix}
+n_1^2 \left(1-\cos\alpha\right) + \cos\alpha  & n_1 n_2 \left(1-\cos\alpha\right) - n_3 \sin\alpha &  n_1 n_3 \left(1-\cos\alpha\right) + n_2 \sin\alpha \\
+n_2 n_1 \left(1-\cos\alpha\right) + n_3 \sin\alpha  & n_2^2\left(1-\cos\alpha\right) + \cos\alpha &   n_2 n_3 \left(1-\cos\alpha\right) - n_1 \sin\alpha \\
+n_3 n_1 \left(1-\cos\alpha\right) - n_2 \sin\alpha &  n_3 n_2 \left(1-\cos\alpha\right) + n_1 \sin\alpha & n_3^2\left(1-\cos\alpha\right) + \cos\alpha
+\end{pmatrix}
+\end{equation*}
+ 
+\paragraph{Input parameters and input file} The orientations module reads in the calculation parameters from an input file, typically ProjectInput/Orientations.opi. The following list provides an explanation of the required input parameters. Mandatory entries are underlined. \textbf{Note: All input angles have to be given in radian.}
+\begin{description}
+ \item[\underline{\$rotationflag}] If option 'Yes' is chosen, the rotations stemming from the deformation field - calculated in \nameref{sec:module_spectralelasticsolver} - are integrated. Otherwise, the storage \cvar{Orientations.Rotations} will store \begin{equation*} \RB^{t+1} = \RB^{t} = \unitymatrix\end{equation*} throughout the calculation.
+ \item[\underline{\$globalconvention}] The conversion from Euler angles to rotation matrices requires the definition of the . The following purely intrinsic rotations are allowed: XYX, XYZ, XZX, XZY, YXY, YXZ, YZX, YZY, ZXY, ZXZ, ZYX, ZYZ. Note: Two succeeding rotations around the same axis can inherently not lead to all possible orientation states. In addition, the following purely rotations are allowed: xyx, xyz, xzx, xzy, yxy, yxz, yzx, yzy, zxy, zxz, zyx, zyz.
+ 
+  \item[\underline{\$globalQ1}, \underline{\$globalQ2}, \underline{\$globalQ3}] This set of angles will set the global rotation matrix $\RB^{glob}$. 
+\end{description}
+
+
+\begin{equation*}
+X_1 Z_2 X_3 = \begin{bmatrix}
+ c_2 & - c_3 s_2 & s_2 s_3 \\
+ c_1 s_2 & c_1 c_2 c_3 - s_1 s_3 &  - c_3 s_1 - c_1 c_2 s_3 \\
+ s_1 s_2 & c_1 s_3 + c_2 c_3 s_1 & c_1 c_3 - c_2 s_1 s_3 
+\end{bmatrix}
+\end{equation*}
+\begin{equation*}
+X_1 Z_2 Y_3 = \begin{bmatrix}
+ c_2 c_3 & - s_2 & c_2 s_3 \\
+ s_1 s_3 + c_1 c_3 s_2 & c_1 c_2 & c_1 s_2 s_3 - c_3 s_1 \\
+ c_3 s_1 s_2 - c_1 s_3 & c_2 s_1 & c_1 c_3 + s_1 s_2 s_3 
+\end{bmatrix}
+\end{equation*}
+\begin{equation*}
+X_1 Y_2 X_3 = \begin{bmatrix}
+ c_2 & s_2 s_3 & c_3 s_2 \\
+ s_1 s_2 & c_1 c_3 - c_2 s_1 s_3 &  - c_1 s_3 - c_2 c_3 s_1 \\
+ - c_1 s_2 & c_3 s_1 + c_1 c_2 s_3 & c_1 c_2 c_3 - s_1 s_3 
+\end{bmatrix}
+\end{equation*}
+\begin{equation*}
+X_1 Y_2 Z_3 = \begin{bmatrix}
+ c_2 c_3 & - c_2 s_3 & s_2 \\
+ c_1 s_3 + c_3 s_1 s_2 & c_1 c_3 - s_1 s_2 s_3 & - c_2 s_1 \\
+ s_1 s_3 - c_1 c_3 s_2 & c_3 s_1 + c_1 s_2 s_3 & c_1 c_2 
+\end{bmatrix}
+\end{equation*}
+\begin{equation*}
+Y_1 X_2 Y_3 = \begin{bmatrix}
+ c_1 c_3 - c_2 s_1 s_3 & s_1 s_2 & c_1 s_3 + c_2 c_3 s_1 \\
+ s_2 s_3 & c_2 & - c_3 s_2 \\
+  - c_3 s_1 - c_1 c_2 s_3 & c_1 s_2 & c_1 c_2 c_3 - s_1 s_3 
+\end{bmatrix}
+\end{equation*}
+\begin{equation*}
+Y_1 X_2 Z_3 = \begin{bmatrix}
+ c_1 c_3 + s_1 s_2 s_3 & c_3 s_1 s_2 - c_1 s_3 & c_2 s_1 \\
+ c_2 s_3 & c_2 c_3 & - s_2 \\
+ c_1 s_2 s_3 - c_3 s_1 & s_1 s_3 + c_1 c_3 s_2 & c_1 c_2 
+\end{bmatrix}
+\end{equation*}
+\begin{equation*}
+Y_1 Z_2 Y_3 = \begin{bmatrix}
+ c_1 c_2 c_3 - s_1 s_3 & - c_1 s_2 & c_3 s_1 + c_1 c_2 s_3 \\
+ c_3 s_2 & c_2 & s_2 s_3 \\
+  - c_1 s_3 - c_2 c_3 s_1 & s_1 s_2 & c_1 c_3 - c_2 s_1 s_3 
+\end{bmatrix}
+\end{equation*}
+\begin{equation*}
+Y_1 Z_2 X_3 = \begin{bmatrix}
+ c_1 c_2 & s_1 s_3 - c_1 c_3 s_2 & c_3 s_1 + c_1 s_2 s_3 \\
+ s_2 & c_2 c_3 & - c_2 s_3 \\
+ - c_2 s_1 & c_1 s_3 + c_3 s_1 s_2 & c_1 c_3 - s_1 s_2 s_3 
+\end{bmatrix}
+\end{equation*}
+\begin{equation*}
+Z_1 Y_2 Z_3 = \begin{bmatrix}
+ c_1 c_2 c_3 - s_1 s_3 &  - c_3 s_1 - c_1 c_2 s_3 & c_1 s_2 \\
+ c_1 s_3 + c_2 c_3 s_1 & c_1 c_3 - c_2 s_1 s_3 & s_1 s_2 \\
+ - c_3 s_2 & s_2 s_3 & c_2 
+\end{bmatrix}
+\end{equation*}
+\begin{equation*}
+Z_1 Y_2 X_3 = \begin{bmatrix}
+ c_1 c_2 & c_1 s_2 s_3 - c_3 s_1 & s_1 s_3 + c_1 c_3 s_2 \\
+ c_2 s_1 & c_1 c_3 + s_1 s_2 s_3 & c_3 s_1 s_2 - c_1 s_3 \\
+ - s_2 & c_2 s_3 & c_2 c_3 
+\end{bmatrix}
+\end{equation*}
+\begin{equation*}
+Z_1 X_2 Z_3 = \begin{bmatrix}
+ c_1 c_3 - c_2 s_1 s_3 &  - c_1 s_3 - c_2 c_3 s_1 & s_1 s_2 \\
+ c_3 s_1 + c_1 c_2 s_3 & c_1 c_2 c_3 - s_1 s_3 & - c_1 s_2 \\
+ s_2 s_3 & c_3 s_2 & c_2 
+\end{bmatrix}
+\end{equation*}
+\begin{equation*}
+Z_1 X_2 Y_3 = \begin{bmatrix}
+ c_1 c_3 - s_1 s_2 s_3 & - c_2 s_1 & c_1 s_3 + c_3 s_1 s_2 \\
+ c_3 s_1 + c_1 s_2 s_3 & c_1 c_2 & s_1 s_3 - c_1 c_3 s_2 \\
+ - c_2 s_3 & s_2 & c_2 c_3 
+\end{bmatrix}
+\end{equation*}
+
+% -------------------------------------------------------------------------
+
+\CallGraphSettings
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[framed, node distance = 2cm, auto]
+    \node [block] (constructor) {\cmethod{Constructor}};
+    \node [block, below of=constructor] (init) {\cmethod{Initialize(...)}};
+        \node [block, below of=init] (readinput) {\cmethod{ReadInput(Orientations.opi)}};
+    \node [block, below of=readinput] (setgrainsproperties) {\cmethod{SetGrainsProperties(PhaseField)}};
+    
+    % Draw edges
+    \path [line] (constructor) -- (init);
+    \path [line] (init) -- (readinput);
+    \path [line] (readinput) -- (setgrainsproperties);
+\end{tikzpicture}
+\caption{Call graph for module \nameref{sec:module_orientations}}
+\end{figure}

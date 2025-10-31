@@ -1,0 +1,36 @@
+\section{SpectralElasticSolver}
+\label{sec:module_spectralelasticsolver}
+
+% Define box and box title style
+\tikzstyle{mybox} = [draw=black, fill=RUBgrau!20, very thick, rectangle, rounded corners, inner sep=10pt, inner ysep=20pt]
+\tikzstyle{fancytitle} =[fill=RUBblau!100, text=white, rectangle, rounded corners,draw=black]
+
+\begin{tikzpicture}
+\node[mybox] (box)
+{
+\begin{minipage}{1\textwidth}
+\begin{description}
+\item[What it does] Calculates the mechanical equilibrium $\nabla \cdot \sigma = 0$.
+\item[Requires] \nameref{sec:module_settings}, \nameref{sec:module_phasefield}, \nameref{sec:module_boundaryconditions}, \nameref{sec:module_elasticproperties}
+\item[Input file] ElasticProperties.opi
+\item[Examples] /examples/EshelbyTest
+\end{description}
+\end{minipage}
+};
+\node[fancytitle, right=12pt] at (box.north west) {Module in brief...};
+\end{tikzpicture}
+\paragraph{Background} This module implements the scheme published by Hu and Chen \citeopref{Hu2001}.
+
+Starting from splitting the average strain
+\begin{equation}
+  \varepsilonB(\xB) = \bar{\varepsilonB} + \tilde{\varepsilonB}(\xB)
+\end{equation}
+with the classical engineering strain
+\begin{equation}
+  \varepsilonB(\xB) = \frac{1}{2}\left(\nabla \uB(\xB) + (\nabla \uB(\xB))^\mathrm{T}\right).
+\end{equation}
+Note, that this linearized strain measure with respect to the undeformed reference configuration. However for applications where the elastic strains are small ($\varepsilon < 0.1$) this assumption is valid.
+
+\begin{equation}
+  \CB^{0} \frac{\partial^2 \uB(\xB)}{\partial \xB^2} = (\CB^{0} \varepsilonB^0 - \tilde{\CB}(\xB) \bar{\varepsilonB}) \frac{\partial X}{\partial \xB} + \tilde{\CB}(\xB)\varepsilonB^0\frac{\partial^2 X}{\partial \xB^2} - \tilde{\CB}(\xB) \frac{\partial}{\partial \xB} \left(X\frac{\partial \uB^{n-1}(\xB)}{\partial \xB}\right)
+\end{equation}

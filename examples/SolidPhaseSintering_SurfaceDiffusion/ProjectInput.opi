@@ -1,0 +1,116 @@
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@RunTimeControl
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$SimTtl    Simulation Title                           : SolidPhaseSintering
+
+$nSteps    Number of Time Steps                       : 1000000
+$tRstrt    Restart output every (tSteps)              : 100000
+$FTime     Output Distance to Disk (in tSteps)        : 5000
+$STime     Output Distance to Screen (in tSteps)      : 100
+$dt        Initial Time Step                          : 1.0e-13
+
+$Restrt    Restart switch (Yes/No)                    : No
+$tStart    Restart at time step                       : 0
+
+$nOMP      Number of OpenMP Threads                   : 1
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GridParameters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Nx        System Size in X Direction                 : 96
+$Ny        System Size in Y Direction                 : 64
+$Nz        System Size in Z Direction                 : 0
+$dx        Grid Spacing                               : 1.0E-9
+$IWidth    Interface Width (in grid points)           : 5
+$Bcells                                               : 2
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Settings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Phase_0   Name of Phase 0                            : Fluid
+$Phase_1   Name of Phase 1                            : Solid
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@BoundaryConditions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$BC0X      X axis beginning boundary condition        : Periodic
+$BCNX      X axis far end boundary condition          : Periodic
+$BC0Y      Y axis beginning boundary condition        : Periodic
+$BCNY      Y axis far end boundary condition          : Periodic
+$BC0Z      Z axis beginning boundary condition        : Periodic
+$BCNZ      Z axis far end boundary condition          : Periodic
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@ElasticProperties
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$BCX       Mixed Mode X                               : Free Boundaries
+$BCY       Mixed Mode Y                               : Free Boundaries
+$BCZ       Mixed Mode Z                               : Free Boundaries
+
+$BCValueX  Mixed Value X                              : 0
+$BCValueY  Mixed Value Y                              : 0
+$BCValueZ  Mixed Value Z                              : 0
+
+$EModel     Elasticity model                          : Khachaturyan
+$SMode      Strain mode                               : Small
+
+$MAXIterations                                        : 1000
+
+$L_0       Lame's first parameter                     : 1e6
+$G_0       Shear modulus                              : 1e6
+
+$U_0 :
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+$L_1       Lame's first parameter                     : 1e11
+$G_1       Shear modulus                              : 1e11
+
+$U_1 :
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+$ChemoMechCoupling                                    : No
+$ThermoMechCoupling                                   : No
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InterfaceProperties
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Sigma_0_0  Interface energy     of UHV   with UHV     : 0.0
+$Sigma_0_1  Interface energy     of Alpha with UHV     : 1.0
+$Sigma_1_1  Interface energy     of Alpha with Alpha   : 1.0
+
+$Mu_0_0 : 0
+$Mu_0_1 : 0
+$Mu_1_1 : 0
+
+$AE_0_0 : 0
+$AE_0_1 : 0
+$AE_1_1 : 0
+
+$Eps_0_0    Interface anisotropy of UHV   with UHV     : 0.00000
+$Eps_0_1    Interface anisotropy of Alpha with UHV     : 0.00000
+$Eps_1_1    Interface anisotropy of Alpha with Alpha   : 0.00000
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InterfaceDiffusion
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$iBC        Number of Boundary Cells                   : 1
+$dSR        Double-obstacle smoothness range           : 0.04
+$dIDC_0_0   I-Mobility along the UHV/UHV     Interface : 1.0e-25
+$dIDC_0_1   I-Mobility along the Alpha/UHV   Interface : 1.0e-25
+$dIDC_1_1   I-Mobility along the Alpha/Alpha Interface : 1.0e-25

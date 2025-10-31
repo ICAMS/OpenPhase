@@ -1,0 +1,39 @@
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@LinearSystemSolver
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$bGauss          : No
+$bJacobi         : No
+$bGaussSeidel    : No
+$bGradientDecent : Yes
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GridParameters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$Nx       System Size in X Direction              : 100 
+$Ny       System Size in Y Direction              : 100
+$Nz       System Size in Z Direction              : 1
+$dx       Grid Spacing                            : 0.1
+$IWidth   Interface Width (in grid points)        : 3.5
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Settings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Phase_0  Name of Phase 0                         : X
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@BoundaryConditions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$BC0X     X axis beginning boundary condition  : Periodic
+$BCNX     X axis far end boundary condition    : Periodic
+
+$BC0Y     Y axis beginning boundary condition  : Periodic
+$BCNY     Y axis far end boundary condition    : Periodic
+
+$BC0Z     Z axis beginning boundary condition  : Periodic
+$BCNZ     Z axis far end boundary condition    : Periodic
+

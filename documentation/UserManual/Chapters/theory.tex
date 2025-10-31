@@ -1,0 +1,257 @@
+\section{Theoretical background} \label{tb}
+\subsection{Traveling wave solution for the double obstacle potential}
+
+The Free Energy functional using a double obstacle potential is defined as
+
+\begin{equation}
+  \label{total_freeEnergy}
+  F^{dual} =\int_\Omega dx f^{dual}
+\end{equation}
+
+\begin{equation}
+  \label{freeEnergyDensity}
+  f^{dual} = \frac 1 2 \epsilon |\nabla \phi |^2 + \frac 1 2 \gamma DO(\phi) + h(\phi) \Delta g
+\end{equation}
+
+\begin{equation}
+  \label{doubleObstacle}
+\nonumber  DO =\begin {cases} \phi(1-\phi) (\phi)\;\;\;\;& \mbox{for}\;\; 0\le \phi \le 1
+ \\\infty &\mbox{else}\end{cases}
+\end{equation}
+
+$h(\phi)$ is a coupling function between $0$ and $1$ monotonous in $\phi$ in the range between $0$ and $1$ chosen in order to ensure a traveling wave solution (see below).
+
+\begin{equation}
+  \label{hVonPhi}
+  h(\phi) = \frac1\pi[(4\phi-2)\sqrt{\phi(1-\phi)} + arcsin(2\phi-1)]
+\end{equation}
+\begin{equation}
+  \label{hVonPhiStrich}
+  \frac\partial  {\partial\phi} h(\phi) = \frac8\pi \sqrt{\phi(1-\phi)}
+\end{equation}
+
+The phase-field equation is derived
+
+\begin{eqnarray}
+  \label{relaxPhiDO}
+ \nonumber \tau \dot{\phi} &=& - \frac\delta{\delta\phi} F^{dual} \\
+ \nonumber &=& (\nabla \frac{\partial}{\partial \nabla \phi} - \frac\partial  {\partial\phi})f^{dual} \\
+  &=& \epsilon \nabla^2 \phi + \gamma(\phi-\frac12) + \frac8\pi\sqrt{\phi(1-\phi)} \Delta g
+\end{eqnarray}
+
+The solution of \ref{relaxPhiDO} in 1D along the x axis, where the phase $\phi = 1$ is arbitrarily positioned in the left, is
+
+\begin{eqnarray}
+  \label{travellingWaveDO}
+  \phi(x,t) =\begin{cases} 1 &\mbox{for}\;\;\;\;\;\;x<v_nt-\frac\eta2\\ \frac 1 2 - \frac 12 sin(\frac\pi\eta(x-v_n t))&\mbox{for}\;\;\;\;\;\;v_nt-\frac\eta2\le x<v_nt+\frac\eta2\\ 0 &\mbox{for}\;\;\;\;\;\;x \ge v_nt+\frac\eta2 \end{cases}
+\end{eqnarray}
+
+with the velocity $v_n$ of the wave traveling in positive x direction as defined below. The spacial derivatives normal to the front are:
+
+\begin{equation}
+  \label{twStrichDO}
+   \frac \partial {\partial x}\phi = - \frac \pi \eta \sqrt{\phi(1-\phi)}
+\end{equation}
+
+\begin{equation}
+  \label{tw2StrichDO}
+   \frac {\partial^2} {\partial x^2}\phi = \frac{\pi^2}{\eta^2}(\frac12-\phi)
+\end{equation}
+
+We prove this solution by inserting (\ref{tw2StrichDO}) into the 1D version of (\ref{relaxPhiDO})
+
+\begin{eqnarray}
+\label{prove}
+  \tau \dot{\phi} &=& \epsilon_{DO} \frac {\partial^2} {\partial x^2} \phi + \gamma(\phi-\frac12) + \frac8\pi\sqrt{\phi(1-\phi)} \Delta g \\
+&=& \epsilon \frac{\pi^2}{\eta^2}(\frac12-\phi) + \gamma(\phi-\frac12) + \frac8\pi\sqrt{\phi(1-\phi)} \Delta g\\
+&=& [\epsilon \frac{\pi^2}{\eta^2}- \gamma](\frac12-\phi) + \frac8\pi\sqrt{\phi(1-\phi)} \Delta g
+\end{eqnarray}
+
+A steady state solution is found for $\Delta g = 0$, i.e. equilibrium between the phases
+
+\begin{eqnarray}
+\label{prove2}
+   0 &=& [\epsilon \frac{\pi^2}{\eta^2}- \gamma](\frac12-\phi) \\
+     &=& [\epsilon \frac{\pi^2}{\eta^2}- \gamma] \\
+   \eta &=& \sqrt{\frac {\epsilon {\pi^2}}{\gamma}}
+\end{eqnarray}
+
+ This shows that the ratio between $\epsilon$ and $\gamma$ determines the interface width. The velocity $v_n$ of the traveling wave solution (\ref{travellingWaveDO}) can be related to the model parameters $\tau$,$\eta$ and $m$:
+
+\begin{equation}
+\label{prove3}
+  \dot \phi = \dot x \frac {\partial} {\partial x} \phi = v_n \frac {\partial} {\partial x} \phi = - v_n \frac \pi \eta \sqrt{\phi(1-\phi)}
+\end{equation}
+
+Here we have transformed $\dot\phi$ into a coordinate system traveling with velocity $v_n$ and used the first spacial derivative of the traveling wave solution (\ref{twStrichDO}). In 1D the interface contribution proportional to $\epsilon$ and $\gamma$ cancel, as shown above, and the phase field equation (\ref{relaxPhiDO}) becomes
+
+\begin{equation}\label{prove4}
+  \tau \dot{\phi}  = \epsilon \frac {\partial^2} {\partial x^2} \phi + \gamma(\phi-\frac12) + \frac8\pi\sqrt{\phi(1-\phi)} \Delta g = \frac8\pi\sqrt{\phi(1-\phi)} \Delta g
+\end{equation}
+
+By comparison of (\ref{prove3}) and (\ref{prove4}) we find the velocity
+
+\begin{equation}\label{prove5}
+  v_n = -\frac {8\eta}{\pi^2\tau} \Delta g
+\end{equation}
+
+The sign means, that if the phase $\phi = 1$, which is placed on the left, is thermodynamically favorable, i.e. $\Delta g < 0$, the velocity is positif and the interface is traveling to the right, which means growth of phase $\phi = 1$.
+
+It shall be noted that the coupling function $h(\phi)$ is constructed such that $\frac {\partial} {\partial \phi}h(\phi) = \frac {\partial} {\partial x }\phi$ and therefore the profile of the traveling wave is independent of $\phi$ and $x$. There is, however, no generalization of such a solution in junctions between more than 2 phase-fields (see below).
+
+The interface energy $\sigma [\frac J{cm^2}]$ is
+
+\begin{eqnarray}\label{eindeInterfaceEnergy}
+ \nonumber \sigma &=& \int_{-\infty}^{\infty} dx[ \frac {\epsilon}2 {(\nabla\phi})^2 + \frac \gamma 2 \phi (1-\phi)] \\ \nonumber
+ &=& \int_{-\infty}^{\infty} dx[\frac \epsilon2 \frac{\pi^2}{\eta^2} + \frac \gamma 2] \phi (1-\phi) \\
+ &=& \int_{-\infty}^{\infty} dx \gamma  \phi (1-\phi)
+\end{eqnarray}
+
+In the last equation the result (\ref{prove2}) was used. To solve the integral we substitute $dx$ by $d\phi \frac {dx}{d\phi}$
+
+\begin{eqnarray}\label{eindeInterfaceEnergy2}
+ \nonumber \sigma &=& \int_0^1 d\phi \frac {dx}{d\phi} \gamma \phi (1-\phi) \label{l19} \\
+ \nonumber &=& \gamma \frac\eta\pi \int_0^1 d\phi \sqrt{\phi(1-\phi)} \\
+  &=&  \frac{\gamma \eta}8  = \frac{\epsilon \pi^2}{8 \eta}
+\end{eqnarray}
+
+Finally we fix the time scale comparing the traveling wave equation (\ref{prove5}) to the Gibbs Tomson equation with the interface mobility $\mu$
+
+\begin{eqnarray}
+  \label{GT}
+  \nonumber  v_n &=& \mu \Delta G = \frac {m\eta}{\pi\tau} = \frac {8 \Delta G \eta}{\pi^2\tau} \\
+  \mu &=& \frac {8 \eta}{\pi^2\tau}
+\end{eqnarray}
+
+The relations between the model parameters $\tau$, $\epsilon$ and $\gamma$ and the physical parameters $\mu$, $\sigma$ and $\eta$ can be summarized:
+
+\begin{eqnarray}\label{relationsDO}
+ \epsilon = \frac{8\sigma\eta}{\pi^2} \mbox{,}\;\;\;\; \;\;\;\;\; \gamma = 8\frac{\sigma}{\eta} \mbox{,}\;\;\;\; \;\;\;\;\;  \tau = \frac{8\eta}{\pi^2\mu}
+\end{eqnarray}
+
+In the physical units the free energy density and phase field equation read:
+
+\begin{equation}
+  \label{freeEnergyDensity_Phys}
+  f =  \frac {4\sigma}{\eta} [ (\frac\eta{\pi}\nabla \phi )^2 + \phi(1-\phi)] - h(\phi) \Delta g
+\end{equation}
+
+\begin{equation}
+  \label{relaxPhi_Phys}
+  \dot{\phi} = \mu \Bigm[\sigma ( \nabla^2 \phi + \frac{\pi^2}{\eta^2}(\phi-\frac12)) + \frac{\pi\sqrt{\phi(1-\phi)}}{\eta} \Delta g\Bigm]
+\end{equation}
+
+
+
+\subsection{The multi-phase-field model}\label{mpf}
+
+
+
+We start out from a general free energy description separating different physical phenomena, interfacial $f^{intf}$, chemical $f^{chem}$. Later we will compare the multi-phase model to the 2 phase model from the last sections in the case that only 2 phases are present.
+
+\begin{equation}
+  \label{fAllgmein}
+  F = \int_\Omega f^{intf} + f^{chem}
+\end{equation}
+
+other contributions like elastic, magnetic and electric energy will be added later.
+
+\begin{equation}
+  \label{fGB}
+  f^{intf} = \sum_{\alpha,\beta=1..N,\alpha > \beta} \frac{4\sigma_{\alpha\beta}}{\eta} \Bigm\{ -\frac{\eta^2}{\pi^2} \nabla\phi_\alpha \cdot \nabla\phi_\beta  + \phi_\alpha \phi_\beta \Bigm\}
+\end{equation}
+
+where we have set the interface width $\eta$ equal for all pairs of phases.
+
+\begin{equation}
+  \label{fCH}
+  f^{chem} = \sum_{\alpha=1..N} \phi_\alpha f_\alpha(c^i_\alpha) + \tilde\mu^i ( c^i - \sum_{\alpha=1..N} \phi_\alpha c_\alpha^i )
+\end{equation}
+
+We use the sum convention over double indices of the components i. $N=N(x)$ is the local number of phases and we have the sum constraint
+
+\begin{equation} \label{summConstraint}
+  \sum_{\alpha=1..N} \phi_\alpha = 1
+\end{equation}
+
+$\sigma_{\alpha \beta}$ is the energy of the interface between phase -- or grain -- $\alpha$ and $\beta$. It may be anisotropic with respect to the relative orientation between the phases. $\eta_{\alpha\beta}$ is the interface width that will be treated equal for all interfaces in the following. The chemical free energy is built from the bulk free energies of the individual phases $f_\alpha(\vec{c}_\alpha)$ which depend on the phase concentrations $c^i_\alpha$.  $\tilde\mu^i$ is the generalized chemical potential or diffusion potential of component i introduced as a Lagrange multiplier to conserve the mass balance between the phases $c^i = \sum_{\alpha=1..N} \phi_\alpha c_\alpha^i$.
+
+For $N = 2$, $\alpha = 1$, $\beta = 2$ we check for consistency
+
+\begin{eqnarray}
+  \label{fGB2}
+\nonumber  f^{intf-dual} &=& \frac{4\sigma_{12}}{\eta} \Bigm\{ -\frac{\eta^2}{\pi^2} \nabla\phi_\alpha \cdot \nabla\phi_\beta  + \phi_\alpha \phi_\beta \Bigm\} \\ &=& \frac{4\sigma_{12}}{\eta} \Bigm\{ \frac{\eta^2}{\pi^2} (\nabla\phi_\alpha)^2   + \phi_\alpha(1- \phi_\alpha) \Bigm\}
+\end{eqnarray}
+
+which is identical to (\ref{freeEnergyDensity_Phys}) with $\phi_\beta = 1- \phi_\alpha$ in the dual case. The chemical free energy in the multi-phase case uses the identity $h(\phi) = \phi$ for the coupling function
+\begin{eqnarray}
+  \label{fCH2}
+\nonumber  f^{chem-dual} &=& \phi_\alpha f_\alpha(c^i_\alpha) + \phi_\beta f_\beta(c^i_\beta) + \tilde\mu^i ( c^i - \phi_\alpha c_\alpha^i - \phi_\beta c_\beta^i) \\
+ \nonumber &=& \phi_\alpha (f_\alpha(c^i_\alpha) - f_\beta(c^i_\beta) - \tilde\mu^i (c_\alpha^i - c_\beta^i) + f_\beta(c^i_\beta)) + \tilde\mu^i ( c^i - c_\beta^i) \\
+ &=&  \phi_\alpha \Delta g^{dual}_{\alpha\beta} + f_0(c^i)
+\end{eqnarray}
+
+\begin{equation} \label{dg_dual}
+ \Delta g^{dual}_{\alpha\beta} = f_\alpha(c^i_\alpha) - f_\beta(c^i_\beta) - \tilde\mu^i (c_\alpha^i - c_\beta^i)
+\end{equation}
+
+$\Delta g^{dual}_{\alpha\beta}$ is the equivalent to $\Delta g$ in (\ref{freeEnergyDensity_Phys}) under the assumption that the phase compositions $c_\alpha^i$ obey a parallel tangent construction with the same chemical potential $\tilde\mu^i$. $f_0(c^i)$ is an offset independent of $\phi$.
+
+The multi-phase-field equations are derived
+
+\begin{eqnarray}
+  \label{phiPunktMP}
+  \dot{\phi}_\alpha = - \sum_{\beta=1..N} \frac{\pi^2}{4\eta N} \mu_{\alpha \beta}
+(\frac{\delta F}{\delta\phi_\alpha}-\frac{\delta F}{\delta\phi_\beta})
+\end{eqnarray}
+
+$\mu_{\alpha\beta}$ is defined individually for each pair of phases. Inserting the free energy (\ref{fAllgmein}) to (\ref{phiPunktMP}) we calculate explicitly
+
+\begin{equation}
+  \label{phiPunktMP2}
+\dot{\phi}_\alpha = \sum_{\beta=1..N} \frac{\mu_{\alpha \beta}}
+ N \Bigm[\Bigm\{ \sigma_{\alpha\beta}(I_\alpha - I_\beta) + \sum_{\gamma=1..N, \gamma \ne \alpha, \gamma \ne \beta} (  \sigma_{\beta\gamma}-\sigma_{\alpha\gamma} ) I_{\gamma}\Bigm\} + \frac{\pi^2}{4\eta} \Delta g_{\alpha\beta}\Bigm]
+\end{equation}
+
+\begin{equation}
+  \label{Kruemmung}
+I_{\alpha} = \nabla^2 \phi_\alpha + \frac{\pi^2}{\eta^2}\phi_\alpha
+\end{equation}
+\begin{equation}
+  \label{dgab}
+\Delta g_{\alpha\beta} = f_\alpha(c^i_\alpha) - f_\beta(c^i_\beta) - \tilde\mu^i (c_\alpha^i - c_\beta^i)
+\end{equation}
+
+Again we compare the model for consistency with the dual phase model. For $N=2$ we have:
+
+\begin{eqnarray}
+  \label{phiPunkt_dualPhase}
+\nonumber \dot{\phi}_1 &=& - \frac{\pi^2}{8\eta} \mu_{12}(\frac{\delta F}{\delta\phi_1}-\frac{\delta F}{\delta\phi_2}) \\
+\nonumber &=& \frac{\mu_{12}}  2\{[ \sigma_{12}(I_1 - I_2)  + \frac{\pi^2}{4\eta} \Delta g_{12} \} \\ \nonumber &=& \mu_{12}  \{[ \sigma_{12}(\nabla^2 \phi_1 + \frac{\pi^2}{\eta^2}\frac{\phi_1-\phi_2}2)  + \frac{\pi^2}{8\eta} \Delta g_{12} \} \\
+&=& \mu_{12}  \{[ \sigma_{12}(\nabla^2 \phi_1 + \frac{\pi^2}{\eta^2}(\phi_1-\frac12)  + \frac{\pi^2}{8\eta} \Delta g_{12} \}\\
+\dot{\phi}_2 &=& - \dot{\phi}_1
+\end{eqnarray}
+
+The interface contribution is identical to (\ref{freeEnergyDensity_Phys}), the non equilibrium part, however, violates the traveling wave solution as the identity for the coupling function is used for thermodynamic consistency. We may check that the integral of the rate change of $\phi$ is the same in both cases (taking $\mu_{12} = \mu$ and $\Delta g_{12} = \Delta g$
+
+\begin{eqnarray}
+  \label{velocityCheck}
+ \int_0^1 d\phi  \frac{\pi\sqrt{\phi(1-\phi)}}{\eta} \Delta g &=& \frac{\pi\Delta g}{\eta}\int_0^1 d\phi  \sqrt{\phi(1-\phi)} = \frac{\pi^2\Delta g}{8\eta}\\
+ \int_0^1 dx \frac{\pi^2}{8\eta} \Delta g_{12}   &=& \frac{\pi^2\Delta g}{8\eta}
+\end{eqnarray}
+
+
+This shows, that for practical use in a phase-field simulation we may approximate in dual interfaces
+
+\begin{equation}\label{dgapp}
+\Delta g \approx \frac\pi8\sqrt{\phi(1-\phi)}\Delta g
+\end{equation}
+
+Resigning from full thermodynamic consistency we will use in the following the approximation
+
+
+\begin{eqnarray}
+ \nonumber \dot{\phi}_\alpha &=& \sum_{\beta=1..N} \frac{\mu_{\alpha \beta}}
+ N \Bigm\{ \Bigm[\sigma_{\alpha\beta}(I_\alpha - I_\beta) + \sum_{\gamma=1..N, \gamma \ne \alpha, \gamma \ne \beta} (  \sigma_{\beta\gamma}-\sigma_{\alpha\gamma} ) I_{\gamma}\Bigm] \\
+ &\;&\;\;\;\;\;\;\;\;\; + \frac{2\pi}{\eta} \sqrt{\phi(1-\phi)} \Delta g_{\alpha\beta}\Bigm\}
+\end{eqnarray}

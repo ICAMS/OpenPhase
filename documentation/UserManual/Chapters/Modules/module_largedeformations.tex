@@ -1,0 +1,47 @@
+\section{Large Deformations}
+\label{sec:module_largedeformations}
+% Define box and box title style
+\tikzstyle{mybox} = [draw=black, fill=RUBgrau!20, very thick, rectangle, rounded corners, inner sep=10pt, inner ysep=20pt]
+\tikzstyle{fancytitle} =[fill=RUBblau!100, text=white, rectangle, rounded corners,draw=black]
+
+\begin{tikzpicture}
+\node[mybox] (box)
+{
+\begin{minipage}{1\textwidth}
+\begin{description}
+    \item[What it does] Calculates the mechanics in the case of large deformations
+    \item[Requires] \nameref{sec:module_settings}, \nameref{sec:module_boundaryconditions}, \nameref{sec:module_phasefield}, \nameref{sec:module_elasticproperties}
+    \item[Header file] Mechanics/LargeDeformations/LargeDeformationsElastic.h, Mechanics/LargeDeformations/LargeDeformationsElastoPlastic.h
+    \item[Input file] LDInput.opi
+    \item[Examples] /examples/LD-J2Plasticity
+\end{description}
+\end{minipage}
+};
+\node[fancytitle, right=12pt] at (box.north west) {Module in brief...};
+\end{tikzpicture}
+
+The plasticity modules use OpenPhase's large deformation framework following an Eulerian approach with a fixed grid. The total deformation increment due to external strain or changes in the eigenstrain field is evaluated and splitted to increments which are \emph{small} and can be passed to the spectral linear elastic solver. Once the BVP is solved for the given load increment, the resulting velocity field updates the geometry (phase-field), the stresses are integrated and the next load increment is applied.
+\paragraph{Usage} The solver is called by the single command 
+
+\tikzstyle{decision} = [diamond, draw, fill=RUBgrau!20, 
+    text width=4.5em, text badly centered, node distance=3cm, inner sep=0pt]
+\tikzstyle{block} = [rectangle, draw, fill=RUBgrau!20,  text centered, rounded corners, minimum height=4em]
+\tikzstyle{line} = [draw, -latex']
+\tikzstyle{cloud} = [draw, ellipse,fill=RUBgrau!20, node distance=3cm,
+    minimum height=2em]
+    
+\lstinputlisting[frame=single,float=h,captionpos=b, caption= Example of LDInput.opi input file for LargeDeformations module, label=lst:ldinput]{Chapters/Modules/listing_ldinput.tex}
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[framed, node distance = 2cm, auto]
+    \node [block] (constructor) {\cmethod{Constructor}};
+        \node [block, below of=constructor] (constants) {\cmethod{SetEffectiveElasticConstants(ElasticProperties)}};
+    \node [block, below of=constants] (eigenstrains) {\cmethod{SetEffectiveEigenStrains(ElasticProperties)}};
+    
+    % Draw edges
+    \path [line] (constructor) -- (constants);
+    \path [line] (constants) -- (eigenstrains);
+\end{tikzpicture}
+\caption{Call graph for module \nameref{sec:module_largedeformations}}
+\end{figure}

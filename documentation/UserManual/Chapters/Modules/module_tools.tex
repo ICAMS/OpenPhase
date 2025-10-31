@@ -1,0 +1,19 @@
+\section{Tools}
+\label{sec:module_tools}
+\begin{tikzpicture}
+\node[mybox] (box)
+{
+\begin{minipage}{1\textwidth}
+\begin{description}
+    \item[What it does] Provides additional methods which are not part of the principales modules and/or required for the execution of OpenPhase
+    \item[Header File] Tools.h
+    \item[Requires] Nothing
+    \item[Input file] None
+    \item[Examples]
+\end{description}
+\end{minipage}
+};
+\node[fancytitle, right=12pt] at (box.north west) {Module in brief...};
+\end{tikzpicture}
+\subsection*{Abaqus input file writer}
+Using the initialization methods of OpenPhase makes it very convenient to create representative volume elements for Simulia Abaqus calculations. The routine can be invoked after the initialization of the phase-field using \cmethod{Tools::WriteAbaqusInput(PhaseField)}.

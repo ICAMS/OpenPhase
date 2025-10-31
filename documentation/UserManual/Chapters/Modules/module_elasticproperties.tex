@@ -1,0 +1,52 @@
+\section{ElasticProperties}
+\label{sec:module_elasticproperties}
+
+% Define box and box title style
+\tikzstyle{mybox} = [draw=black, fill=RUBgrau!20, very thick, rectangle, rounded corners, inner sep=10pt, inner ysep=20pt]
+\tikzstyle{fancytitle} =[fill=RUBblau!100, text=white, rectangle, rounded corners,draw=black]
+
+\begin{tikzpicture}
+\node[mybox] (box)
+{
+\begin{minipage}{1\textwidth}
+\begin{description}
+\item[What it does] Defines and manages storages for mechanical calculation
+\item[Requires] \nameref{sec:module_settings}
+\item[Header file] Mechanics/Storages/ElasticProperties.h
+\item[Input file] ElasticityInput.opi
+\item[Examples] /benchmarks/EshelbyTest /examples/LD-J2Plasticity
+\end{description}
+\end{minipage}
+};
+\node[fancytitle, right=12pt] at (box.north west) {Module in brief...};
+\end{tikzpicture}
+
+\paragraph{Input parameters and input file}
+Several parameters can be defined in the input file for the ElasticProperties module and read via \cmethod{ReadInput()}. An example is given in Listing \ref{lst:ElasticInputListing}. 
+\begin{description}
+ \item[0 - Pressure relaxation mode] This boundary condition is only supported in \nameref{sec:module_spectralelasticsolver} and \nameref{sec:module_spectralelastoplasticsolver}.
+ \item[1 - Applied strain mode] This boundary condition is supported by all solvers.
+ \item[2 - Applied stress mode] This boundary condition is supported by all solvers.
+ \item[3 - Mixed stress strain mode] This boundary condition is supported by \nameref{sec:module_spectralelasticsolverBS} and \nameref{sec:module_spectralelasticsolverAL}.
+\end{description}
+\lstinputlisting[frame=single,float=p,captionpos=b, caption= Example of ElasticProperties.opi input file for ElasticProperties, label=lst:ElasticInputListing]{Chapters/Modules/listing_elasticinput.tex}
+
+% -------------------------------------------------------------------------
+
+\CallGraphSettings
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[framed, node distance = 2cm, auto]
+    \node [block] (constructor) {\cmethod{Constructor}};
+    \node [block, below of=constructor] (init) {\cmethod{Initialize(...)}};
+        \node [block, below of=init] (readinput) {\cmethod{ReadInput(ElasticProperties.opi)}};
+    \node [block, below of=readinput] (setgrainsproperties) {\cmethod{SetGrainsProperties(PhaseField)}};
+    
+    % Draw edges
+    \path [line] (constructor) -- (init);
+    \path [line] (init) -- (readinput);
+    \path [line] (readinput) -- (setgrainsproperties);
+\end{tikzpicture}
+\caption{Call graph for module \nameref{sec:module_elasticproperties}}
+\end{figure}

@@ -1,0 +1,79 @@
+\section{Crystal plasticity UMAT}
+\label{sec:example_cpumat}
+The CrystalPlasticityUMAT benchmark is designed to compare the CrystalPlasticity module of OpenPhase with results of CP codes such as DAMASK \citeopref{Roters2012}. It evaluates the stresses and hardening variables at a single continuum point for a given strain increment. This approach is analogue to the evaluation of an integration point under a given deformation gradient (or strain) in finite element frameworks such as Abaqus (where the user-defined material model is described in a so called UMAT).
+
+\subsection{Modules and Parameters}
+The benchmark uses the three mandatory modules \nameref{sec:module_phasefield}, \nameref{sec:module_boundaryconditions} and \nameref{sec:module_settings}. In order to perform the mechanical calculations it is necessary to load \nameref{sec:module_orientations}, \nameref{sec:module_elasticproperties} as well one of the two homogenization modules \nameref{sec:module_elasticityreuss} or \nameref{sec:module_elasticitykhachaturyan}, respectively. For the plasticity part PlasticPropertiesCPphenom and PlasticityModelCPphenom have to be loaded.\\
+The benchmark sets up a one point phase field with a single phase/grain present. By defining an applied strain $\bar{\varepsilonB}$ the full stress tensor
+\begin{equation}
+	\sigmaB = \mathcal{C} : \left(\bar{\varepsilonB} - \varepsilonB_p\right)
+\end{equation}
+the plastic strain increment
+\begin{equation}
+	\varepsilon_p = f(\sigmaB, \dot{\gamma}^{(\alpha = 1..12)}, \tau_c^{(\alpha = 1..12)})
+\end{equation}
+(see crystal plasticity model for more details) as well as the hardening
+\begin{equation}
+	\tau_c^{(\alpha = 1..12)} = f(\sigmaB, \dot{\gamma}^{(\alpha = 1..12)})
+\end{equation}
+for each glide system $\alpha$ is calculated. Since the plasticity model is of viscous type, parameter $\Delta t$ is a crucial input parameter. The domain size, adjusted with parameter $dx$ can be chosen arbitrarily, since the length-scale will not enter the mechanical solution (at least for a local model). The calculation will return an error, if the plasticity could not converge for a given $\bar{\varepsilonB}$. The grain orientation can be adjusted by \cmethod{Orientations::GrainEulerAngles[0].set()}. For completeness, a set of important input parameters is given in table~\ref{tab:tablePICPUMAT}. 
+\begin{table}[ht]
+\centering
+\begin{tabular}{lll}
+\toprule
+Key & Value & Comment \\
+\midrule
+\$nSteps & 1 & Single step\\
+\$Nx & 1 & \multirow{3}{8cm}{Note: Only a single point is evaluated.}\\
+\$Ny & 1 & \\
+\$Nz & 1 & \\
+\$Nphses & 1 & Single phase\\
+\$dt & 1 & \\
+\$dx & 1 & \\
+\bottomrule
+\end{tabular}
+\caption{ProjectInput.opi for CrystalPlasticityUMAT}
+\label{tab:tablePICPUMAT}
+\end{table}
+\subsection{Results}
+All material parameters are given in \si{\milli\meter, \second, \kilogram} units.
+\begin{table}[ht]
+\begin{center}
+\subfloat[Elasticity input for CrystalPlasticityUMAT benchmark]{
+\begin{tabular}{lcc}
+\toprule
+Key & Value 1  & Value 2 \\
+\midrule
+\$Phase 0\\
+\$C11 & 280,000 &  0\\
+\$C22 & 280,000 &  0\\
+\$C33 & 280,000 &  0\\
+\$C12 & 120,000 &  0\\
+\$C13 & 120,000 &  0\\
+\$C23 & 120,000 &  0\\
+\$C44 & 80,000 &   0\\
+\$C55 & 80,000 &  0\\
+\$C66 & 80,000 &  0\\
+\bottomrule
+\end{tabular}}
+\qquad
+\subfloat[Plasticity input for CrystalPlasticityUMAT benchmark]{
+\begin{tabular}{lc}
+\toprule
+Key & Value\\
+\midrule
+\$explicitSolver    & No\\
+~\\
+\$plasticityflag\_0  & Yes\\
+\$nonlocalflag\_0    & No\\
+\$gamma0\_0          & $0.001$\\
+\$tauc\_0            & $10.0$\\
+\$taus\_0            & $117.0$\\
+\$h0\_0              & $100.0$\\
+\$flowPow\_0         & $10.0$\\
+\$hardPow\_0         & $2.25$\\
+\bottomrule
+\end{tabular}}
+\end{center}
+\caption{Set of material parameters used for benchmark calculation.}
+\end{table}

@@ -1,0 +1,62 @@
+\section{Heat}
+\label{sec:module_heat}
+% Define box and box title style
+\tikzstyle{mybox} = [draw=black, fill=RUBgrau!20, very thick, rectangle, rounded corners, inner sep=10pt, inner ysep=20pt]
+\tikzstyle{fancytitle} =[fill=RUBblau!100, text=white, rectangle, rounded corners,draw=black]
+
+\begin{tikzpicture}
+\node[mybox] (box)
+{
+  \begin{minipage}{1\textwidth}
+  \begin{description}
+  \item[What it does] Calculates the heat equation $\frac{\partial u}  {\partial t} = \Delta u + \dot{q}$
+  \item[Requires] \nameref{sec:module_settings}, PhaseField, \nameref{sec:module_boundaryconditions}, \nameref{sec:module_temperature}
+  \item[Header file] Heat.h
+  \item[Input file] Heat.opi
+  \item[Examples] /examples/HeatEquationSolver
+  \end{description}
+  \end{minipage}
+};
+\node[fancytitle, right=12pt] at (box.north west) {Module in brief...};
+\end{tikzpicture}
+\paragraph{Background}
+The heat module solves the heat equation
+\begin{equation}
+  \frac{\partial u(\xB)}{\partial t} = \alpha(\xB) \Delta u(\xB) + \dot{q}(\xB)
+\label{eq:heatmodule1}
+\end{equation}
+where $u(\xB)$ is the local temperature, $\dot{q}(\xB)$ is a heat source (or sink) and $\Delta = \sum_{k=1}^3\frac{\partial^ 2}{\partial x^2}$ is the Laplacian operator. The intergration of (\ref{eq:heatmodule1}) using a Forward Euler scheme in time and a central difference stencil reads
+\begin{equation}
+\begin{split}
+  (u^{n+1}(\xB)-u^{n}(\xB))\Delta t^{-1} = 
+  &\frac{u^n_{i+1,j,k}-2u^n_{i,j,k} + u^n_{i-1,j,k}}{(\Delta x)^2}\\
+  &\frac{u^n_{i,j+1,k}-2u^n_{i,j,k} + u^n_{i,j-1,k}}{(\Delta x)^2} \\
+  &\frac{u^n_{i,j,k+1}-2u^n_{i,j,k} + u^n_{i,j,k-1}}{(\Delta x)^2} + \dot{q}(\xB).
+  \end{split}
+\label{eq:heatmodule2}
+\end{equation}
+The scheme is stable for
+\begin{equation}
+   \Delta t < 0.25* (\Delta dx)^2/\alpha
+\end{equation}
+
+\paragraph{Usage} Following the initialization, settings are read from ProjectInput/Heat.opi. In every time step, the heat equation can be evaluated by \cmethod{Solve(Temperature)}. Internally, this method sets boundary conditions, calculates the effective thermal diffusivity as well as the effective heat capacity, determines the Laplacian according to (\ref{eq:heatmodule2}) and integrates the temperature.  
+
+% ----------------------------------------------------
+\CallGraphSettings
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[framed, node distance = 2cm, auto]
+    \node [block] (constructor) {constructor};
+    \node [block, below of=constructor] (init) {Initialize()};
+    \node [block, below of=init] (input) {ReadInput(Filename)};
+    \node [block, below of=input] (solve) {Solve(Temperature)};
+ 
+    % Draw edges
+    \path [line] (constructor) -- (init);
+    \path [line] (init) -- (input);
+    \path [line] (input) -- (solve);
+\end{tikzpicture}
+\caption{Call graph for module \nameref{sec:module_heat}}
+\end{figure}

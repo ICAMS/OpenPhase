@@ -1,0 +1,180 @@
+\section{Plasticity modules}
+\label{sec:module_plasticity}
+\begin{tikzpicture}
+\node[mybox] (box)
+{
+\begin{minipage}{1\textwidth}
+\begin{description}
+\item[What it does]
+\item[Requires] \nameref{sec:module_settings}, \nameref{sec:module_phasefield}, \nameref{sec:module_boundaryconditions}
+\item[Input file] PlasticPropertiesJ2.opi,PlasticPropertiesCPphenom.opi, etc.
+\item[Examples]
+\end{description}
+\end{minipage}
+};
+\node[fancytitle, right=12pt] at (box.north west) {Module in brief...};
+\end{tikzpicture}
+\subsection*{Structure}
+The plasticity functionality of OpenPhase is splitted to classes storing and managing the corresponding storages (\cmethod{PlasticProperties, PlasticPropertiesJ2, ...}) and classes to calculate the plastic strain (\cmethod{PlasticityModel, PlasticityModelJ2, ...}). In a typical elasto-plastic calculation the properties and the model classes have to be invoked and are passed to the SpectralElastoPlasticSolver. 
+\subsection*{Homogenization}
+Plastic strains and plastic properties (hardening parameters, dislocation densities, etc.) are defined for each individual phase-field $\gamma$. Using
+\begin{equation}
+	\varepsilonB^{\mathrm{pl}}_{\mathrm{eff}} =\sum_\gamma^{N_\gamma} \varepsilonB^{\mathrm{pl}}_\gamma \phi_\gamma
+\end{equation}
+the complete homogenization (Reuss $\sigmaB = \sigmaB_\alpha = \sigmaB_\beta$) becomes
+\begin{equation}
+  \varepsilonB_{\mathrm{eff}} = \left(\sum_\gamma^{N_\gamma}\phi_\gamma\mathcal{\CB}_{\gamma}^{-1}\right)\sigmaB +\underbrace{\sum_\gamma^{N_\gamma} \varepsilonB^*_\gamma}_{\varepsilonB^*_\mathrm{eff}} + \underbrace{\sum_\gamma^{N_\gamma} \varepsilonB^{\mathrm{pl}}_\gamma}_{\varepsilonB^\mathrm{pl}_{\mathrm{eff}}}.
+\end{equation}
+The effective values are handed over to the spectral elastic solver.
+\subsection*{J2 plasticity model}
+The J2 model represent the most simple plasticity model implemented in OpenPhase. It is an isotropic plasticity model with linear and kinematic hardening. 
+Yielding occurs, if 
+\begin{equation*}
+f(\sigmaB, \qB) = \|\etaB\|-\sqrt{\frac{2}{3}}(\textcolor{red}{\sigma_y} + \textcolor{red}{\theta} \textcolor{red}{\bar{H}}\alpha)
+\end{equation*}
+where 
+\begin{equation*}
+\etaB~\hat{=} \mathrm{dev}(\sigmaB) - \betaB.
+\end{equation*}
+The stress deviator is defined as
+\begin{equation*}
+\mathrm{dev}(\sigmaB) = \sigmaB - \frac{1}{3}\mathrm{trace}(\sigmaB)
+\end{equation*}
+Furthermore, $\sigma_y$ is the yield strength obtained by unidirectional tensile tests, $\theta$ and $\bar{H}$ 
+  \begin{eqnarray*}
+     \etaB~\hat{=}& \mathrm{dev}(\sigmaB) - \betaB\\
+	\dot{\varepsilonB}^{p} =& \gamma \frac{\etaB}{\|\etaB\|}\\
+	\dot{\alpha} = &\gamma\sqrt{\frac{2}{3}}\\
+	\dot{\betaB} = &\gamma \frac{2}{3} (1-\theta)\textcolor{red}{\bar{H}}(\alpha)\frac{\etaB}{\|\etaB\|}
+  \end{eqnarray*}
+\subsection*{Hill plasticity model}
+In opposite to the J2 model, the Hill model allows an anisotropic yield surface. Currently no hardening model is implemented for this model.
+Starting with
+\begin{equation*}
+\dot{\varepsilon}^p = \dot{\lambda}\frac{\partial f}{\partial \sigmaB}
+\end{equation*}
+a yield surface is defined as
+\begin{equation*}
+f = \alpha_{12}(\sigmaB_{11} - \sigmaB_{22})^2 + \alpha_{23}(\sigmaB_{22}-\sigmaB_{33})^2 + \alpha_{31} (\sigmaB_{33} - \sigma_{11})^2 + 6\alpha_{44}\sigmaB_{12}^2+6\alpha_{55}\sigmaB_{23}^2+6\alpha_{66}\sigmaB_{31}^2
+-\bar{\sigma}^2.
+\end{equation*}
+$\alpha_{12}$, $\alpha_{23}$, $\alpha_{31}$, $\alpha_{44}$, $\alpha_{55}$,$\alpha_{66}$ are the anisotropic parameters with respect to a reference yield strenght $\bar{\sigma}$. Briefly, one could also write
+\begin{equation*}
+f = \frac{3}{2}\sigmaB^T  \PB \sigmaB - \bar{\sigma}^2
+\end{equation*}
+where
+\begin{equation*}
+\PB = 
+\begin{pmatrix}
+\frac{1}{3}(\alpha_{12}+\alpha_{31}) & -\frac{1}{3}\alpha_{12} & -\frac{1}{3}\alpha_{31} & 0 & 0 & 0 \\
+-\frac{1}{3}\alpha_{12} & \frac{1}{3}(\alpha_{23}+\alpha_{12}) & -\frac{1}{3}\alpha_{23} & 0 & 0 & 0 \\
+-\frac{1}{3}\alpha_{31} & -\frac{1}{3}\alpha_{23} & \frac{1}{3}(\alpha_{31}+\alpha_{23}) & 0 & 0 & 0 \\
+0 & 0 & 0 & 2\alpha_{44} & 0 & 0 \\
+0 & 0 & 0 & 0 & 2\alpha_{55} & 0 \\
+0 & 0 & 0 & 0 & 0 & 2\alpha_{66} \\
+\end{pmatrix}
+\end{equation*}
+The Hill model will fall back to the J2 model for $\alpha_{12} = \alpha_{23} = \alpha_{31} = \alpha_{44} = \alpha_{55} = \alpha_{66} = 1$.
+
+More details can be found in \citeopref{deBorst1990}.
+
+\subsection*{Crystal plasticity model}
+The FCC crystal plasticity model starts from 
+\begin{gather}
+	\DB^{\mathrm{pl}}_\gamma =\sum_{s=1}^{N_s}{\dot{\gamma}^s_\gamma  \frac{1}{2}\left(\mB^s_\gamma\otimes\nB^{s}_\gamma + \nB^s_\gamma\otimes\mB^{s}_\gamma\right)} = \sum_{s=1}^{N_s}{\dot{\gamma}^s_\gamma \PB^s}\\
+	\WB^{\mathrm{pl}}_\gamma = \sum_{s=1}{\dot{\gamma}^s_\gamma \frac{1}{2}\left(\mB^s_\gamma\otimes\nB^{s}_\gamma - \nB^s_\gamma\otimes\mB^{s}_\gamma\right)} = \sum_{s=1}^{N_s}{\dot{\gamma}^s_\gamma \MB^s}\\
+	\shortintertext{where}
+	\begin{tabular}{>{$}r<{$}@{\ :\ }l}
+		 \dot{\gamma}^s_\gamma & shear rate on glide system $s$\\ 
+		 \DB^{\mathrm{pl}}_\gamma & plastic strain rate in phase $\gamma$\\ 
+		 \WB^{\mathrm{pl}}_\gamma & plastic spin in phase $\gamma$\\ 
+   		 \mB^{s}_\gamma & vector of the slip direction\\
+   		 \nB^{s}_\gamma & glide system's normal direction
+   \end{tabular}\nonumber
+\end{gather}
+The phenomenological crystal plasticity model uses the following model instead
+\begin{gather}
+	\dot{\gamma}^s_\gamma = \gamma_0 \left(\frac{|\sigmaB_\gamma:\MB^s_\gamma|}{\tau_{c,\gamma}^s}\right)^{m_\gamma} \mathrm{sgn}\left(\sigmaB_\gamma:\MB^s_\gamma\right),
+	\shortintertext{where}
+	\begin{tabular}{>{$}r<{$}@{\ :\ }l}
+   		 \gamma_0 &  referential shear rate\\
+   		 \sigmaB_\gamma:\MB^s_\gamma & resolved shear stress on glide system $s$\\
+   		 \tau_{c,\gamma}^s & critical resolved shear stress on glide system $s$\\
+   		 m_\gamma & hardening exponent 
+   \end{tabular}\nonumber
+\end{gather}
+The evolution of the critical resolved shear stress is assumed to be
+\begin{equation}
+  \dot{\tau}_{c,\alpha} = q_{\alpha\beta} h_0 \left(1-\frac{\tau_\beta}{\tau_s}\right)^a |\dot{\gamma}_\beta|
+\end{equation}
+Herein, $h_0$ is a referential hardening parameters, $\tau_s$ is the saturation stress and $a$ the hardening exponent. Finally, $q_{\alpha\beta}$ is a $12\times12$ matrix $1.0$ for self-hardening terms and $1.4$ for co-planar hardening. In FCC materials, the glide systems are defined by <111> glide plane normals and [100] glide directions, see Table \ref{tab:glidesystemsFCC}\\
+
+\renewcommand{\kbldelim}{.}
+\renewcommand{\kbrdelim}{.}
+\begin{table}
+\hspace{1.5cm}
+\kbordermatrix{\mbox{GS}&
+n1& n2 & n3 & d1 & d2 & d3\\
+1& -1.0 & 1.0 & 1.0 & 0.0 & 1.0 &-1.0\\
+2& -1.0 & 1.0 & 1.0 & 1.0 & 0.0 & 1.0\\
+3& -1.0 & 1.0 & 1.0 & 1.0 & 1.0 & 0.0\\
+4&  1.0 & 1.0 & 1.0 & 0.0 & 1.0 &-1.0\\
+5&  1.0 & 1.0 & 1.0 & 1.0 & 0.0 &-1.0\\
+6&  1.0 & 1.0 & 1.0 & 1.0 &-1.0 & 0.0\\
+7&  1.0 & 1.0 &-1.0 & 0.0 & 1.0 & 1.0\\
+8&  1.0 & 1.0 &-1.0 & 1.0 & 0.0 & 1.0\\
+9&  1.0 & 1.0 &-1.0 & 1.0 &-1.0 & 0.0\\
+10& 1.0 &-1.0 & 1.0 & 0.0 & 1.0 & 1.0\\
+11& 1.0 &-1.0 & 1.0 & 1.0 & 0.0 &-1.0\\
+12& 1.0 &-1.0 & 1.0 & 1.0 & 1.0 & 0.0
+}
+\caption{Glide systems in FCC material}
+\label{tab:glidesystemsFCC}
+\end{table}
+
+For an dislocation based approach, the slip rate is defined  as
+\begin{gather}
+	\dot{\gamma}^s_\gamma = \rho^s_\gamma b_\gamma v_{0,\gamma} \left(\frac{|\sigmaB_\gamma:\MB^s_\gamma|}{\tau_{c,\gamma}^s}\right)^{m_\gamma} \mathrm{sgn}\left(\sigmaB_\gamma:\MB^s_\gamma\right),
+	\shortintertext{where}
+	\begin{tabular}{>{$}r<{$}@{\ :\ }l}
+   		 v_{0,\gamma} &  referential dislocation velocity\\
+   		 b_\gamma & length of the burgers vector\\
+   		 \sigmaB_\gamma:\MB^s_\gamma & resolved shear stress on glide system $s$\\
+   		 \tau_{c,\gamma}^s & critical resolved shear stress on glide system $s$\\
+   		 m_\gamma & hardening exponent 
+   \end{tabular}\nonumber
+\end{gather}
+The evolution of statistically stored dislocations (SSD) due to micro-mechanical processes is governed by the Kocks-Mecking evolution law
+\begin{equation}
+	\dot{\rho}_{\gamma}^s = \left(c_1 \sqrt{\rho^s_\gamma} - c_2 \rho^s_\gamma\right)|\dot{\gamma}_\gamma^s|
+\end{equation}
+
+\subsection*{Integration}
+The velocity gradient $\LB$ is returned from Fourier space as
+\begin{equation}
+  \widetilde{\LB}(\xiB) = i \xiB \otimes\widetilde{\uB}(\xiB).
+\end{equation}
+and can be decomposed additively to strain rate and spin
+\begin{equation}
+ \LB = \DB + \WB = \DB^{\mathrm{el}} + \WB^{\mathrm{el}} + \DB^{\mathrm{pl}} + \WB^{\mathrm{pl}}
+\end{equation}
+Following the integration scheme as introduced by [Peirce, Asaro, Needleman, Acta metall. 1983], one gets
+\begin{equation}
+  \sigmaB_{n+1} = \sigmaB_{n} + \left(\sigmaB_{n+1}^\nabla + \WB_{n+1}\sigmaB_{n} - \sigmaB_{n}\WB_{n+1}\right) \delta t.
+\end{equation}
+where the Jaumann rate of Kirchhoff stress reads
+\begin{equation}
+  \sigmaB^\nabla_{n+1} = \mathcal{\CB}_{n}\DB_{n+1}-\sum_{s=1}^{N_s}{\RB}_n\dot{\gamma}_s - \sigmaB_n \mathrm{tr}(\DB_{n+1})
+\end{equation}
+and
+\begin{equation}
+\RB_s = \mathcal{\CB} \PB_s + \WB \sigmaB - \sigmaB \WB_s
+\end{equation}
+All local tensors (stiffness, eigenstrains, diffusion parameter, ...) are rotated from the initial configuration to the current orientation by $\OB_{n+1}$. Only the elastic spin $\WB^{\mathrm{el}} = \WB - \WB^{\mathrm{pl}}$ rotates the crystal, hence 
+\begin{equation}
+ \OB_{n+1} = \exp\left(\WB^{\mathrm{el}}\delta t\right)\OB_{n}
+\end{equation}
+where
+\begin{equation}
+\exp\left(\WB^{\mathrm{el}}\delta t\right) = \IB + \frac{\sin \left(\|\delta t\WB^{\mathrm{el}}\|\right)}{\|\WB^{\mathrm{el}}\|}+\frac{1-\cos \left(\|\delta t\WB^{\mathrm{el}}\|\right)}{\|\WB^{\mathrm{el}}\|^2}\WB^{\mathrm{el}}\WB^{\mathrm{el}}
+\end{equation}

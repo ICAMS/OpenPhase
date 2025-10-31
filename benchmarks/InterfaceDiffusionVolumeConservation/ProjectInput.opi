@@ -1,0 +1,104 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@RunTimeControl
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$SimTtl   Simulation Title                         : IDVolumeConservation
+
+$nOMP     Number of OpenMP Threads                 : 4
+
+!Model parameters
+$EUnits   Unit of energy                           : J
+$LUnits   Unit of length                           : m
+$MUnits   Unit of mass                             : kg
+$TUnits   Unit of time                             : s
+
+!Discretization parameters
+$dt       Initial Time Step                        : 2.0e-2
+$nSteps   Number of Time Steps                     : 100
+
+!Output parameters
+$FTime    Output Distance to Disk (in tSteps)      : 100
+$STime    Output Distance to Screen (in tSteps)    : 20
+$tRstrt   Restart output every (tSteps)            : 100
+
+!Restart parameters
+$Restrt   Restart switch (Yes/No)                  : No
+$tStart   Restart at time step                     : 0
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GridParameters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Nx       System Size in X Direction               : 128
+$Ny       System Size in Y Direction               : 64
+$Nz       System Size in Z Direction               : 0
+$dx       Grid Spacing                             : 1.0
+$Bcells   Number of boundary cells                 : 3
+$IWidth   Interface Width (in grid points)         : 5
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Settings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Phase_0  Name of Phase 0                          : Solid0
+$Phase_1  Name of Phase 1                          : Solid1
+$Phase_2  Name of Phase 2                          : Solid2
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@BoundaryConditions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$BC0X   X axis beginning boundary condition        : Periodic
+$BCNX   X axis far end boundary condition          : Periodic
+$BC0Y   Y axis beginning boundary condition        : Periodic
+$BCNY   Y axis far end boundary condition          : Periodic
+$BC0Z   Z axis beginning boundary condition        : Periodic
+$BCNZ   Z axis far end boundary condition          : Periodic
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InterfaceProperties
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Sigma_0_0        Interface energy                  : 1.00
+$Sigma_0_1        Interface energy                  : 1.25
+$Sigma_0_2        Interface energy                  : 1.50
+$Sigma_1_1        Interface energy                  : 1.75
+$Sigma_1_2        Interface energy                  : 2.00
+$Sigma_2_2        Interface energy                  : 2.25
+
+$Epsilon_0_0      Interface anisotropy              : 0.0
+$Epsilon_0_1      Interface anisotropy              : 0.0
+$Epsilon_0_2      Interface anisotropy              : 0.0
+$Epsilon_1_1      Interface anisotropy              : 0.0
+$Epsilon_1_2      Interface anisotropy              : 0.0
+$Epsilon_2_2      Interface anisotropy              : 0.0
+
+$Mu_0_0           Interface Mobility 0-0            : 1.0
+$Mu_0_1           Interface Mobility 0-1            : 1.0
+$Mu_0_2           Interface Mobility 0-2            : 1.0
+$Mu_0_3           Interface Mobility 0-3            : 1.0
+$Mu_1_1           Interface Mobility 1-1            : 1.0
+$Mu_1_2           Interface Mobility 1-2            : 1.0
+$Mu_1_3           Interface Mobility 1-3            : 1.0
+$Mu_2_2           Interface Mobility 2-2            : 1.0
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InterfaceDiffusion
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$dSR          Double-obstacle smoothness range in [0,1]   : 0.05
+$dIDC_0_0     Mobility along the alpha/alpha Interface    : 1.0
+$dIDC_0_1     Mobility along the alpha/beta  Interface    : 1.0
+$dIDC_0_2     Mobility along the alpha/gamma Interface    : 1.0
+$dIDC_1_1     Mobility along the beta/beta   Interface    : 1.0
+$dIDC_1_2     Mobility along the beta/gamma  Interface    : 1.0
+$dIDC_1_2     Mobility along the beta/gamma  Interface    : 1.0
+$dIDC_2_2     Mobility along the gamma/gamma Interface    : 1.0

@@ -1,0 +1,7 @@
+This is a README file for the SolidificationNiAl example.
+
+In order to run the benchmark run ./SolidificationNiAl. 
+./ProjectInput directory contains the necessary input files for the simulation. 
+Results will be placed in the ./VTK directory and can be visualised 
+using ParaView (www.paraview.org).
+

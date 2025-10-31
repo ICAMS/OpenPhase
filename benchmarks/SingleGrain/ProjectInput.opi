@@ -1,0 +1,65 @@
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+
+@RunTimeControl
+
+$SimTtl         Simulation Title                        : Evolution of a single grain
+
+$LUnits         Units of length                         : m
+$TUnits         Units of time                           : s
+$MUnits         Units of mass                           : kg
+$EUnits         Energy units                            : J
+
+$nSteps         Number of Time Steps                    : 1000
+$FTime          Output frequency to disk (in tSteps)    : 100
+$STime          Output frequency to screen (in tSteps)  : 100
+$Restrt         Restart switch (Yes/No)                 : No
+$tStart         Restart at time step                    : 0
+$tRstrt         Restart output every (tSteps)           : 10000
+$dt             Initial Time Step                       : 1.0e-4
+$nOMP           Number of OpenMP Threads                : 1
+
+@GridParameters
+
+$Nx             System Size in X Direction              : 51
+$Ny             System Size in Y Direction              : 51
+$Nz             System Size in Z Direction              : 51
+$dx             Grid Spacing                            : 1e-6
+$IWidth         Interface Width (in grid points)        : 5.0
+
+@Settings
+
+$Phase_0        Name of Phase 0                         : Matrix
+$State_0        State of matter of phase 0              : Solid
+$Phase_1        Name of Phase 1                         : Inclusion
+$State_1        State of matter of phase 1              : Solid
+
+@InterfaceProperties
+
+$EnergyModel_0_0 Interface energy model     : ISO
+$EnergyModel_0_1 Interface energy model     : ISO
+$EnergyModel_1_1 Interface energy model     : ISO
+
+$Sigma_0_0  Interface energy                : 1.0
+$Sigma_0_1  Interface energy                : 1.0
+$Sigma_1_1  Interface energy                : 1.0
+
+$MobilityModel_0_0 Interface energy model   : ISO
+$MobilityModel_0_1 Interface energy model   : ISO
+$MobilityModel_1_1 Interface energy model   : ISO
+
+$Mu_0_0  Interface mobility                 : 1.0e-9
+$Mu_0_1  Interface mobility                 : 1.0e-9
+$Mu_1_1  Interface mobility                 : 1.0e-9
+
+@BoundaryConditions
+
+$BC0X   X axis beginning boundary condition  : NoFlux
+$BCNX   X axis far end boundary condition    : NoFlux
+
+$BC0Y   Y axis beginning boundary condition  : NoFlux
+$BCNY   Y axis far end boundary condition    : NoFlux
+
+$BC0Z   Z axis beginning boundary condition  : NoFlux
+$BCNZ   Z axis far end boundary condition    : NoFlux
+

@@ -1,0 +1,138 @@
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+
+@RunTimeControl
+
+$SimTtl   Simulation Title                        : Al-Cu Directional Solidification Benchmark
+
+$LUnits   Units of Length                         : m
+$TUnits   Units of Time                           : s
+$MUnits   Units of Mass                           : kg
+$EUnits   Energy units                            : J
+
+$nSteps   Number of Time Steps                    : 10000000
+$FTime    Output to disk every (tSteps)           : 10000
+$STime    Output to screen every (tSteps)         : 10000
+$dt       Initial Time Step                       : 5e-5
+$nOMP     Number of OpenMP Threads                : 1
+$Restrt   Restart switch (Yes/No)                 : No
+$tStart   Restart at time step                    : 0
+$tRstrt   Restart output every (tSteps)           : 100000
+
+@GridParameters
+
+$Nx       System Size in X Direction              : 0
+$Ny       System Size in Y Direction              : 70
+$Nz       System Size in Z Direction              : 450
+$dx       Grid Spacing                            : 1.0e-6
+$IWidth   Interface Width (in grid points)        : 5.0
+$Resolution                                       : Single
+
+@Settings
+
+$Comp_0   Chemical Component 0                    : CU
+$Comp_1   Chemical Component 1                    : AL
+
+$Phase_0  Name of Phase 0                         : Melt
+$State_0  State of matter of phase 0              : Liquid
+$Phase_1  Name of Phase 1                         : Solid
+$State_1  State of matter of phase 1              : Solid
+
+@DrivingForce
+
+$Average        Driving force averaging           : Yes
+$CutOff_0_1     Driving force cutoff 0 1          : 0.95
+$CutOff_0_2     Driving force cutoff 0 2          : 0.95
+$CutOff_1_2     Driving force cutoff 1 2          : 0.95
+
+@InterfaceProperties
+
+$EnergyModel_0_1 Interface model             : Cubic
+$Sigma_0_1       Interface energy            : 0.24
+$EpsilonE_0_1    Interface anisotropy        : 0.35
+
+$EnergyModel_0_0 Interface model             : Iso 
+$Sigma_0_0       Interface energy            : 0.24
+
+$EnergyModel_1_1 Interface model             : Iso
+$Sigma_1_1       Interface energy            : 0.24
+
+$MobilityModel_0_1 Interface model           : Iso
+$Mu_0_1            Interface mobility        : 8.0e-10
+
+$MobilityModel_0_0 Interface model           : Iso
+$Mu_0_0            Interface mobility        : 8.0e-10
+
+$MobilityModel_1_1 Interface model           : Iso
+$Mu_1_1            Interface mobility        : 4.0e-12
+
+@EquilibriumPartitionDiffusion
+
+$EnableAntiTrapping                          : Yes
+$RefElement  Reference Element               : AL
+
+$Cs_0_1  Intersection Concentration          : 0
+$Ts_0_1  Intersection Temperature 01         : 933.6
+
+$ML_0_1  Liquidus Slope                      : -656
+$ML_1_0  Solidus Slope                       : -4524
+
+$DC_0  Diffusion Coefficient of Liquid       : 3.0e-9
+$DC_1  Diffusion Coefficient of Solid        : 0.0
+
+$AE_0  Diffusion activation energy of Liquid : 0.0
+$AE_1  Diffusion activation energy of Solid  : 0.0
+
+$EF_0  Entropy of Fusion                     : 0.0
+$EF_1  Entropy of Fusion                     : -1.0e6
+
+$Flag_0 Stoichiometry flag                   : No
+$Flag_1 Stoichiometry flag                   : No
+
+$DrivingForceModel                           : STANDARD
+
+@Composition
+
+$C0_0_CU  Initial Concentration              : 0.04
+$C0_1_CU  Initial Concentration              : 0.0058
+
+$CMIN_0_CU  Lower Phase Concentration Limit  : 0
+$CMAX_0_CU  Upper Phase Concentration Limit  : 1
+
+$CMIN_1_CU  Lower Phase Concentration Limit  : 0
+$CMAX_1_CU  Upper Phase Concentration Limit  : 1
+
+$C0_0_AL  Initial Concentration              : 0.96
+$C0_1_AL  Initial Concentration              : 0.9942
+
+$Extension_ZN                                : 2000
+$Extension_ZN_Phase                          : 0
+
+@BoundaryConditions
+
+$BC0X   X axis beginning boundary condition  : NoFlux
+$BCNX   X axis far end boundary condition    : NoFlux
+
+$BC0Y   Y axis beginning boundary condition  : NoFlux
+$BCNY   Y axis far end boundary condition    : NoFlux
+
+$BC0Z   Z axis beginning boundary condition  : NoFlux
+$BCNZ   Z axis far end boundary condition    : Free
+
+@Temperature
+
+$T0     Initial System Temperature           : 907.0
+
+$R0X    X coordinate of the reference point  : 0
+$R0Y    Y coordinate of the reference point  : 0
+$R0Z    Z coordinate of the reference point  : 0
+
+$DT_DRX X component of the temp. gradient    : 0
+$DT_DRY Y component of the temp. gradient    : 0
+$DT_DRZ Z component of the temp. gradient    : 10000
+
+$ControlMode_0                               : Linear
+$LinearRate_0                                : -0.4
+$HoldingTemperature_0                        : 0.0
+$ActivationTime_0                            : 0
+

@@ -1,0 +1,254 @@
+ Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+
+@RunTimeControl
+
+$SimTtl         Simulation Title                        : Ni-Al Solidification (Additive Manufacturing)
+$nSteps         Number of Time Steps                    : 100000
+$FTime          Output to Disk every (tSteps)           : 1000
+$STime          Output to Screen every (tSteps)         : 100
+$LUnits         Units of Length                         : m
+$TUnits         Units of Time                           : s
+$MUnits         Units of Mass                           : kg
+$EUnits         Energy units                            : J
+$dt             Initial Time Step                       : 1.0e-6
+$nOMP           Number of OpenMP Threads                : 1
+$Restrt         Restart switch (Yes/No)                 : No
+$tStart         Restart at time step                    : 10000
+$tRstrt         Restart output every (tSteps)           : 10000
+
+@GridParameters
+
+$Nx             System Size in X Direction              : 91
+$Ny             System Size in Y Direction              : 0
+$Nz             System Size in Z Direction              : 141
+$dx             Grid Spacing                            : 1.0e-7
+$IWidth         Interface Width (in grid points)        : 5.0
+$Resolution     Phase-field resolution                  : Single
+
+@Settings
+
+$Comp_0         Chemical Component 0                    : AL
+$Comp_1         Chemical Component 1                    : NI
+
+$Phase_0        Name of Phase 0                         : Liquid
+$Phase_1        Name of Phase 1                         : A1
+$Phase_2        Name of Phase 2                         : L12
+
+@DrivingForce
+
+$Average        Driving force averaging                 : Yes
+$CutOff_0_1     Driving force cutoff 0 1                : 0.95
+$CutOff_0_2     Driving force cutoff 0 2                : 0.95
+$CutOff_1_2     Driving force cutoff 1 2                : 0.95
+
+@InterfaceProperties
+
+$EnergyModel_0_1  Interface energy model                : Cubic
+$Sigma_0_1        Interface energy                      : 0.24
+$EpsilonE_0_1     Interface anisotropy                  : 0.7
+
+$EnergyModel_0_2  Interface energy model                : Cubic
+$Sigma_0_2        Interface energy                      : 0.24
+$EpsilonE_0_2     Interface anisotropy                  : 0.35
+
+$EnergyModel_1_2  Interface energy model                : Iso
+$Sigma_1_2        Interface energy                      : 0.24
+
+$EnergyModel_0_0  Interface energy model                : Iso
+$Sigma_0_0        Interface energy                      : 0.24
+
+$EnergyModel_1_1  Interface energy model                : Iso
+$Sigma_1_1        Interface energy                      : 0.24
+
+$EnergyModel_2_2  Interface energy model                : Iso
+$Sigma_2_2        Interface energy                      : 0.24
+
+
+$MobilityModel_0_1  Interface mobility model            : Iso
+$Mu_0_1             Interface mobility                  : 1.0e-9
+
+$MobilityModel_0_2  Interface mobility model            : Iso
+$Mu_0_2             Interface mobility                  : 1.0e-9
+
+$MobilityModel_1_2  Interface mobility model            : Iso
+$Mu_1_2             Interface mobility                  : 1.0e-12
+
+$MobilityModel_0_0  Interface mobility model            : Iso
+$Mu_0_0             Interface mobility                  : 1.0e-9
+
+$MobilityModel_1_1  Interface mobility model            : Iso
+$Mu_1_1             Interface mobility                  : 1.0e-12
+
+$$MobilityModel_2_2 Interface mobility model            : Iso
+$Mu_2_2             Interface mobility                  : 1.0e-12
+
+@Nucleation
+
+$Allowed_0_0   allows to nucleate phase 0 in itself     : No
+$Allowed_0_1   allows to nucleate phase 0 in phase 1    : No
+$Allowed_0_2   allows to nucleate phase 0 in phase 2    : No
+$Allowed_1_0   allows to nucleate phase 1 in phase 0    : No
+$Allowed_1_1   allows to nucleate phase 1 in itself     : No
+$Allowed_1_2   allows to nucleate phase 1 in phase 2    : No
+$Allowed_2_0   allows to nucleate phase 2 in phase 0    : No
+$Allowed_2_1   allows to nucleate phase 2 in phase 1    : No
+$Allowed_2_2   allows to nucleate phase 2 in itself     : No
+
+$NucDens_1_0    Particle Density of phase 1 in phase 0 (in 1/m^3)   : 1.0e17
+$DistMu_1_0     Mu of the Normal SizeDistribution (in m)            : -0.5e-7
+$DistSig_1_0    Sigma of the SizeDistribution (in m)                : 1.0e-6
+$Tmin_1_0       Minimum temperature where nucleation is possible    : 1646
+$Tmax_1_0       Maximum temperature where nucleation is possible    : 1655.
+$Orient_1_0     Grains orientation mode                             : Random
+$Variant_1_0    Symmetry variants per nucleation site               : Single
+
+$Density_2_0    Particle Density of phase 2 in phase 0 (in 1/m^3)   : 4.5e17
+$Distribution   Nuclei size distribution                            : Normal
+$Center_2_0     Mu of the Normal SizeDistribution (in m)            : -1.5e-7
+$Deviation_2_0  Sigma of the SizeDistribution (in m)                : 1.0e-7
+$Tmin_2_0       Minimum temperature where nucleation is possible    : 1640
+$Tmax_2_0       Maximum temperature where nucleation is possible    : 1646
+$Orientation_2_0 Grains orientation mode                            : Parent
+$Variant_2_0    Symmetry variants per nucleation site               : Single
+
+@EquilibriumPartitionDiffusion
+
+$RefElement  Reference Element                          : NI
+
+$Cs_0_1  Intersection Concentration 01                  : 0.0
+$Ts_0_1  Intersection Temperature 01                    : 1725.42
+
+$Cs_0_2  Intersection Concentration 02                  : 0.2623
+$Ts_0_2  Intersection Temperature 02                    : 1656.32
+
+$Cs_1_2  Intersection Concentration 12                  : 0.2470
+$Ts_1_2  Intersection Temperature 12                    : 1927.36
+
+$ML_0_1  Liquidus Slope                                 : -342.148
+$ML_1_0  Solidus Slope                                  : -376.376
+
+$ML_0_2  Liquidus Slope                                 : 286.77
+$ML_2_0  Solidus Slope                                  : 669.135
+
+$ML_1_2  Solvus Slope                                   : 7770.03
+$ML_2_1  Solvus Slope                                   : 0.0
+
+$DC_0  Diffusion Coefficient of Liquid                  : 1.0e-9
+$DC_1  Diffusion Coefficient of Solid                   : 1.0e-12
+$DC_2  Diffusion Coefficient of Solid                   : 1.0e-12
+
+$AE_0  Diffusion activation energy of Liquid            : 0.0
+$AE_1  Diffusion activation energy of A1                : 0.0
+$AE_2  Diffusion activation energy of L12               : 0.0
+
+$EF_0  Entropy of Fusion                                : 0.0
+$EF_1  Entropy of Fusion                                : -1.0e6
+$EF_2  Entropy of Fusion                                : -1.2e6
+
+$Flag_0 Stoichiometry flag                              : No
+$Flag_1 Stoichiometry flag                              : No
+$Flag_2 Stoichiometry flag                              : Yes
+
+@Composition
+
+$C0_0_AL  Initial Concentration                         : 0.205
+$C0_1_AL  Initial Concentration                         : 0.190
+$C0_2_AL  Initial Concentration                         : 0.230
+
+$CMIN_0_AL  Lower Phase Concentration Limit             : 0.10
+$CMAX_0_AL  Upper Phase Concentration Limit             : 0.30
+
+$CMIN_1_AL  Lower Phase Concentration Limit             : 0.10
+$CMAX_1_AL  Upper Phase Concentration Limit             : 0.30
+
+$CMIN_2_AL  Lower Phase Concentration Limit             : 0.23
+$CMAX_2_AL  Upper Phase Concentration Limit             : 0.23
+
+$C0_0_NI  Initial Concentration                         : 0.795
+$C0_1_NI  Initial Concentration                         : 0.810
+$C0_2_NI  Initial Concentration                         : 0.770
+
+$CMIN_0_NI  Lower Phase Concentration Limit             : 0.70
+$CMAX_0_NI  Upper Phase Concentration Limit             : 0.90
+
+$CMIN_1_NI  Lower Phase Concentration Limit             : 0.70
+$CMAX_1_NI  Upper Phase Concentration Limit             : 0.90
+
+$CMIN_2_NI  Lower Phase Concentration Limit             : 0.77
+$CMAX_2_NI  Upper Phase Concentration Limit             : 0.77
+
+@Temperature
+
+$T0     Initial System Temperature                      : 1654
+
+$R0X    X coordinate of the reference point             : 0
+$R0Y    Y coordinate of the reference point             : 0
+$R0Z    Z coordinate of the reference point             : 0
+
+$DT_DRX X component of the temp. gradient               : 0
+$DT_DRY Y component of the temp. gradient               : 0
+$DT_DRZ Z component of the temp. gradient               : 0
+
+$ControlMode_0                                          : LINEAR
+$LinearRate_0  Cooling(-) or heating(+) rate            : -10000.0
+
+$LatentHeatMode                                         : LOCAL
+
+$LatentHeat_0_1                                         : -9.46e+8
+$LatentHeat_0_2                                         : -6.691e+8
+$LatentHeat_1_2                                         : 2.769e+8
+
+$VolumetricHeatCapacity_0                               : 5.51e+6
+$VolumetricHeatCapacity_1                               : 5.02e+6
+$VolumetricHeatCapacity_2                               : 5.02e+6
+
+$Extension_Z0                                           : 1200
+$Extension_ZN                                           : 1200
+
+@HeatSources
+
+$Source_0     Source is present                         : Yes
+$Value_0      Heat source value                         : -1.0e7
+$Type_0       Heat source type                          : BCZ0
+$TriggerON_0  Turn ON condition                         : Tmax
+$TriggerONvalue_0  Turn ON value                        : 1000
+$TriggerOFF_0  Turn OFF condition                       : Tmin
+$TriggerOFFvalue_0  Turn OFF value                      : 1600
+$Repeat_0     How many times to reactivate              : 1
+
+$Source_1     Source is present                         : Yes
+$Value_1      Heat source value                         : 10.0e6
+$Type_1       Heat source type                          : BCZN
+$TriggerON_1  Turn ON condition                         : PhaseFractionMin
+$PhaseIndexON_1   Phase index ON                        : 0
+$TriggerONvalue_1  Turn ON value                        : 0.1
+$TriggerOFF_1  Turn OFF condition                       : PhaseFractionMax
+$PhaseIndexOFF_1   Phase index OFF                      : 0
+$TriggerOFFvalue_1  Turn OFF value                      : 0.4
+$Repeat_1     How many times to reactivate              : 1
+
+@HeatDiffusion
+
+$ThermalConductivity_0                                  : 50
+$ThermalConductivity_1                                  : 75
+$ThermalConductivity_2                                  : 75
+
+$VolumetricHeatCapacity_0                               : 5.51e+6
+$VolumetricHeatCapacity_1                               : 5.02e+6
+$VolumetricHeatCapacity_2                               : 5.02e+6
+
+$Tolerance                                              : 1.0e-9
+$SolverCallsInterval                                    : 10
+$VerboseIterations                                      : No
+
+@BoundaryConditions
+
+$BC0X   X axis beginning boundary condition             : NoFlux
+$BCNX   X axis far end boundary condition               : NoFlux
+
+$BC0Y   Y axis beginning boundary condition             : NoFlux
+$BCNY   Y axis far end boundary condition               : NoFlux
+
+$BC0Z   Z axis beginning boundary condition             : NoFlux
+$BCNZ   Z axis far end boundary condition               : NoFlux

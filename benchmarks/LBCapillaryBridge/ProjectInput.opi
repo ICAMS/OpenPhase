@@ -1,0 +1,105 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@RunTimeControl
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$SimTtl        Simulation Title                        : LBCapillaryBridge
+$nSteps        Number of Time Steps                    : 10000
+$tRstrt        Restart output every (tSteps)           : 50000
+$FTime         Output Distance to Disk (in tSteps)     : 100
+$STime         Output Distance to Screen (in tSteps)   : 100
+$dt            Initial Time Step                       : 1.5506576913568358e-11
+
+$Restrt        Restart switch (Yes/No)                 : No
+$tStart        Restart at time step                    : 0
+
+$nOMP          Number of OpenMP Threads                : 4
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GridParameters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Nx            System Size in X Direction              : 30
+$Ny            System Size in Y Direction              : 30
+$Nz            System Size in Z Direction              : 0
+$dx            Grid Spacing                            : 1E-8
+$Bcells        Boundary cells                          : 3
+$IWidth        Interface Width (in grid points)        : 5
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Settings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Phase_0       Name of Phase 0                         : Fluid
+$Phase_1       Name of Phase 1                         : Solid
+
+$State_0       Aggregate state of phase 0              : LIQUID
+$State_1       Aggregate state of phase 1              : SOLID
+
+$MassDensity_0     Density of phase 0 (does not apply) : 0
+$MassDensity_1     Density of phase wall [Kg/m^3]      : 1.0E5
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@LBCapillaryBridge
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$bAdvect        Advect solid bodies                    : Yes
+$bEnforceV      Enforce initial liquid Volume          : No
+$bEnforceD      Enforce initial liquid Diameter        : Yes
+$bEnforceC      Enforce initial curvature              : Yes
+$iTAdvect       Time after advection is computed       : 5000
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@AdvectionHR
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$scheme         Advection scheme                       : Superbee
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@BoundaryConditions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$BC0X          X axis beginning boundary condition     : NoFlux
+$BCNX          X axis far end boundary condition       : NoFlux
+$BC0Y          Y axis beginning boundary condition     : NoFlux
+$BCNY          Y axis far end boundary condition       : NoFlux
+$BC0Z          Z axis beginning boundary condition     : NoFlux
+$BCNZ          Z axis far end boundary condition       : NoFlux
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@FlowSolverLBM
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$N_FLUID_COMP   Number of fluid components              : 1
+$NU[0]          Kinematic viscosity of water [m^2/s]    : 1.00E-6
+$dRho           Reference Density [Kg/m^3]              : 530.0
+
+$BENZI          Liquid vapor phase separation (Benzi)   : Yes
+$GB_0_0         Benzi parameter   [Kg/m^3]              : -2650.0
+$Wetting_0_0    Wetting parameter [Kg/m^3]              : 0.0
+$Wetting_0_1    Wetting parameter [Kg/m^3]              : 3.86675e+02
+
+$BOUNCEBACK     Calculate bounce back force             : Yes
+$DRAG           Calculate drag force                    : No
+$GRAVITY        Calculate gravitational force           : No
+$GUO_FORCING    Use Guo's method to apply force         : Yes
+$ED_FORCING     Use exact difference method             : No
+$THERMALCOMP                                            : No
+
+$bFluidRedistributionApearing                           : Yes
+$bFluidRedistributionVanishing                          : No
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InteractionSolidFluid
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Inertia      Consider inertia of solid bodies  : Yes
+$Rotations    Consider rotations solid bodies   : No

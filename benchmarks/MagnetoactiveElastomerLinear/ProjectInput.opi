@@ -1,0 +1,138 @@
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@MagnetoactiveElastomerLinear
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$dR1     Radius of first Magnetic Particle        :  103.75e-6
+$dR2     Radius of second Magnetic Particle       :  111.37e-6
+$dR3     Radius of polymer matrix                 : 1000.00e-6
+$dDis    Distance between Magnetic Particles      :  329.82e-6
+$dH0     External magnetic field H [A/m]          : 135.3e3
+$dPhi0   Start angle of H [deg]                   : 0.0
+$dDPhi   Rotation of H per time step [deg]        : 5.0
+$dAcc    Relative Accuracy of DeltaDistance       : 1.0e-7
+$iMinItr Minimum of iteration of elastic solver   : 100
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@RunTimeControl
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$SimTtl   Simulation Title                        : MagnetoactiveElastomerLinear
+$nOMP     Number of OpenMP Threads                : 4
+
+$LUnits   Units of length                         : m
+$TUnits   Units of time                           : s
+$MUnits   Units of mass                           : kg
+$EUnits   Energy units                            : J
+
+$dt       Initial Time Step                       : 1
+$nSteps   Number of Time Steps                    : 36
+$FTime    Output to disk every (tSteps)           : 36
+$STime    Output to screen every (tSteps)         : 1
+
+$Restrt   Restart switch (Yes/No)                 : No
+$tStart   Restart at time step                    : 0
+$tRstrt   Restart output every (tSteps)           : 1
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GridParameters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Nx       System Size in X Direction              : 256
+$Ny       System Size in Y Direction              : 256
+$Nz       System Size in Z Direction              : 0
+$dx       Grid Spacing                            : 5.0e-6
+$IWidth   Interface Width (in grid points)        : 5
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Settings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Phase_0  Name of Phase 0                         : Atmosphere
+$Phase_1  Name of Phase 1                         : Polymer
+$Phase_2  Name of Phase 2                         : Ni
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@BoundaryConditions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$BC0X     X axis beginning boundary condition  : Periodic
+$BCNX     X axis far end boundary condition    : Periodic
+
+$BC0Y     Y axis beginning boundary condition  : Periodic
+$BCNY     Y axis far end boundary condition    : Periodic
+
+$BC0Z     Z axis beginning boundary condition  : Periodic
+$BCNZ     Z axis far end boundary condition    : Periodic
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@LinearMagneticSolver
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$H0X       External magnetic field strength in X  : 0
+$H0Y       External magnetic field strength in Y  : 0
+$H0Z       External magnetic field strength in Z  : 0
+
+$chi_0     Volume susceptibility of 0             : 0.0
+$chi_1     Volume susceptibility of 1             : 0.1
+$chi_2     Volume susceptibility of 2             : 4.9
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@ElasticProperties
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Mechanical boundary conditions:
+AppliedStrain
+AppliedStress
+FreeBoundaries
+
+$BCX         Boundary condition in X direction    :  FreeBoundaries
+$BCY         Boundary condition in Y direction    :  FreeBoundaries
+$BCZ         Boundary condition in Z direction    :  FreeBoundaries
+
+$BCXY        Boundary condition in X direction    :  FreeBoundaries
+$BCXZ        Boundary condition in Y direction    :  FreeBoundaries
+$BCYZ        Boundary condition in Z direction    :  FreeBoundaries
+
+$BCValueX    Mixed Value X                        : 0
+$BCValueY    Mixed Value Y                        : 0
+$BCValueZ    Mixed Value Z                        : 0
+
+$BCValueXY   Mixed Value XY                       : 0
+$BCValueXZ   Mixed Value XZ                       : 0
+$BCValueYZ   Mixed Value YZ                       : 0
+
+$EModel      Elasticity model                     : Khachaturyan
+$SMode       Strain mode                          : Small
+$ConsiderExternalForces                           : Yes
+
+$K_0        Bulk modulus of Atmosphere            : 1.01e5
+$G_0        Shear modulus of Atmosphere (real 0!) : 1.00e2
+
+$U_0 :
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+$E_1        Young's modulus of polymer matrix (real 7.244e3Pa!) : 7.244e3
+$Nu_1       Poisson's ratio of polymer matrix (real 0.49)       : 0.49
+
+$U_1 :
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+$E_2        Young's modulus of nickel particles (real 197GPa!) : 1.97e6
+$Nu_2       Poisson's ratio of nickel particles                : 0.3
+
+$U_2 :
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+$ChemoMechanicalCoupling : No
+$ThermoMechanicalCoupling : No
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@ElasticitySolverSpectral
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$MAXIterations                                    : 1000000000
+$StrainAccuracy                                   : 1e-90

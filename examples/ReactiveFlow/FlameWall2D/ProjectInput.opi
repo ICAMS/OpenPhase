@@ -1,0 +1,148 @@
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+
+@RunTimeControl
+
+$SimTtl         Simulation Title                                        : Reactive Flow
+
+$nSteps         Number of Time Steps                                    : 3000000
+$dt             Initial Time Step                                       : 8.0e-08
+
+$nOMP           Number of OpenMP Threads                                : 1
+
+$FTime          Output Interval to Disk (in tSteps)                     : 1000
+$STime          Output Interval to Screen (in tSteps)                   : 1000
+$tRstrt         Restart output every (tSteps)                           : 10000
+
+$Restrt         Restart switch (Yes/No)                                 : No
+$tStart         Restart at time step                                    : 0
+
+@ThermoChemistry
+
+$ReactionMechanism  Name of the input file used as mreaction mechanism  : bferch4.yaml
+$PhaseName          Name of the phase in the file                       : CH4_BFER_mix
+$TransportName      Name of the transport model                         : mixture-averaged
+$FuelName           Main fuel used in the mixture                       : CH4
+$Oxidizer           Oxidizer in the mixture                             : air
+$EquivRatio         Equivalence Ratio                                   : 1.0
+$nPhases            Number of thermodynamic phases                      : 2
+
+@BoundaryConditions
+
+$BC0X   X axis beginning boundary condition                             : Fixed
+$BCNX   X axis far end boundary condition                               : Fixed
+$BC0Y   Y axis beginning boundary condition                             : Periodic
+$BCNY   Y axis far end boundary condition                               : Periodic
+$BC0Z   Z axis beginning boundary condition                             : Periodic
+$BCNZ   Z axis far end boundary condition                               : Periodic
+
+@FlowSolverLBM
+
+$N_FLUID_COMP Number of fluid components             	                : 1
+
+$BOUNCEBACK   Calculate bounce back force            	                : No
+$DRAG         Calculate drag force                   	                : No
+$GRAVITY      Calculate gravitational force          	                : No
+$THERMALCOMP  Thermo-Compressibility effect                             : Yes
+$GradRho_Upwind    If scheme of advection is upwind                     : No
+$GradRho_Central   If scheme of advection is central                    : No
+$GradRho_VanLeer   If scheme of advection is vanleer                    : Yes
+
+$DRHODC[0]    Density change with Al content [kg/m^3]                   : 1
+$G0[0]        Gravity acceleration x [kg m/s^2]                         : -0.0
+$G0[1]        Gravity acceleration y [kg m/s^2]                         : 0.0
+$G0[2]        Gravity acceleration z [kg m/s^2]                         : 0.0
+$NU[0]        Kinematic viscosity liquid Mg [m^2/s]                     : 1.56e-8
+$U0X          Inflow velocity x                                         : 0.4
+$U0Y          Inflow velocity y                                         : 0.0
+$U0Z          Inflow velocity z                                         : 0.0
+$dRho         Density of liquid Mg [kg/m^3]                             : 1
+$Pth0         Initial thermodynamic pressure                            : 1.01325e05
+
+@FlowMixture
+
+$Update_Vel      If the velocity updated each time step                 : Yes
+$UniformVel      If the inlet velocity is uniform                       : No
+$PoiseuilleVel   If the Poiseuille flow imposed at inlet                : Yes
+$Austar          The optimum value of Au when DI is on                  : 320.0
+$DI              Diffuse Interface                                      : No
+$YCORNER         If corner correction is applied                        : No
+$ZCORNER         If corner correction is applied                        : Yes
+$SecOrdBB        If second order bounce back is applied                 : Yes
+$lbnu            Desired lb Kinematic viscosity for grid refinement     : 0.005
+$MaxU            Estimate of the Maximum velocity for grid refinement   : 5.0
+$Kp              Estimate of the Maximum velocity for grid refinement   : 0.7
+$LengthScale     Simulatoion length scale of Reynolds number            : 2.5e-3
+
+@EnergyTransport
+
+$T0                 Initial Temperature                                 : 300
+$BCOrder            The order of bc at the outlet                       : 1
+$ATstar             The optimum value of AT when DI is on               : 70.0
+$TempSolid          Temperature of hot solid phases                     : 300.0
+$Ts0                Initial temperature of solid phase                  : 300.0
+$HeatFlux           If constant flux applied on solid bodies            : 0.0
+$Conjugate          If congugated heat transfer is on                   : No
+$Pr                 Prandtl number of air                               : 0.71
+$Cp                 Specific heat capacity of air                       : 1005
+$Mw                 Molcular weight of air                              : 0.02896
+$AdvectionUpwind    If scheme of advection is upwind                    : Yes
+$AdvectionCentral   If scheme of advection is central                   : No
+$AdvectionVanLeer   If scheme of advection is vanleer                   : No
+$IF_ENERGY          If energy eq is being solved                        : Yes
+$Cps                Specific heat capacity of solid phase               : 900
+$Rhos               Density of solid phase                              : 2700
+$Ks                 Thernmal conductivity of solid phase                : 205
+
+@SpeciesTransport
+
+$BCOrder            The order of bc at the outlet                       : 1
+$FuelIndex          The order of bc at the outlet                       : 2
+$TempBurntGas       Temperature of burnt products                       : 2200.0
+$TempSolid          Temperature of hot solid phases                     : 300.0
+$Ts0                Initial temperature of solid phase                  : 300.0
+$HeatFlux           If constant flux applied on solid bodies            : 0.0
+$Species            If multi-species is involved                        : Yes
+$nCoeffs            Number of poly nomial coefficients                  : 15
+$IF_REACTION        If reaction is taking place                         : Yes
+$AdvectionUpwind    If scheme of advection is upwind                    : Yes
+$AdvectionCentral   If scheme of advection is central                   : No
+$AdvectionVanLeer   If scheme of advection is vanleer                   : No
+
+$X0BurntZone        First point of the initial box for ignition         : 101
+$XNBurntZone        First point of the initial box for ignition         : 1010 
+$Y0BurntZone        First point of the initial box for ignition         : 0 
+$YNBurntZone        First point of the initial box for ignition         : 1 
+$Z0BurntZone        First point of the initial box for ignition         : -10
+$ZNBurntZone        First point of the initial box for ignition         : 160
+
+$X0FuelZone         First point of the initial box for fuel             : -10
+$XNFuelZone         First point of the initial box for fuel             : 100 
+$Y0FuelZone         First point of the initial box for fuel             : 0 
+$YNFuelZone         First point of the initial box for fuel             : 1 
+$Z0FuelZone         First point of the initial box for fuel             : -10
+$ZNFuelZone         First point of the initial box for fuel             : 160
+
+@SolidBody
+
+$nParticles         Number of particles                                 : 19
+$FirstRow           First row of particles                              : 70
+$nRows              Number of rows                                      : 1
+$nCols              Number of columns                                   : 1
+$PartDiameter       Diameter of particles                               : 0.0025
+$Porosity           Fluid volum fraction (porosity)                     : 0.5
+$nDist              Normal distance from solid in grid points           : 1
+
+$Random_Dist        If random distribution is on                        : No
+$X0DistZone         First point of the distribution zone                : 25
+$XNDistZone         First point of the initial box for fuel             : 0 
+$Y0DistZone         First point of the initial box for fuel             : 0
+$YNDistZone         First point of the initial box for fuel             : 0
+$Z0DistZone         First point of the initial box for fuel             : 0
+$ZNDistZone         First point of the initial box for fuel             : 0
+
+$MinRadious         Minimum radious of solid bodies                     : 10
+$MaxRadious         Maximum radious of solid bodies                     : 30
+
+
+

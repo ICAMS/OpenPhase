@@ -1,0 +1,257 @@
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+
+@RunTimeControl
+
+$SimTtl         Simulation Title                        : Ni4Ti3 precipitation in NiTi SMA
+$nSteps         Number of Time Steps                    : 10000
+$FTime          Output to disk every (tSteps)           : 100
+$STime          Output to screen every (tSteps)         : 100
+$dt             Initial Time Step                       : 1e-9
+$LUnits         Units of length                         : m
+$TUnits         Units of time                           : s
+$MUnits         Units of mass                           : kg
+$EUnits         Energy units                            : J
+$nOMP           Number of OpenMP Threads                : 1
+$Restrt         Restart switch (Yes/No)                 : No
+$tStart         Restart at time step                    : 0
+$tRstrt         Restart output every (tSteps)           : 10000
+
+@GridParameters
+
+$Nx             System Size in X Direction              : 64
+$Ny             System Size in Y Direction              : 1
+$Nz             System Size in Z Direction              : 64
+$dx             Grid Spacing                            : 1e-6
+$IWidth         Interface Width (in grid points)        : 4.5
+
+@Settings
+
+$Comp_0   Chemical Component 0 :   Ni
+$Comp_1   Chemical Component 1 :   Ti
+
+$Phase_0  Name of Phase 0     :   B2
+$Phase_1  Name of Phase 1     :   Ni4Ti3
+
+@DrivingForce
+
+$Averg          Driving force averaging     : Yes
+$CutOff         Driving force cutoff        : 0.95
+
+@BoundaryConditions
+
+$BC0X   X axis beginning boundary condition  : Periodic
+$BCNX   X axis far end boundary condition    : Periodic
+
+$BC0Y   Y axis beginning boundary condition  : Periodic
+$BCNY   Y axis far end boundary condition    : Periodic
+
+$BC0Z   Z axis beginning boundary condition  : Periodic
+$BCNZ   Z axis far end boundary condition    : Periodic
+
+@EquilibriumPartitionDiffusion
+
+$Cs_01  Intersection Concentration          : 57.1
+$Ts_01  Intersection Temperature 01         : 4323
+
+$ML_01  Liquidus Slope                      : 500
+$ML_10  Solidus Slope                       : 0
+
+$DC_0  Diffusion Coefficient of B2           : 6.0e-19
+$DC_1  Diffusion Coefficient of Ni4Ti3       : 0.0
+
+$AE_0  Diffusion activation energy of B2     : 0.0
+$AE_1  Diffusion activation energy of Ni4Ti3 : 0.0
+
+$EF_0  Entropy of Fusion                     : 0.0
+$EF_1  Entropy of Fusion                     : -8.615e4
+
+$Flag_0 Stoichiometry flag                   : No
+$Flag_1 Stoichiometry flag                   : Yes
+
+@Composition
+
+$Comp_0   Name of the component                : Ni
+
+$C0_0_Ni  Initial Concentration                : 51
+$C0_1_Ni  Initial Concentration                : 57.1
+
+$Vm_0_Ni  Molar Volume                         : 6.0e-6
+$Vm_1_Ni  Molar Volume                         : 6.0e-6
+
+$CMIN_0_Ni  Lower Phase Concentration Limit    : 46
+$CMAX_0_Ni  Upper Phase Concentration Limit    : 58
+
+$CMIN_1_Ni  Lower Phase Concentration Limit    : 57.1
+$CMAX_1_Ni  Upper Phase Concentration Limit    : 57.1
+
+@ElasticProperties
+
+Mechanical boundary conditions:
+Applied Strain
+Applied Stress
+Free Boundaries
+
+$BCX    Boundary condition in X direction:  Free Boundaries
+$BCY    Boundary condition in Y direction:  Free Boundaries
+$BCZ    Boundary condition in Z direction:  Free Boundaries
+
+$BCValueX   Mixed Value X   : 0
+$BCValueY   Mixed Value Y   : 0
+$BCValueZ   Mixed Value Z   : 0
+
+$Comp_0   Name of the component               : Ni
+$Comp_1   Name of the component               : Ti
+
+$CREF_Ni_0      Reference concentration     : 50
+$CREF_Ni_1      Reference concentration     : 57.1
+
+$EModel Elasticity model : Khachaturyan
+
+$C11_0  : 169e9
+$C12_0  : 138e9
+$C13_0  : 138e9
+$C22_0  : 169e9
+$C23_0  : 138e9
+$C33_0  : 169e9
+$C44_0  : 40e9
+$C55_0  : 40e9
+$C66_0  : 40e9
+
+$U_0  :
+0 0 0
+0 0 0
+0 0 0
+
+$C11_1  : 218e9
+$C12_1  : 143e9
+$C13_1  : 125e9
+$C14_1  : -11e9
+$C15_1  : 6e9
+$C22_1  : 218e9
+$C23_1  : 125e9
+$C24_1  : 11e9
+$C25_1  : -6e9
+$C33_1  : 255e9
+$C44_1  : 36e9
+$C46_1  : -6e9
+$C55_1  : 36e9
+$C56_1  : -11e9
+$C66_1  : 37.5e9
+
+$U_1  :
+-0.0044 0 0
+0 -0.0044 0
+0 0 -0.027
+
+$ChemoMechCoupling : Yes
+
+$Kappa11_0_Ni : 0.003
+$Kappa22_0_Ni : 0.003
+$Kappa33_0_Ni : 0.003
+
+$ThermoMechCoupling : No
+
+@SymmetryVariants
+
+$Nvariants_0 : 1
+$V_0_0
+1 0 0
+0 1 0
+0 0 1
+ 
+$Nvariants_1 : 4
+$V_1_0
+ 0.788675 -0.211325 0.57735
+-0.211325  0.788675 0.57735
+-0.57735  -0.57735  0.57735
+
+$V_1_1
+0.788675  0.211325 -0.57735
+0.211325  0.788675  0.57735
+0.57735  -0.57735   0.57735
+
+$V_1_2
+ 0.788675 0.211325  0.57735
+ 0.211325 0.788675 -0.57735
+-0.57735  0.57735   0.57735
+
+$V_1_3
+ 0.788675 -0.211325 -0.57735
+-0.211325  0.788675 -0.57735
+ 0.57735   0.57735   0.57735
+
+@Nucleation
+
+$Allowed_0_0   allows to nucleate phase 0 in itself     : No
+$Allowed_0_1   allows to nucleate phase 0 in phase 1    : No
+$Allowed_1_0   allows to nucleate phase 1 in phase 0    : Yes
+$Allowed_1_1   allows to nucleate phase 1 in itself     : No
+
+$NucDens_1_0    Particle Density of phase 1 in phase 0 (in 1/m^3)   : 1.0e20
+$DistMu_1_0     Mu of the Normal SizeDistribution (in m)            : -1.5e-6
+$DistSig_1_0    Sigma of the SizeDistribution (in m)                : 1.0e-6
+$Tmin_1_0       Minimum temperature where nucleation is possible    : 0
+$Tmax_1_0       Maximum temperature where nucleation is possible    : 800
+$Orient_1_0     Grains orientation mode                             : Random
+$Variant_1_0    Symmetry variants per nucleation site               : Single
+
+@InterfaceEnergy
+
+$Sigma_0_1  Interface energy       : 0.035
+$Eps_0_1    Interface anisotropy  : 0.0
+
+$Sigma_0_0  Interface energy       : 0.035
+$Eps_0_0    Interface anisotropy  : 0.0
+
+$Sigma_1_1  Interface energy       : 0.035
+$Eps_1_1    Interface anisotropy  : 0.0
+
+@InterfaceMobility
+
+$Mu_0_1      Interface mobility      : 3.0e-18
+$Eps_0_1     Interface anisotropy    : 0.0
+$AE_0_1      Activation energy       : 0.0
+
+$Mu_0_0      Interface mobility      : 3.0e-18
+$Eps_0_0     Interface anisotropy    : 0.0
+$AE_0_0      Activation energy       : 0.0
+
+$Mu_1_1      Interface mobility      : 3.0e-18
+$Eps_1_1     Interface anisotropy    : 0.0
+$AE_1_1      Activation energy       : 0.0
+
+@Temperature
+
+$T0      Initial System Temperature          : 773.0
+
+$R0X    X coordinate of the reference point : 0
+$R0Y    Y coordinate of the reference point : 0
+$R0Z    Z coordinate of the reference point : 0
+
+$DT_DRX X component of the temp. gradient   : 0
+$DT_DRY Y component of the temp. gradient   : 0
+$DT_DRZ Z component of the temp. gradient   : 0
+
+$DT_Dt  Cooling(-) or heating(+) rate       : 0.0
+ 
+$LAT_HEAT_0_1 : -157999.7
+$LAT_HEAT_0_2 :   0.00
+$LAT_HEAT_1_2 :   0.00
+
+$CP_0 : 810.75
+$CP_1 : 697.21
+$CP_2 : 697.21
+
+$RHO_0 : 7000.00
+$RHO_1 : 7000.00
+$RHO_2 : 7000.00
+
+@HeatDiffusion
+$ThermalDiffusivity_0 :  75.0
+$ThermalDiffusivity_1 :  75.0
+$ThermalDiffusivity_2 :  75.0
+$HeatCapacity_0 :  810.75
+$HeatCapacity_1 :  697.21
+$HeatCapacity_2 :  697.21
+$Tolerance : 1.0e-8

@@ -1,0 +1,9 @@
+This is a README file for the Eshelby Test.
+
+In order to run the test simulation you should run ./EshelbyTest. 
+/ProjectInput directory contains the necessary input file for the simulation. 
+Results will be placed in to the /VTK directory and can be visualised 
+using ParaView (www.paraview.org).
+
+A detailed description of the simulation setup is given in the EshelbyTest.txt file.  
+

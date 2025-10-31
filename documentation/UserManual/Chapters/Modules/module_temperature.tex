@@ -1,0 +1,46 @@
+\section{Temperature}
+\label{sec:module_temperature}
+% Define box and box title style
+\tikzstyle{mybox} = [draw=black, fill=RUBgrau!20, very thick, rectangle, rounded corners, inner sep=10pt, inner ysep=20pt]
+\tikzstyle{fancytitle} =[fill=RUBblau!100, text=white, rectangle, rounded corners,draw=black]
+
+\begin{tikzpicture}
+\node[mybox] (box)
+{
+  \begin{minipage}{1\textwidth}
+  \begin{description}
+  \item[What it does] Stores temperature field and provides several methods to control it during the simulation.
+  \item[Requires] \nameref{sec:module_settings}, \nameref{sec:module_phasefield}, \nameref{sec:module_boundaryconditions}
+  \item[Header File] Temperature.h
+  \item[Input file] Temperature.opi
+  \item[Examples] /examples/HeatEquation, ...
+  \end{description}
+  \end{minipage}
+};
+\node[fancytitle, right=12pt] at (box.north west) {Module in brief...};
+\end{tikzpicture}
+\paragraph{Background and usage} The main purpose of the temperature module is the storage of a temperature field, here called $\mathrm{Tx}(i,j,k)$, as well as the temperature gradients used for the heat calculations. Since $\mathrm{Tx}(i,j,k)$ is public it can be accessed from the main.cpp in order to declare boundary conditions manually. However, the module provides various routines to set the temperature at the beginning or during the simulation.
+
+\begin{description}[font=\sffamily, font=\normalsize]
+  \lstitem{SetInitial(BoundaryConditions& BC)} Sets temperature $\mathrm{Tx}(i,j,k)$ to constant value $\mathrm{T_0}$ as defined in the input file. For $\mathrm{dT/dx} \neq 0$, $\mathrm{dT/dy} \neq 0$ or $\mathrm{dT/dz} \neq 0$ .
+  \lstitem{Set(BoundaryConditions& BC, double dt)} Integrates the temperature by $\delta T = \mathrm{dT/dt} dt$, where $\mathrm{dT/dt}$ is given in the temperature input file.
+\end{description}
+
+The temperature field can be read and write to disk using \lstinline{Write(int tStep)} and \lstinline{Read(int tStep)}. VTK output can be generated via \lstinline{WriteVTK(int tStep)} for temperature and \lstinline{WriteTemperatureGradientVTK(int tStep)} for gradients.
+
+% ----------------------------------------------------------------
+\CallGraphSettings
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[framed, node distance = 2cm, auto]
+    \node [block] (constructor) {constructor};
+    \node [block, below of=constructor] (init) {Initialize()};
+    \node [block, below of=init] (input) {ReadInput(Filename)};
+ 
+    % Draw edges
+    \path [line] (constructor) -- (init);
+    \path [line] (init) -- (input);
+\end{tikzpicture}
+\caption{In and output for module \nameref{sec:module_temperature}}
+\end{figure}

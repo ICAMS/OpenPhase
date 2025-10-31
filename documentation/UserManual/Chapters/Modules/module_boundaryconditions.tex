@@ -1,0 +1,51 @@
+\section{BoundaryConditions}
+\label{sec:module_boundaryconditions}
+
+% Define box and box title style
+\tikzstyle{mybox} = [draw=black, fill=RUBgrau!20, very thick, rectangle, rounded corners, inner sep=10pt, inner ysep=20pt]
+\tikzstyle{fancytitle} =[fill=RUBblau!100, text=white, rectangle, rounded corners,draw=black]
+
+\begin{tikzpicture}
+\node[mybox] (box)
+{
+\begin{minipage}{1\textwidth}
+\begin{description}
+\item[What it does] Sets boundary conditions for scalar and vectorial calculation variables.
+\item[Requires] \nameref{sec:module_settings}
+\item[Header file] BoundaryConditions.h
+\item[Input file] BoundaryConditions.opi
+\item[Examples] /examples/HeatEquationSolver
+\end{description}
+\end{minipage}
+};
+\node[fancytitle, right=12pt] at (box.north west) {Module in brief...};
+\end{tikzpicture}
+Boundary Conditions can be set individually for every side in the boundary condition input file (typically BoundaryConditions.opi) which is read by \cmethod{ReadInput()}. The keywords \cmethod{\$BC0X}, \cmethod{\$BCNX}, \cmethod{\$BC0Y}, \cmethod{\$BCNY}, \cmethod{\$BC0Z} and \cmethod{\$BCNZ} define the six individual sides of the calculation domain, see Listing \ref{lst:BCInputListing}
+
+\lstinputlisting[frame=single,float=h,captionpos=b, caption= Example of BoundaryConditions.opi input file for BoundaryConditions, label=lst:BCInputListing]{Chapters/Modules/listing_bcinput.tex}
+
+The available types for a scalar or vectorial variable $\xi$
+\begin{description}
+ \item[Periodic] $\xi_1 = \xi_N$
+ \item[Free] $\xi_1, \xi_N$
+ \item[NoFlux] $(\nabla \xi_1)\nB = (\nabla \xi_N)\nB = 0$
+ \item[Fixed] $\xi_1, \xi_N$
+\end{description}
+Internally, a boundary condition object containing the boundary definitions is passed to the indivual modules, such as \nameref{sec:module_temperature} or \nameref{sec:module_phasefield}.
+
+% ------------------------------------------------------------------------------
+\CallGraphSettings
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[framed, node distance = 2cm, auto]
+    \node [block] (constructor) {\cmethod{Constructor}};
+    \node [block, below of=constructor] (init) {\cmethod{Initialize(...)}};
+        \node [block, below of=init] (readinput) {\cmethod{ReadInput(BoundaryConditions.opi)}};
+    
+    % Draw edges
+    \path [line] (constructor) -- (init);
+    \path [line] (init) -- (readinput);
+\end{tikzpicture}
+\caption{Call graph for module \nameref{sec:module_boundaryconditions}}
+\end{figure}

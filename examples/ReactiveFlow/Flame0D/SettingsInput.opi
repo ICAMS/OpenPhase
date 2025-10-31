@@ -1,0 +1,29 @@
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+
+@GridParameters
+
+$Nx             System Size in X Direction                              : 20
+$Ny             System Size in Y Direction                              : 0
+$Nz             System Size in Z Direction                              : 20
+$dx             Grid Spacing                                            : 1.0e-5 
+$IWidth         Interface Width (in grid points)                        : 6.0
+$Bcells                                                                 : 2
+$MPI3D		    MPI working in 3 Dimensions     	                    : Yes
+$Ncx            Number of cores in X Direction                          : 1
+$Ncy            Number of cores in Y Direction                          : 1
+$Ncz            Number of cores in Z Direction                          : 1
+
+@Settings
+
+$Phase_0        Name of Phase 0                                         : Gas
+$State_0        Aggregate state of phase 0                              : GAS
+
+
+
+
+
+
+
+
+

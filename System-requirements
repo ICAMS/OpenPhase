@@ -1,0 +1,3 @@
+The OpenPhase project is developed for Linux, but it is not restricted to use 
+it in any other OS. The project has been tested to work with GNU g++ 9.0 and
+later. It also requires the fftw3 library (www.fftw.org)

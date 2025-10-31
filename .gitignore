@@ -1,0 +1,12 @@
+*.o
+*.d
+*.so
+*/*.o
+*/*.d
+*/*.so
+*/*/*.o
+*/*/*.d
+*.cache/*
+.clang-format
+.clangd
+compile_commands.json

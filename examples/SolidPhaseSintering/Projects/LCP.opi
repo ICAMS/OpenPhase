@@ -1,0 +1,159 @@
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@RunTimeControl
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$SimTtl     Simulation Title                       : SolidPhaseSintering
+$nSteps     Number of Time Steps                   : 100000
+$tRstrt     Restart output every (tSteps)          : 1000
+$FTime      Output to disk every (tSteps)          : 100
+$STime      Output to screen every (tSteps)        : 10
+$dt         Initial Time Step                      : 2.50e-1
+
+$Restrt                                            : No
+
+$nOMP       Number of OpenMP Threads               : 10
+
+$LogScreen  Logarithmic output to screen           : No
+$LogVTK     Logarithmic output to VTK              : No
+$LogScreenF Outputs to screen per decade = 10 x    : 10
+$LogVTKF    Outputs to VTK    per decade = 10 x    : 1
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Settings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Nx         System Size in X Direction            : 128
+$Ny         System Size in Y Direction            : 128
+$Nz         System Size in Z Direction            : 0
+$IWidth     Interface Width (in grid points)      : 5
+$dx         Grid Spacing [m]                      : 1.0e-7
+$Bcells     Boundary Cells                        : 2
+
+$Comp_0     Chemical Component 0                  : LCP
+
+$Phase_0    Name of Phase 0                       : Vapor
+$Phase_1    Name of Phase 1                       : LCP
+
+$State_0    Aggregate state of phase Vapor        : Gas
+$State_1    Aggregate state of phase LCP         : Solid
+
+$Density_0  Equilibrium density of Vapor [kg/m^3] :    0.16090262
+$Density_1  Equilibrium density of LCP  [kg/m^3] : 3650.00
+
+$VTKDir  :  Projects/LCP/VTK
+$RAWDir  :  Projects/LCP/RawData
+$DATADir :  Perojcts/LCP/TextData
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@ProjectInput
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$RandomSeed Random number seed                      : 123456789
+
+$Rho        Initial Relative Density                : 0.64
+$AvR        Mean particle radius                    : 0.50e-6
+$StdR       Standard deviation of particle radius   : 0.25e-6
+
+$SX         Initial sintered body size X            : 12e-6
+$SY         Initial sintered body size Y            : 12e-6
+$SZ         Initial sintered body size Z            : 12e-6
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@AnalysisSintering
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$BBox       Calculate Density using bounding box method     : Yes
+
+$BBSX       Bounding box size size X [m]                    : 6e-6
+$BBSY       Bounding box size size Y [m]                    : 6e-6
+$BBSZ       Bounding box size size Z [m]                    : 6e-6
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@BoundaryConditions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Boundary Condition Options: Periodic, Fixed, NoFlux
+% NoFlux corresponds to mirroring boundary conditions
+
+$BC0X    X axis beginning boundary condition    : Periodic
+$BCNX    X axis far end boundary condition      : Periodic
+$BC0Y    Y axis beginning boundary condition    : Periodic
+$BCNY    Y axis far end boundary condition      : Periodic
+$BC0Z    Z axis beginning boundary condition    : Periodic
+$BCNZ    Z axis far end boundary condition      : Periodic
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InterfaceProperties
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Mu_0_0     Interface mobility Vapor_Vapor [m^2 s/Kg] : 0.000
+$Mu_0_1     Interface mobility Vapor_LCP   [m^2 s/Kg] : 1.00e-14
+$Mu_1_1     Interface mobility LCP_LCP     [m^2 s/Kg] : 1.00e-14
+
+$Sigma_0_0  Interface energy Vapor_Vapor [kg/s^2]     : 0.000
+$Sigma_0_1  Interface energy Vapor_LCP   [kg/s^2]     : 0.320
+$Sigma_1_1  Interface energy LCP_LCP     [kg/s^2]     : 0.224
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GrandPotentialDensity
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$OMEGA_0      Vapor phase model                      : Parabolic
+$EPS_0_LCP    Bulk Modulus of LCP Vapor [Pa]         : 1.0e-1
+$C0_0_LCP     Equilibrium moles per volume [mol/m^3] : 1.0
+
+$OMEGA_1      Solid phase model                      : Parabolic
+$K0_1_LCP     Bulk Modulus of Solid LCP [Pa]         : 1.00e8
+$C0_1_LCP     Equilibrium moles per volume [mol/m^3] : 22692.51
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GrandPotentialSolver
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$MASS_LCP      Molar Mass of LCP [kg/mol]                         : 0.16090262
+
+$CI_0_LCP      Initial moles per volume of LCP in vapor [mol/m^3] : 1
+$CI_1_LCP      Initial moles per volume of LCP in LCP [mol/m^3]   : 22692.51
+
+$M0_0_LCP      Chemical mobility of LCP in vapor [m^2/s]          : 2.00e-14
+$M0_1_LCP      Chemical mobility of LCP in LCP [m^2/s]            : 2.00e-14
+
+$IM             Use Interface Mobility Coefficient                : No
+$dMdc           Phase Mobility Concentration Coupling             : No
+
+$Implicit       Use semi implicit Euler scheme                    : No
+$MAXI           Maximum of iterations                             : 1000
+$ACC            Relative Accuracy of chemical potential           : 1.0e-08
+
+$TOC            Conserve total amount of components               : Yes
+$TOCMAXI        Maximum of iterations                             : 10
+$TOCACC         Relative Accuracy                                 : 1.0e-10
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InteractionSolidSolid
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Model    Solid-Solid interaction model              : Wang
+$SWang    Solid-Solid interaction strength [Pa]      : 0
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InteractionSolidFluid
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Inertia      Consider inertia of rigid bodies                 : No
+$Rotations    Consider rotations rigid bodies                  : Yes
+
+$TauTrans     Rigid body translation time parameter [s]        : 1
+$TauRot       Rigid body rotation time parameter [s]           : 1
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Temperature
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$T0    Sintering temperature [K]    : 600

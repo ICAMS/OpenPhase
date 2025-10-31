@@ -1,0 +1,134 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@RunTimeControl
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$SimTtl        Simulation Title                        : GPWangSolidSolidTest
+$nSteps        Number of Time Steps                    : 1000
+$tRstrt        Restart output every (tSteps)           : 1000
+$FTime         Output Distance to Disk (in tSteps)     : 10
+$STime         Output Distance to Screen (in tSteps)   : 10
+$dt            Initial Time Step                       : 2.50e-1
+$Restrt        Restart switch (Yes/No)                 : No
+$tStart        Restart at time step                    : 0
+
+$nOMP          Number of OpenMP Threads                : 1
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GridParameters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Nx           System Size in X Direction              : 100
+$Ny           System Size in Y Direction              : 80
+$Nz           System Size in Z Direction              : 0
+$dx           Grid Spacing                            : 1.0e-7
+$Bcells       Boundary cells                          : 2
+$IWidth       Interface Width (in grid points)        : 6
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Settings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Comp_0       Chemical Component 0                    : LATP
+
+$Phase_0      Name of Phase 0                         : Vapor
+$Phase_1      Name of Phase 1                         : LATP
+
+$State_0      Aggregate state of phase Vapor          : Gas
+$State_1      Aggregate state of phase LATP           : Solid
+
+$MassDensity_0    Equilibrium density of Vapor [kg/m^3]   :    0.17676
+$MassDensity_1    Equilibrium density of LATP  [kg/m^3]   : 2934.00
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@AdvectionHR
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$scheme        Advection scheme                        : Superbee
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@BoundaryConditions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$BC0X          X axis beginning boundary condition     : Periodic
+$BCNX          X axis far end boundary condition       : Periodic
+$BC0Y          Y axis beginning boundary condition     : Periodic
+$BCNY          Y axis far end boundary condition       : Periodic
+$BC0Z          Z axis beginning boundary condition     : Periodic
+$BCNZ          Z axis far end boundary condition       : Periodic
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InterfaceProperties
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Mu_0_0       Interface mobility Vapor_Vapor [m^2 s/Kg]    : 0.000
+$Mu_0_1       Interface mobility Vapor_GAMMA [m^2 s/Kg]    : 1.00e-14
+$Mu_1_1       Interface mobility GAMMA_GAMMA [m^2 s/Kg]    : 1.00e-14
+
+$Sigma_0_0    Interface energy Vapor_Vapor [kg/s^2]        : 0.000
+$Sigma_0_1    Interface energy Vapor_GAMMA [kg/s^2]        : 0.500
+$Sigma_1_1    Interface energy GAMMA_GAMMA [kg/s^2]        : 0.250
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GrandPotentialDensity
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Gravity                                              : No
+
+$OMEGA_0       Vapor phase model                      : Parabolic
+$EPS_0_LATP    Bulk Modulus of LATP Vapor [Pa]        :  1.0e-1
+$C0_0_LATP     Equilibrium moles per volume [mol/m^3] : 1.0
+
+$OMEGA_1       Solid phase model                      : Parabolic
+$K0_1_LATP     Bulk Modulus of Solid LATP [Pa]        : 1.00e8
+$C0_1_LATP     Equilibrium moles per volume [mol/m^3] : 16632.72
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GrandPotentialSolver
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$MASS_LATP      Molar Mass of LATP [kg/mol]                         : 0.17676
+
+$CI_0_LATP      Initial moles per volume of LATP in vapor [mol/m^3] : 1
+$CI_1_LATP      Initial moles per volume of LATP in LATP [mol/m^3]  : 16632.72
+
+$M0_0_LATP      Chemical mobility of LATP in vapor [m^2/s]          : 2.00e-14
+$M0_1_LATP      Chemical mobility of LATP in LATP [m^2/s]           : 2.00e-14
+
+$IM             Use Interface Mobility Coefficient                  : No
+$dMdc           Phase Mobility Concentration Coupling               : No
+
+$Implicit       Use semi implicit Euler scheme                      : No
+$MAXI           Maximum of iterations                               : 1000
+$ACC            Relative Accuracy of chemical potential             : 1.0e-08
+
+$TOC            Conserve total amount of components                 : No
+$TOCMAXI        Maximum of iterations                               : 10
+$TOCACC         Relative Accuracy                                   : 1.0e-10
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InteractionSolidSolid
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Model         Solid-Solid interaction model                    : Wang
+$SWang         Solid-Solid interaction strength [Pa]            : 1.0e-13
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InteractionSolidFluid
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Inertia      Consider inertia of solid bodies  : Yes
+$Rotations    Consider rotations solid bodies   : Yes
+
+$TauTrans     Time parameter for translation without inertia [s] : 1e+1
+$TauRot       Time parameter for rotation without inertia [s]    : 1e+1
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Temperature
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$T0    Sintering temperature [K]    : 1300

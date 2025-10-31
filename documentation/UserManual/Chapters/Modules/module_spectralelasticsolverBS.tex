@@ -1,0 +1,81 @@
+\section{SpectralElasticSolverBS}
+\label{sec:module_spectralelasticsolverBS}
+
+% Define box and box title style
+\tikzstyle{mybox} = [draw=black, fill=RUBgrau!20, very thick, rectangle, rounded corners, inner sep=10pt, inner ysep=20pt]
+\tikzstyle{fancytitle} =[fill=RUBblau!100, text=white, rectangle, rounded corners,draw=black]
+
+\begin{tikzpicture}
+\node[mybox] (box)
+{
+\begin{minipage}{1\textwidth}
+\begin{description}
+\item[What it does] Calculates the mechanical equilibrium $\nabla \cdot \sigmaB = 0$.
+\item[Requires] \nameref{sec:module_settings}, \nameref{sec:module_phasefield}, \nameref{sec:module_boundaryconditions}, \nameref{sec:module_elasticproperties}
+\item[Input file] ElasticProperties.opi
+\item[Examples] /examples/EshelbyTest
+\end{description}
+\end{minipage}
+};
+\node[fancytitle, right=12pt] at (box.north west) {Module in brief...};
+\end{tikzpicture}
+\paragraph{Background} The SpectralElasticSolverBS module represents an alternative to the \nameref{sec:module_spectralelasticsolver} and the \nameref{sec:module_spectralelasticsolverAL} module. It implements the scheme as described by Moulinec and Suquet \citeopref{Moulinec1998} using an enhanced mathematical formulation, strong phase contrast can be treated with improved convergence behavior, see \citeopref{Moulinec2014} for a comparison. However, the basic scheme uses, like the AL solver, a strain related and hence can not be used in combination with the \nameref{sec:module_largedeformations} module.\\
+
+Starting from the mechanical equilibrium,
+\begin{equation}
+	\nabla \cdot \sigmaB(\xB) = 0,
+  \label{eq:BSeq}
+\end{equation}
+where $\sigmaB = \CB(\xB):\varepsilonB$ is the symmetric Cauchy stress tensor using Hooke's law assuming a linear stress-strain relationship.
+The principle idea is to split the total strain $\varepsilonB(\xB)$ into an homogeneous and an heterogeneous part
+\begin{equation}
+  \varepsilonB(\xB) = \EB + \tilde{\varepsilonB}(\xB)
+  \label{eq:BS1}
+\end{equation}
+where the latter one is assumed to be periodic. It follows, that the stress 
+\begin{equation}
+  \sigmaB(\xB) = \CB(\xB) : (\EB + \tilde{\varepsilonB}(\xB)) 
+  \label{eq:BS2}
+\end{equation}
+If one introduces a reference stiffness\footnote{}, 
+\begin{equation}
+\CB^0 = \frac{1}{2}\left(\textrm{max}_{\phi}(\tilde{\CB}) - \textrm{min}_{\phi}(\tilde{\CB}_\phi)\right),
+\label{eq:BS3}
+\end{equation}
+with $\tilde{\CB}$ being the rotated initial stiffness tensors,
+
+
+By transferring (\ref{eq:BS1}) to Fourier space, the convolution becomes a simple multiplication
+\begin{equation}
+  \varepsilonB^{i+1}(\xB) = \Gamma \ast \left(\CB(\xB) - \CB^0\right)\varepsilonB^i + \EB
+  \label{eq:BS3}
+\end{equation}
+The Green operator for anisotropic materials reads in Fourier space
+\begin{equation}
+  \hat{\Gamma}^0_{ijkl} = -k_j k_l \left(C^0_{ijkl} k_l k_j \right)^{-1} 
+\end{equation}
+
+Note that the choice of the reference stiffness $\CB^0$ has a severe impact on the convergence performance. 
+
+
+\paragraph{Usage} The solver is called via \cmethod{Solve(ElasticProperties,
+            double equilibrium, int MAXIterations)}, where \textsf{equilibrium} is the convergence criterium following (\ref{eq:convAL}) and \cvar{MAXIterations} the maximum allowed number of iterations. Before the solver is called, the load is internally finalized with \cmethod{SetLoad(ElasticProperties)}. Check wether that \cmethod{SetGrainsProperties(...)}, \cmethod{SetEffectiveElasticConstants()} and \textsf{ SetEffectiveEigenstrains(...)} of \cmethod{ElasticProperties} and \cmethod{ElasticityModel} have been called.
+            
+% ----------------------------------------------------
+\CallGraphSettings
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[framed, node distance = 2cm, auto]
+    \node [block] (constructor) {\cmethod{Constructor}};
+    \node [block, below of=constructor] (init) {\cmethod{Initialize(...)}};
+    \node [block, below of=init] (load) {\cmethod{SetLoad(ElasticProperties)}};
+    \node [block, below of=load] (solve) {\cmethod{Solve(...)}};
+ 
+    % Draw edges
+    \path [line] (constructor) -- (init);
+    \path [line] (init) -- (load);
+    \path [line] (load) -- (solve);
+\end{tikzpicture}
+\caption{Call graph for module \nameref{sec:module_spectralelasticsolverBS}}
+\end{figure}

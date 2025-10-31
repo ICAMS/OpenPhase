@@ -1,0 +1,11 @@
+This is a README file for the Multiple Junction benchmark.
+
+In order to run the benchmark simulation you should run ./MultiJunction. 
+/ProjectInput directory contains the necessary input file for the simulation. 
+Results will be placed in to the /VTK directory and can be visualised 
+using ParaView (www.paraview.org).
+
+A detailed description of the simulation setup is given in the MultiJunction.txt file.  
+
+For a comparison we provide several snapshots of the simulation box at different time steps. 
+They can be found in the /Figures directory.

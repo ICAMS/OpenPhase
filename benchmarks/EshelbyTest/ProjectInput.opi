@@ -1,0 +1,115 @@
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+
+@RunTimeControl
+
+$SimTtl         Simulation Title                        : Eshelby Test
+$nSteps         Number of Time Steps                    : 1
+$FTime          Output to Disk every (tSteps)           : 1
+$STime          Output to Screen every (tSteps)         : 1
+$dt             Initial Time Step                       : 1
+$nOMP           Number of OpenMP Threads                : 1
+$Restrt         Restart switch (Yes/No)                 : No
+$tStart         Restart at time step                    : 0
+$tRstrt         Restart output every (tSteps)           : 10000
+
+$LUnits         Unit of length                          : m
+$TUnits         Unit of time                            : s
+$MUnits         Unit of mass                            : kg
+$EUnits         Unit of energy                          : J
+
+
+@GridParameters
+
+$Nx             System Size in X Direction              : 129
+$Ny             System Size in Y Direction              : 129
+$Nz             System Size in Z Direction              : 129
+$dx             Grid Spacing                            : 1
+$IWidth         Interface Width (in grid points)        : 3.5
+
+@Settings
+
+$Phase_0        Name of Phase 0                         : Matrix
+$Phase_1        Name of Phase 1                         : Inclusion
+
+@DrivingForce
+
+$Average        Driving force averaging                 : Yes
+$CutOff_0_1     Driving force cutoff                    : 0.95
+
+@ElasticProperties
+
+Mechanical boundary conditions:
+AppliedStrain
+AppliedStrainRate
+AppliedStress
+FreeBoundaries
+
+$BCX    Boundary condition in X direction :  FreeBoundaries
+$BCY    Boundary condition in Y direction :  FreeBoundaries
+$BCZ    Boundary condition in Z direction :  FreeBoundaries
+
+$BCXY   Boundary condition in XY direction :  FreeBoundaries
+$BCXZ   Boundary condition in XZ direction :  FreeBoundaries
+$BCYZ   Boundary condition in YZ direction :  FreeBoundaries
+
+$BCValueX   Mixed Value X   : 0
+$BCValueY   Mixed Value Y   : 0
+$BCValueZ   Mixed Value Z   : 0
+
+$BCValueXY   Mixed Value XY   : 0.0
+$BCValueXZ   Mixed Value XZ   : 0.0
+$BCValueYZ   Mixed Value YZ   : 0.0
+
+$EModel Elasticity model : Khachaturyan
+$SMode  Strain mode      : Small
+
+Possible restrictions:
+AspectRatio
+Shear
+
+Restrict                   : AspectRatio
+
+$C11_0  : 280e9
+$C22_0  : 280e9
+$C33_0  : 280e9
+$C12_0  : 120e9
+$C13_0  : 120e9
+$C23_0  : 120e9
+$C44_0  : 80e9
+$C55_0  : 80e9
+$C66_0  : 80e9
+
+$U_0 :
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+$C11_1  : 280e9
+$C22_1  : 280e9
+$C33_1  : 280e9
+$C12_1  : 120e9
+$C13_1  : 120e9
+$C23_1  : 120e9
+$C44_1  : 80e9
+$C55_1  : 80e9
+$C66_1  : 80e9
+
+$U_1 :
+1.01 0.0 0.0
+0.0 1.01 0.0
+0.0 0.0 1.01
+
+$ChemoMechanicalCoupling : No
+$ThermoMechanicalCoupling : No
+
+@BoundaryConditions
+
+$BC0X   X axis beginning boundary condition  : Periodic
+$BCNX   X axis far end boundary condition    : Periodic
+
+$BC0Y   Y axis beginning boundary condition  : Periodic
+$BCNY   Y axis far end boundary condition    : Periodic
+
+$BC0Z   Z axis beginning boundary condition  : Periodic
+$BCNZ   Z axis far end boundary condition    : Periodic

@@ -1,0 +1,241 @@
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@RunTimeControl
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$SimTtl     Simulation Title                        : SolidPhaseSintering
+$nSteps     Number of Time Steps                    : 1000000000
+$tRstrt     Restart output every (tSteps)           : 10000
+$FTime      Output to disk every (tSteps)           : 10000
+$STime      Output to screen every (tSteps)         : 100
+
+$Restrt                                             : No
+
+$dt         Initial Time Step                       : 0.125e-2
+
+$nOMP       Number of OpenMP Threads                : 1
+
+$LogScreen  Logarithmic output to screen            : No
+$LogVTK     Logarithmic output to VTK               : No
+$LogScreenF Outputs to screen per decade = 10 x     : 1
+$LogVTKF    Outputs to VTK    per decade = 10 x     : 1
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Settings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Nx         System Size in X Direction              : 400
+$Ny         System Size in Y Direction              : 200
+$Nz         System Size in Z Direction              : 0
+$IWidth     Interface Width (in grid points)        : 5
+$dx         Grid Spacing                            : 1.0e-7
+$Bcells     Boundary Cells                          : 2
+
+$Comp_0     Chemical Component 0                    : LiPO4
+$Comp_1     Chemical Component 1                    : LATP
+$Comp_2     Chemical Component 2                    : Co
+
+
+$Phase_0    Name of Phase 0                         : Vapor
+$Phase_1    Name of Phase 1                         : LCP
+$Phase_2    Name of Phase 2                         : LATP
+
+$VTKDir  :  Projects/LCP_LATP/VTK
+$RAWDir  :  Projects/LCP_LATP/RawData
+$DATADir :  Projects/LCP_LATP/TextData
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@ProjectInput
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$RandomSeed Random number seed                      : random
+
+$Rho        Initial Relative Density                : 0.65
+$AvR        Mean particle radius                    : 0.50e-6
+$StdR       Standard deviation of particle radius   : 0.25e-6
+
+$SX         Initial sintered body size X            : 380e-7
+$SY         Initial sintered body size Y            : 180e-7
+$SZ         Initial sintered body size Z            : 180e-7
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@AnalysisSintering
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$BBox       Calculate Density using bounding box method     : Yes
+$BBSX       Bounding box size size X [m]                    : 60e-7
+$BBSY       Bounding box size size Y [m]                    : 60e-7
+$BBSZ       Bounding box size size Z [m]                    : 60e-7
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@BoundaryConditions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Boundary Condition Options: Periodic, Fixed, NoFlux
+% NoFlux corresponds to mirroring boundary conditions
+
+$BC0X      X axis beginning boundary condition        : Periodic
+$BCNX      X axis far end boundary condition          : Periodic
+$BC0Y      Y axis beginning boundary condition        : NoFlux
+$BCNY      Y axis far end boundary condition          : NoFlux
+$BC0Z      Z axis beginning boundary condition        : Periodic
+$BCNZ      Z axis far end boundary condition          : Periodic
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InterfaceProperties
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Mu_0_0     Interface mobility Vapor_Vapor [m^2 s/Kg] : 0.000
+$Mu_0_1     Interface mobility Vapor_LCP   [m^2 s/Kg] : 1.000e-14
+$Mu_0_2     Interface mobility Vapor_LATP  [m^2 s/Kg] : 1.000e-14
+$Mu_1_1     Interface mobility LCP_LCP     [m^2 s/Kg] : 1.000e-14
+$Mu_1_2     Interface mobility LCP_LATP    [m^2 s/Kg] : 1.000e-14
+$Mu_2_2     Interface mobility LATP_LATP   [m^2 s/Kg] : 1.000e-14
+
+$Sigma_0_0  Interface energy   Vapor_Vapor [kg/s^2]   : 0.000
+$Sigma_0_1  Interface energy   Vapor_LCP   [kg/s^2]   : 0.320
+$Sigma_0_2  Interface energy   Vapor_LATP  [kg/s^2]   : 0.370
+$Sigma_1_1  Interface energy   LCP_LCP     [kg/s^2]   : 0.224
+$Sigma_1_2  Interface energy   LCP_LATP    [kg/s^2]   : 0.289
+$Sigma_2_2  Interface energy   LATP_LATP   [kg/s^2]   : 0.259
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GrandPotentialDensity
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Gravity                                               : No
+
+$OMEGA_LATP      LATP phase model                                           : Parabolic
+$C0_LATP_CO      Equilibrium concentration LATP_Co     [mol/m^3]            :   2201.0
+$C0_LATP_LATP    Equilibrium concentration LATP_LATP   [mol/m^3]            :   7337.0
+$C0_LATP_LIPO4   Equilibrium concentration LATP_LiPO4  [mol/m^3]            :    100.0
+$EPS_LATP_CO     Energy coefficient        LATP_Co     [kg m^5/(s^2 mol^2)] : 4.4279e+00
+$EPS_LATP_LATP   Energy coefficient        LATP_LATP   [kg m^5/(s^2 mol^2)] : 1.3283e+00
+$EPS_LATP_LIPO4  Energy coefficient        LATP_LiPO4  [kg m^5/(s^2 mol^2)] : 9.7458e+01
+
+$OMEGA_LCP       LCP phase model                                            : Parabolic
+$C0_LCP_CO       Equilibrium concentration LCP_Co      [mol/m^3]            :  11902.0
+$C0_LCP_LATP     Equilibrium concentration LCP_LATP    [mol/m^3]            :    100.0
+$C0_LCP_LIPO4    Equilibrium concentration LCP_LiPO4   [mol/m^3]            :  11902.0
+$EPS_LCP_CO      Energy coefficient        LCP_Co      [kg m^5/(s^2 mol^2)] : 8.1884e-01
+$EPS_LCP_LATP    Energy coefficient        LCP_LATP    [kg m^5/(s^2 mol^2)] : 9.7458e+01
+$EPS_LCP_LIPO4   Energy coefficient        LCP_LiPO4   [kg m^5/(s^2 mol^2)] : 8.1884e-01
+
+$OMEGA_VAPOR     Vapor phase model                                          : Parabolic
+$C0_VAPOR_CO     Equilibrium concentration Vapor_Co    [mol/m^3]            :    100.0
+$C0_VAPOR_LATP   Equilibrium concentration Vapor_LATP  [mol/m^3]            :    100.0
+$C0_VAPOR_LIPO4  Equilibrium concentration Vapor_LiPO4 [mol/m^3]            :    100.0
+$EPS_VAPOR_CO    Energy coefficient        Vapor_Co    [kg m^5/(s^2 mol^2)] : 9.7458e+01
+$EPS_VAPOR_LATP  Energy coefficient        Vapor_LATP  [kg m^5/(s^2 mol^2)] : 9.7458e+01
+$EPS_VAPOR_LIPO4 Energy coefficient        Vapor_LiPO4 [kg m^5/(s^2 mol^2)] : 9.7458e+01
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GrandPotentialSolver
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Implicit               Use semi implicit Euler scheme           : Yes
+$MAXI                   Maximum of iterations                    : 1000
+$ACC                    Relative Accuracy of chemical potential  : 1.0e-8
+
+$TOC                    Concerve total amount of components      : Yes
+$TOCMAXI                Maximum of iterations                    : 10
+$TOCACC                 Relative Accuracy                        : 1.0e-10
+
+$MASS_LATP              Mass of LATP [kg/mol]                    : 7.05456
+$MASS_LCP               Mass of LCP [kg/mol]                     : 0.383400
+
+$UIP                    Set initial pressure                        : No
+$CI_LATP_CO             Initial concentration LATP_Co     [mol/m^3] :   100.0
+$CI_LATP_LATP           Initial concentration LATP_LATP   [mol/m^3] :  8363.4
+$CI_LATP_LIPO4          Initial concentration LATP_LiPO4  [mol/m^3] :   100.0
+$CI_LCP_CO              Initial concentration LCP_Co      [mol/m^3] : 11902.0
+$CI_LCP_LATP            Initial concentration LCP_LATP    [mol/m^3] :   100.0
+$CI_LCP_LIPO4           Initial concentration LCP_LiPO4   [mol/m^3] : 11902.0
+$CI_VAPOR_CO            Initial concentration Vapor_Co    [mol/m^3] :   100.0
+$CI_VAPOR_LATP          Initial concentration Vapor_LATP  [mol/m^3] :   100.0
+$CI_VAPOR_LIPO4         Initial concentration Vapor_LiPO4 [mol/m^3] :   100.0
+
+$M0_LATP_CO             Mobility coefficient  LATP_Co     [mol^2 s^2/(Kg m^3)] : 2.26e-17
+$M0_LATP_LATP           Mobility coefficient  LATP_LATP   [mol^2 s^2/(Kg m^3)] : 7.53e-14
+$M0_LATP_LIPO4          Mobility coefficient  LATP_LiPO4  [mol^2 s^2/(Kg m^3)] : 1.03e-15
+$M0_LCP_CO              Mobility coefficient  LCP_Co      [mol^2 s^2/(Kg m^3)] : 3.96e-12
+$M0_LCP_LATP            Mobility coefficient  LCP_LATP    [mol^2 s^2/(Kg m^3)] : 1.00e-18
+$M0_LCP_LIPO4           Mobility coefficient  LCP_LiPO4   [mol^2 s^2/(Kg m^3)] : 3.94e-12
+$M0_VAPOR_CO            Mobility coefficient  Vapor_Co    [mol^2 s^2/(Kg m^3)] : 3.31e-14
+$M0_VAPOR_LATP          Mobility coefficient  Vapor_LATP  [mol^2 s^2/(Kg m^3)] : 3.31e-14
+$M0_VAPOR_LIPO4         Mobility coefficient  Vapor_LiPO4 [mol^2 s^2/(Kg m^3)] : 3.21e-14
+
+$dMdc                   Consider first derivative dMobility_dConcentration               : No
+$dMdc_LATP_CO_CO        Concentration Coupling Coefficient LATP_Co_Co        [m^6/s/mol] : 0.00
+$dMdc_LATP_CO_LATP      Concentration Coupling Coefficient LATP_Co_LATP      [m^6/s/mol] : 0.00
+$dMdc_LATP_CO_LIPO4     Concentration Coupling Coefficient LATP_Co_LiPO4     [m^6/s/mol] : 0.00
+$dMdc_LATP_LATP_CO      Concentration Coupling Coefficient LATP_LATP_Co      [m^6/s/mol] : 1.00e-17
+$dMdc_LATP_LATP_LATP    Concentration Coupling Coefficient LATP_LATP_LATP    [m^6/s/mol] : 0.00
+$dMdc_LATP_LATP_LIPO4   Concentration Coupling Coefficient LATP_LATP_LiPO4   [m^6/s/mol] : 0.00
+$dMdc_LATP_LIPO4_CO     Concentration Coupling Coefficient LATP_LiPO4_Co     [m^6/s/mol] : 0.00
+$dMdc_LATP_LIPO4_LATP   Concentration Coupling Coefficient LATP_LiPO4_LATP   [m^6/s/mol] : 0.00
+$dMdc_LATP_LIPO4_LIPO4  Concentration Coupling Coefficient LATP_LiPO4_LiPO4  [m^6/s/mol] : 0.00
+$dMdc_LCP_CO_CO         Concentration Coupling Coefficient LCP_Co_Co         [m^6/s/mol] : 0.00
+$dMdc_LCP_CO_LATP       Concentration Coupling Coefficient LCP_Co_LATP       [m^6/s/mol] : 0.00
+$dMdc_LCP_CO_LIPO4      Concentration Coupling Coefficient LCP_Co_LiPO4      [m^6/s/mol] : 0.00
+$dMdc_LCP_LATP_CO       Concentration Coupling Coefficient LCP_LATP_Co       [m^6/s/mol] : 0.00
+$dMdc_LCP_LATP_LATP     Concentration Coupling Coefficient LCP_LATP_LATP     [m^6/s/mol] : 0.00
+$dMdc_LCP_LATP_LIPO4    Concentration Coupling Coefficient LCP_LATP_LiPO4    [m^6/s/mol] : 0.00
+$dMdc_LCP_LIPO4_CO      Concentration Coupling Coefficient LCP_LiPO4_Co      [m^6/s/mol] : 0.00
+$dMdc_LCP_LIPO4_LATP    Concentration Coupling Coefficient LCP_LiPO4_LATP    [m^6/s/mol] : 0.00
+$dMdc_LCP_LIPO4_LIPO4   Concentration Coupling Coefficient LCP_LiPO4_LiPO4   [m^6/s/mol] : 0.00
+$dMdc_VAPOR_CO_CO       Concentration Coupling Coefficient Vapor_Co_Co       [m^6/s/mol] : 0.00
+$dMdc_VAPOR_CO_LATP     Concentration Coupling Coefficient Vapor_Co_LATP     [m^6/s/mol] : 0.00
+$dMdc_VAPOR_CO_LIPO4    Concentration Coupling Coefficient Vapor_Co_LiPO4    [m^6/s/mol] : 0.00
+$dMdc_VAPOR_LATP_CO     Concentration Coupling Coefficient Vapor_LATP_Co     [m^6/s/mol] : 0.00
+$dMdc_VAPOR_LATP_LATP   Concentration Coupling Coefficient Vapor_LATP_LATP   [m^6/s/mol] : 0.00
+$dMdc_VAPOR_LATP_LIPO4  Concentration Coupling Coefficient Vapor_LATP_LiPO4  [m^6/s/mol] : 0.00
+$dMdc_VAPOR_LIPO4_CO    Concentration Coupling Coefficient Vapor_LiPO4_Co    [m^6/s/mol] : 0.00
+$dMdc_VAPOR_LIPO4_LATP  Concentration Coupling Coefficient Vapor_LiPO4_LATP  [m^6/s/mol] : 0.00
+$dMdc_VAPOR_LIPO4_LIPO4 Concentration Coupling Coefficient Vapor_LiPO4_LiPO4 [m^6/s/mol] : 0.00
+
+$IM                     Mobility Coefficient                             : No
+$IM_LATP_LATP_CO        Mobility Coefficient LATP_LATP_Co      [mol/m^3] : 0.00
+$IM_LATP_LATP_LATP      Mobility Coefficient LATP_LATP_LATP    [mol/m^3] : 0.00
+$IM_LATP_LATP_LIPO4     Mobility Coefficient LATP_LATP_LiPO4   [mol/m^3] : 0.00
+$IM_LCP_LATP_CO         Mobility Coefficient LCP_LATP_Co       [mol/m^3] : 0.00
+$IM_LCP_LATP_LATP       Mobility Coefficient LCP_LATP_LATP     [mol/m^3] : 0.00
+$IM_LCP_LATP_LIPO4      Mobility Coefficient LCP_LATP_LiPO4    [mol/m^3] : 0.00
+$IM_LCP_LCP_CO          Mobility Coefficient LCP_LCP_Co        [mol/m^3] : 0.00
+$IM_LCP_LCP_LATP        Mobility Coefficient LCP_LCP_LATP      [mol/m^3] : 0.00
+$IM_LCP_LCP_LIPO4       Mobility Coefficient LCP_LCP_LiPO4     [mol/m^3] : 0.00
+$IM_VAPOR_LATP_CO       Mobility Coefficient Vapor_LATP_Co     [mol/m^3] : 0.00
+$IM_VAPOR_LATP_LATP     Mobility Coefficient Vapor_LATP_LATP   [mol/m^3] : 0.00
+$IM_VAPOR_LATP_LIPO4    Mobility Coefficient Vapor_LATP_LiPO4  [mol/m^3] : 0.00
+$IM_VAPOR_LCP_CO        Mobility Coefficient Vapor_LCP_Co      [mol/m^3] : 0.00
+$IM_VAPOR_LCP_LATP      Mobility Coefficient Vapor_LCP_LATP    [mol/m^3] : 0.00
+$IM_VAPOR_LCP_LIPO4     Mobility Coefficient Vapor_LCP_LiPO4   [mol/m^3] : 0.00
+$IM_VAPOR_VAPOR_CO      Mobility Coefficient Vapor_Vapor_Co    [mol/m^3] : 0.00
+$IM_VAPOR_VAPOR_LATP    Mobility Coefficient Vapor_Vapor_LATP  [mol/m^3] : 0.00
+$IM_VAPOR_VAPOR_LIPO4   Mobility Coefficient Vapor_Vapor_LiPO4 [mol/m^3] : 0.00
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InteractionSolidSolid
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Model         Solid-Solid interaction model                    : Wang
+$StrengthWang  Solid-Solid interaction strength [kg/(m^3 s^2)]  : 0
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InteractionSolidFluid
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Inertia      Consider inertia of solid bodies  : No
+$Mobility     Mobility of solid bodies [s/Kg]   : 1
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Temperature
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$T0    Sintering temperature [K]    : 600

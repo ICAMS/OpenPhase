@@ -1,0 +1,43 @@
+This document provides a desription of the SolidificationMgAl example of OpenPhase (www.openphase.de).
+
+This example is dedicated to simulation of Mg-Al alloy solidification. 
+The relevant parameters of the alloy are set in the ProjectInput.opi file.
+
+The entries of the linearized phase diagramm are given by $Ts_(A)_(B) and $Cs_(A)_(B) which 
+indicate the points of intersection of the solidus/liquidus/solvus lines for a pair 
+of phases (Ts - is the temperature while Cs is corresponding composition). 
+The first index (A) is always indicating the phase with which given line of the phase 
+diagramm is in direct contact, while the second index (B) is indicating a complimentary 
+phase which form a dual phase region with phase (A). Parameters ML_(A)_(B) and ML_(B)_(A) 
+set the corresponding solidus/liquidus/solubility lines slopes. The slopes in contact with the 
+stoichimetric phase lines are set to "0.0" ("inf" is not a good input value). 
+A phase can be marked as stoichiometric (no diffusion, no solubility, fixed concentration) 
+using the parameters $Flag_(A). Value "0" is used for nonstoichiometric phases and any nonzero 
+value can be used for stoichiometric ones. 
+
+In this example the phase with index (0) coreesponds to the Mg-Al melt, while index (1) corresponds 
+to the HCP Mg-Al phase and index (2) denotes the beta phase. The respective initial 
+phase concentrations are set by the parameters $C0_(A), where (A) is again a phase index. 
+
+Parameters $CMIN and $CMAX are used for numerical bounds of the phase concentrations. 
+They can be any physically correct value between 0 and 100 %. Narrower intervals 
+are some times preferred when for example a phase does not exist outside of certain 
+concentration range.
+
+The temperature dependent diffusion coefficients D_(A) for a phase (A) are set by a pair 
+of DC_(A) (diffusion coefficient) and AE_(A) (activation energy) parameters of 
+the Arhenius formula: 
+
+D_(A) = DC_(A) * Exp[-AE_(A)/(R*T)], 
+
+where R is a gas constant. If activation energy is set to 0.0 the diffusion 
+coefficient becomes temperature independent: D_(A) = DC_(A).
+
+Parameters relevant for temperature settings are $R0(X,Y,Z) which set the starting 
+point of the applied temperatre gradient in the simulation box. The starting temperature 
+value $T0 is set as the starting value at the point $R0(X,Y,Z) and then the temperature 
+gradient given by the parameters $DT_DR(X,Y,Z) is applied starting from this value/point.
+The cooling/heating rate $DT_Dt is applied in all simulation points equally in each 
+time step, providing the temperature change by $DT_Dt * $dt value, where $dt is the 
+time step.
+

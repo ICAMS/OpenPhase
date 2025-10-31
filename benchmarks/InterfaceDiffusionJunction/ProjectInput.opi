@@ -1,0 +1,66 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@RunTimeControl
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$SimTtl   Simulation Title                        : IDJunction
+
+$nOMP     Number of OpenMP Threads                : 4
+
+$dt       Initial Time Step                       : 2.0e-2
+$nSteps   Number of Time Steps                    : 10000
+
+!Output parameters
+$FTime    Output Distance to Disk (in tSteps)     : 100
+$STime    Output Distance to Screen (in tSteps)   : 100
+$tRstrt   Restart output every (tSteps)           : 10000000
+
+!Restart parameters
+$Restrt   Restart switch (Yes/No)                 : No
+$tStart   Restart at time step                    : 0
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GridParameters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Nx       System Size in X Direction              : 40
+$Ny       System Size in Y Direction              : 0
+$Nz       System Size in Z Direction              : 40
+$dx       Grid Spacing                            : 1.0
+$Bcells   Number of boundary cells                : 3
+$IWidth   Interface Width (in grid points)        : 5
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Settings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Phase_0  Name of Phase 0                         : Solid
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@BoundaryConditions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$BC0X   X axis beginning boundary condition       : Periodic
+$BC0Y   Y axis beginning boundary condition       : Periodic
+$BC0Z   Z axis beginning boundary condition       : Periodic
+
+$BCNX   X axis far end boundary condition         : Periodic
+$BCNY   Y axis far end boundary condition         : Periodic
+$BCNZ   Z axis far end boundary condition         : Periodic
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InterfaceProperties
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$EnergyModel_0_0  Interface energy model 0-0      : Iso
+$Sigma_0_0        Interface Energy 0-0            : 1.0
+$Mu_0_0           Interface Mobility 0-0          : 1.0
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InterfaceDiffusion
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$dSR         Double-obstacle smoothness range in [0,1]: 0.05
+$dIDC_0_0    Mobility along the 0-0 Interface         : 1.0

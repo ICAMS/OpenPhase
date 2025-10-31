@@ -1,0 +1,24 @@
+Multiple Junction benchmark description
+
+Four grains are initiated in the box in order to check the Young's angles at the 
+quadrupole junction as the first nontrivial configuration (the two and three 
+grains junctions are trivial). No driving force is applied. All interface 
+energies and mobilities are identical. The code uses the frame movement 
+in order to keep the quadrupole junction in the center of the simulation box.
+
+The box size is 101x101x101 grid points. The input parameters are:
+
+grid spacing:         dX    = 10^{-6} m, 
+time step:            dt    = 10^{-4} s, 
+interface mobility:   mu    = 4*10^{-9} m^4/(J*s), 
+interface energy:     sigma = 0.24 J/m^2, 
+interface width:      eta   = 3.5*dX.
+
+The free boundary conditions are used in the simulation. After the start of the 
+simulation the interfaces begin to evolve due to the curvature differences at 
+the multiple junctions. The evolution continues until all the interfaces are 
+strait and the angles between neighboring grains at the multiple junctions are 
+identical.
+
+The output data in vtk format is written in the VTK directory and can be directly 
+visualized using Paraview software (www.paraview.org).

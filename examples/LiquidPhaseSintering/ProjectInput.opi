@@ -1,0 +1,142 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@RunTimeControl
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$SimTtl        Simulation Title                           : LiquidStateSintering
+$nSteps        Number of Time Steps                       : 100000
+$tRstrt        Restart output every (tSteps)              : 5000
+$FTime         Output Distance to Disk (in tSteps)        : 100
+$STime         Output Distance to Screen (in tSteps)      : 100
+$dt            Initial Time Step                          : 1
+
+$Restrt        Restart switch (Yes/No)                    : No
+$tStart        Restart at time step                       : 5000
+
+$nOMP          Number of OpenMP Threads                   : 10
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GridProperties
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Nx            System Size in X Direction                 : 150
+$Ny            System Size in Y Direction                 : 90
+$Nz            System Size in Z Direction                 : 0
+$dx            Grid Spacing                               : 1
+$IWidth        Interface Width (in grid points)           : 5
+$Bcells        Boundary cells                             : 2
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Settings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Phase_0       Name of Phase 0                            : Fluid
+$Phase_1       Name of Phase 1                            : Solid
+
+$State_0       Aggregate state of phase 0                 : LIQUID
+$State_1       Aggregate state of phase 1                 : SOLID
+
+$Density_0     Density of phase 0 (does not apply)        : 0.00
+$Density_1     Density of phase 1                         : 1.00
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@SinterLiquidState
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$dLiquidConcentration  Concentration of liquid             : 0.30
+$dSolidDensity         Solid density in lattice units      : 1.00
+$iInitialRadius        Initial radius of solids            : 20
+$iNSolids              Number of solid particles           : 2
+$iDistance             Initial distance between particles  : 20
+$iTInit                time initialization                 : 3000
+$iTAdvect              time to start advection             : 5000
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InteractionSolidSolid
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Model          Solid-Solid interaction model             : Standard
+$Strength       Solid-Solid interaction strength          : 1e2
+$Elastic[1][1]  factor of elastic interaction 1-1         : 0.5
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@AdvectionHR
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$scheme         Advection scheme                       : Superbee
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@BoundaryConditions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$BC0X          X axis beginning boundary condition        : Periodic
+$BCNX          X axis far end boundary condition          : Periodic
+
+$BC0Y          Y axis beginning boundary condition        : Periodic
+$BCNY          Y axis far end boundary condition          : Periodic
+
+$BC0Z          Z axis beginning boundary condition        : Periodic
+$BCNZ          Z axis far end boundary condition          : Periodic
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@FlowSolverLBM
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$N_FLUID_COMP  Number of fluid components                 : 1
+$NU[0]         Kinematic viscosity [m^2/s]                : 1.0
+$dRho          Ratio of LBM density to MKS density        : 1.0
+
+$BENZI         Calculate Benzi force                      : Yes
+$GB[0][0]      Benzi force coupling constant              : -5.0
+$RHO0[0]       Reference density (Parameter for Benzi)    : 1.0
+$Wetting[0][0] Determines the contact angle               : 0.0
+$Wetting[0][1] Determines the contact angle               : 2.0
+
+$BOUNCEBACK    Calculate bounce back force                : Yes
+$DRAG          Calculate drag force                       : No
+$GRAVITY       Calculate gravitational force              : No
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InterfaceProperties
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Sigma_0_0      Interface energy                          : 1.00
+$Sigma_0_1      Interface energy                          : 1.00
+$Sigma_1_1      Interface energy                          : 1.00
+
+$Mu_0_0         Interface mobility                        : 1e-4
+$Mu_0_1         Interface mobility                        : 1e-4
+$Mu_1_1         Interface mobility                        : 1e-4
+
+$AE_0_0         Activation energy                         : 0.0
+$AE_0_1         Activation energy                         : 0.0
+$AE_1_1         Activation energy                         : 0.0
+
+$Eps_0_0        Interface anisotropy                      : 0.0
+$Eps_0_0        Interface anisotropy                      : 0.0
+$Eps_0_1        Interface anisotropy                      : 0.0
+$Eps_0_1        Interface anisotropy                      : 0.0
+$Eps_1_1        Interface anisotropy                      : 0.0
+$Eps_1_1        Interface anisotropy                      : 0.0
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InterfaceDiffusion
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$dSR           Double-obstacle smoothness range in [0,1] : 0.05
+$dIDC_00       Mobility along the 00 Interface           : 0.0
+$dIDC_01       Mobility along the 01 Interface           : 0.02
+$dIDC_11       Mobility along the 11 Interface           : 0.002
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InteractionSolidFluid
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Inertia      Consider inertia of solid bodies  : Yes
+$Rotations    Consider rotations solid bodies   : No

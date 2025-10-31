@@ -1,0 +1,130 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@RunTimeControl
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$SimTtl        Simulation Title                        : GPAnnisotropyTest
+$nSteps        Number of Time Steps                    : 10000
+$tRstrt        Restart output every (tSteps)           : 10000
+$FTime         Output Distance to Disk (in tSteps)     : 100
+$STime         Output Distance to Screen (in tSteps)   : 10
+$dt            Initial Time Step                       : 0.25
+
+$Restrt        Restart switch (Yes/No)                 : No
+$tStart        Restart at time step                    : 0
+
+$nOMP          Number of OpenMP Threads                : 10
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GridParameters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Nx           System Size in X Direction              : 200
+$Ny           System Size in Y Direction              : 200
+$Nz           System Size in Z Direction              : 0
+$dx           Grid Spacing                            : 0.1e-6
+$IWidth       Interface Width (in grid points)        : 5
+$Bcells       Boundary cells                          : 2
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Settings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Comp_0       Chemical Component 0                    : Fe
+
+$Phase_0      Name of Phase 0                         : Vapor
+$Phase_1      Name of Phase 1                         : Gamma
+
+$State_0      Aggregate state of phase 0              : Gas
+$State_1      Aggregate state of phase 1              : Solid
+
+$Density_0    Equilibrium density of phase 0          : 2.00e-14
+$Density_1    Equilibrium density of phase 1          : 7874
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@BoundaryConditions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$BC0X          X axis beginning boundary condition     : Periodic
+$BCNX          X axis far end boundary condition       : Periodic
+$BC0Y          Y axis beginning boundary condition     : Periodic
+$BCNY          Y axis far end boundary condition       : Periodic
+$BC0Z          Z axis beginning boundary condition     : Periodic
+$BCNZ          Z axis far end boundary condition       : Periodic
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InterfaceProperties
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$EnergyModel_0_0    : Iso
+$EnergyModel_0_1    : CubicFull
+$EnergyModel_1_1    : Iso
+
+$Mu_0_0        Interface mobility Vapor_Vapor [m^2 s/Kg]    : 0.000
+$Mu_0_1        Interface mobility Vapor_GAMMA [m^2 s/Kg]    : 1.00e-14
+$Mu_1_1        Interface mobility GAMMA_GAMMA [m^2 s/Kg]    : 1.00e-14
+
+$Sigma_0_0    Interface energy Vapor_Vapor [kg/s^2] : 0.000
+$Sigma_1_1    Interface energy GAMMA_GAMMA [kg/s^2] : 0.250
+
+$Sigma0_0_1     Interface energy parameter Vapor_GAMMA [kg/s^2] : 0.250e-8
+$EpsilonE_0_1  Anisotropy Vapor_GAMMA [1]        : 1.0e8
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GrandPotentialDensity
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$OMEGA_VAPOR     Vapor phase model                : Parabolic
+$EPS_VAPOR_FE    Energy coefficient [TODO]        : 2.00
+$C0_VAPOR_FE     Equilibrium density [mol/m^3]    : 1
+
+$OMEGA_GAMMA     Solid phase model                : Parabolic
+$EPS_GAMMA_FE    Energy coefficient [TODO]        : 0.25
+$C0_GAMMA_FE     Equilibrium density [mol/m^3]    : 140984
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GrandPotentialSolver
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$MASS_FE        Molar Mass of Fe [kg/mol]                         : 55.845e-3
+
+$CI_VAPOR_FE    Initial molar density of Fe in vapor [mol/mT^3]    : 1
+$CI_GAMMA_FE    Initial molar density of Fe in gamma [mol/m^3]    : 140984
+
+$M0_VAPOR_FE    Chemical mobility of Fe in vapor [m^2/s]          : 1.00e-14
+$M0_GAMMA_FE    Chemical mobility of Fe in gamma [m^2/s]          : 1.00e-14
+
+$TOC            Enforce Mass conservation                         : No
+$TOCACC         Mass conservation accuracy                        : 1.0e-9
+$TOCMAXI        Mass conservation max iterations                  : 100
+
+$Implicit       Use semi implicit Euler scheme                    : No
+$IM             Use Interface Mobility Coefficient                : No
+$dMdc           Phase Mobility Concentration Coupling             : No
+$dMdT           Phase Mobility Temperature Coupling               : No
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Temperature
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$T0    Sintering temperature [K]    : 1300
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@DrivingForce
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Average        Driving force averaging                 : Yes
+$dGcut          Driving force limiting                  : Yes
+$CutOff_0_1     Driving force cutoff 0 1                : 0.95
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@UserDrivingForce
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$UDF_Mode_0_1        Driving force mode for phase pair 0 and 1      : Value
+$UDF_Value_0_1       Driving force value for phase pair 0 and 1     : -2e5
+

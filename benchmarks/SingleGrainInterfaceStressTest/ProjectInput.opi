@@ -1,0 +1,113 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Standard Open Phase Input File
+!!!All values in MKS (or properly scaled) units please!!!
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@RunTimeControl
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$SimTtl    Simulation Title                        : InterfaceStressTest
+
+$nOMP      Number of OpenMP Threads                : 1
+
+$EUnits    Unit of energy                          : J
+$LUnits    Unit of length                          : m
+$MUnits    Unit of mass                            : kg
+$TUnits    Unit of time                            : s
+
+$dt        Initial Time Step                       : 0.1
+
+$FTime     Output to disk every (tSteps)           : 1
+$STime     Output to screen every (tSteps)         : 1
+$tRstrt    Restart output every (tSteps)           : 1
+$nSteps    Number of Time Steps                    : 1
+
+$Restrt    Restart switch (Yes/No)                 : No
+$tStart    Restart at time step                    : 0
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@GridParameters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Nx        System Size in X Direction              : 480
+$Ny        System Size in Y Direction              : 480
+$Nz        System Size in Z Direction              : 0
+$dx        Grid Spacing                            : 0.5E-9
+$IWidth    Interface Width (in grid points)        : 15
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Settings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Phase_0   Name of Phase 0                         : Matrix
+$Phase_1   Name of Phase 1                         : Inclusion
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@BoundaryConditions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$BC0X      X axis beginning boundary condition     : Periodic
+$BCNX      X axis far end boundary condition       : Periodic
+$BC0Y      Y axis beginning boundary condition     : Periodic
+$BCNY      Y axis far end boundary condition       : Periodic
+$BC0Z      Z axis beginning boundary condition     : Periodic
+$BCNZ      Z axis far end boundary condition       : Periodic
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@ElasticProperties
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+[Applied Strain, Applied Stress, Free Boundaries]
+
+$EModel    Elasticity model                        : Khachaturyan
+$SMode     Strain mode                             : Small
+
+$BCX       Mixed Mode X                            : Free Boundaries
+$BCY       Mixed Mode Y                            : Free Boundaries
+$BCZ       Mixed Mode Z                            : Free Boundaries
+$BCValueX  Mixed Value X                           : 0
+$BCValueY  Mixed Value Y                           : 0
+$BCValueZ  Mixed Value Z                           : 0
+
+$MAXIterations                                    : 1000000000
+$StrainAccuracy                                   : 1e-90
+
+$L_0       Lame's first parameter of aluminium     : 59e9
+$G_0       Shear modulus of aluminium              : 26e9
+
+$U_0 :
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+$L_1       Lame's first parameter of aluminium     : 59e9
+$G_1       Shear modulus of aluminium              : 26e9
+
+$U_1 :
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+$ChemoMechanicalCoupling                           : No
+$ThermoMechanicalCoupling                          : No
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@InterfaceProperties
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+$Sigma_0_0  Interface energy                        : 0.00000
+$Sigma_0_1  Interface energy                        : 2.95000
+$Sigma_1_1  Interface energy                        : 0.00000
+
+$Eps_0_0    Interface anisotropy                    : 0.00000
+$Eps_0_1    Interface anisotropy                    : 0.00000
+$Eps_1_1    Interface anisotropy                    : 0.00000
+
+$Mu_0_0     Interface Mobility                      : 0.00000
+$Mu_0_1     Interface Mobility                      : 0.00000
+$Mu_1_1     Interface Mobility                      : 0.00000
