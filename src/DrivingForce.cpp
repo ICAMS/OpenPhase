@@ -994,7 +994,6 @@ DrivingForce& DrivingForce::operator= (const DrivingForce& rhs)
     }
     return *this;
 }
-
 NodeDF DrivingForce::Force_at(const double x, const double y, const double z) const
 {
 #ifdef DEBUG
@@ -1023,102 +1022,64 @@ NodeDF DrivingForce::Force_at(const double x, const double y, const double z) co
     double dy = fabs(y - y0)*Grid.dNy;
     double dz = fabs(z - z0)*Grid.dNz;
 
-    NodeDF loc_dG;
+    NodeDF locForce;
+    double weight = 0.0;
 
-    double weight_x0y0z0 = ((1.0 - dx)*(1.0 - dy)*(1.0 - dz));
-    for(auto it  = Force(x0,y0,z0).cbegin();
-             it != Force(x0,y0,z0).cend(); ++it)
+    if(Force(x0, y0, z0).size())
     {
-        loc_dG.add_all(it->indexA, it->indexB, it->raw*weight_x0y0z0,
-                                               it->tmp*weight_x0y0z0,
-                                               it->average*weight_x0y0z0,
-                                               weight_x0y0z0);
+        double loc_weight = ((1.0 - dx)*(1.0 - dy)*(1.0 - dz));
+        locForce += Force(x0, y0, z0)*loc_weight;
+        weight += loc_weight;
+    }
+    if(Grid.dNx and Force(x0+Grid.dNx, y0, z0).size())
+    {
+        double loc_weight = (dx*(1.0 - dy)*(1.0 - dz));
+        locForce += Force(x0+1, y0, z0)*loc_weight;
+        weight += loc_weight;
+    }
+    if(Grid.dNy and Force(x0, y0+Grid.dNy, z0).size())
+    {
+        double loc_weight = ((1.0 - dx)*dy*(1.0 - dz));
+        locForce += Force(x0, y0+1, z0)*loc_weight;
+        weight += loc_weight;
+    }
+    if(Grid.dNz and Force(x0, y0, z0+Grid.dNz).size())
+    {
+        double loc_weight = ((1.0 - dx)*(1.0 - dy)*dz);
+        locForce += Force(x0, y0, z0+1)*loc_weight;
+        weight += loc_weight;
+    }
+    if(Grid.dNx and Grid.dNy and Force(x0+Grid.dNx, y0+Grid.dNy, z0).size())
+    {
+        double loc_weight = (dx*dy*(1.0 - dz));
+        locForce += Force(x0+1, y0+1, z0)*loc_weight;
+        weight += loc_weight;
+    }
+    if(Grid.dNx and Grid.dNz and Force(x0+Grid.dNx, y0, z0+Grid.dNz).size())
+    {
+        double loc_weight = (dx*(1.0 - dy)*dz);
+        locForce += Force(x0+1, y0, z0+1)*loc_weight;
+        weight += loc_weight;
+    }
+    if(Grid.dNy and Grid.dNz and Force(x0, y0+Grid.dNy, z0+Grid.dNz).size())
+    {
+        double loc_weight = ((1.0 - dx)*dy*dz);
+        locForce += Force(x0, y0+1, z0+1)*loc_weight;
+        weight += loc_weight;
+    }
+    if(Grid.dNx and Grid.dNy and Grid.dNz and Force(x0+Grid.dNx, y0+Grid.dNy, z0+Grid.dNz).size())
+    {
+        double loc_weight = (dx*dy*dz);
+        locForce += Force(x0+1, y0+1, z0+1)*loc_weight;
+        weight += loc_weight;
     }
 
-    double weight_x1y0z0 = ((dx)*(1.0 - dy)*(1.0 - dz));
-    for(auto it  = Force(x0+1,y0,z0).cbegin();
-             it != Force(x0+1,y0,z0).cend(); ++it)
+    if(weight >= DBL_EPSILON)
     {
-        loc_dG.add_all(it->indexA, it->indexB, it->raw*weight_x1y0z0,
-                                               it->tmp*weight_x1y0z0,
-                                               it->average*weight_x1y0z0,
-                                               weight_x1y0z0);
+        locForce *= 1.0/weight;
     }
 
-    double weight_x0y1z0 = ((1.0 - dx)*(dy)*(1.0 - dz));
-    for(auto it  = Force(x0,y0+1,z0).cbegin();
-             it != Force(x0,y0+1,z0).cend(); ++it)
-    {
-        loc_dG.add_all(it->indexA, it->indexB, it->raw*weight_x0y1z0,
-                                               it->tmp*weight_x0y1z0,
-                                               it->average*weight_x0y1z0,
-                                               weight_x0y1z0);
-    }
-
-    double weight_x0y0z1 = ((1.0 - dx)*(1.0 - dy)*(dz));
-    for(auto it  = Force(x0,y0,z0+1).cbegin();
-             it != Force(x0,y0,z0+1).cend(); ++it)
-    {
-        loc_dG.add_all(it->indexA, it->indexB, it->raw*weight_x0y0z1,
-                                               it->tmp*weight_x0y0z1,
-                                               it->average*weight_x0y0z1,
-                                               weight_x0y0z1);
-    }
-
-    double weight_x1y1z0 = ((dx)*(dy)*(1.0 - dz));
-    for(auto it  = Force(x0+1,y0+1,z0).cbegin();
-             it != Force(x0+1,y0+1,z0).cend(); ++it)
-    {
-        loc_dG.add_all(it->indexA, it->indexB, it->raw*weight_x1y1z0,
-                                               it->tmp*weight_x1y1z0,
-                                               it->average*weight_x1y1z0,
-                                               weight_x1y1z0);
-    }
-
-    double weight_x1y0z1 = ((dx)*(1.0 - dy)*(dz));
-    for(auto it  = Force(x0+1,y0,z0+1).cbegin();
-             it != Force(x0+1,y0,z0+1).cend(); ++it)
-    {
-        loc_dG.add_all(it->indexA, it->indexB, it->raw*weight_x1y0z1,
-                                               it->tmp*weight_x1y0z1,
-                                               it->average*weight_x1y0z1,
-                                               weight_x1y0z1);
-    }
-
-    double weight_x0y1z1 = ((1.0 - dx)*(dy)*(dz));
-    for(auto it  = Force(x0,y0+1,z0+1).cbegin();
-             it != Force(x0,y0+1,z0+1).cend(); ++it)
-    {
-        loc_dG.add_all(it->indexA, it->indexB, it->raw*weight_x0y1z1,
-                                               it->tmp*weight_x0y1z1,
-                                               it->average*weight_x0y1z1,
-                                               weight_x0y1z1);
-    }
-
-    double weight_x1y1z1 = ((dx)*(dy)*(dz));
-    for(auto it  = Force(x0+1,y0+1,z0+1).cbegin();
-             it != Force(x0+1,y0+1,z0+1).cend(); ++it)
-    {
-        loc_dG.add_all(it->indexA, it->indexB, it->raw*weight_x1y1z1,
-                                               it->tmp*weight_x1y1z1,
-                                               it->average*weight_x1y1z1,
-                                               weight_x1y1z1);
-    }
-    // normalize entries
-    for(auto it  = loc_dG.begin();
-             it != loc_dG.end(); ++it)
-    {
-        if(it->weight > DBL_EPSILON)
-        {
-            double weight_1 = 1.0/it->weight;
-
-            it->raw     *= weight_1;
-            it->tmp     *= weight_1;
-            it->average *= weight_1;
-        }
-    }
-
-    return loc_dG;
+    return locForce;
 }
 
 double DrivingForce::GetDrivingForce(PhaseField& Phi,
