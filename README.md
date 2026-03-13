@@ -89,9 +89,39 @@ sudo apt-get install fftw-dev libfftw3-3 libfftw3-dev
 **Installing the MPI Library for computing Fast Fourier Transforms package on Ubuntu (MPI users):**
 ```bash
 sudo apt-get install libfftw3-mpi-dev
+``` 
+
+### Windows
+
+#### Requisites
+
+* [Intel-One API](https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html)
+* [Cmake](https://cmake.org/download/)
+* [Ninja](https://ninja-build.org/)
+
+After installation cmake.exe and ninja.exe should be in your PATH enviroment variable. You can verify this by opening a powershell or cmd and executing the following commands:
+
+```pwsh
+    cmake --version
+    ninja --version
+```
+
+if properly install the version number or the programs should be 
+
+#### Compilation with  Powershell
+
+To compile OpenPhase open a powershell and execute the following commands
+ 
+```pwsh
+    git clone https://github.com/ICAMS/OpenPhase.git
+    cd OpenPhase
+    cmd.exe "/K" '"C:\Program Files (x86)\Intel\oneAPI\setvars.bat" && powershell'
+    cmake --preset intel-release
+    cmake --build  --preset intel-release
 ```
 
 ### Windows (using WSL)
+
 
 For Windows users, we recommend using Windows Subsystem for Linux (WSL). This allows you to use the same Linux-based installation and build process.
 
