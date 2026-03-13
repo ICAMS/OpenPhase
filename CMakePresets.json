@@ -1,0 +1,57 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "intel-base",
+      "hidden": true,
+      "displayName": "Intel oneAPI (icx/Ninja base)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "icx",
+        "CMAKE_CXX_COMPILER": "icx",
+        "ENABLE_MPI": "OFF",
+        "ENABLE_OPENMP": "ON"
+      },
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "hostOS": [
+            "Windows"
+          ],
+          "intelliSenseMode": "windows-clang-x64"
+        }
+      }
+    },
+    {
+      "name": "intel-release",
+      "displayName": "Intel oneAPI Release",
+      "inherits": "intel-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON"
+      }
+    },
+    {
+      "name": "intel-debug",
+      "displayName": "Intel oneAPI Debug",
+      "inherits": "intel-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "intel-release",
+      "displayName": "Build — Intel Release",
+      "configurePreset": "intel-release",
+      "jobs": 0
+    },
+    {
+      "name": "intel-debug",
+      "displayName": "Build — Intel Debug",
+      "configurePreset": "intel-debug",
+      "jobs": 0
+    }
+  ]
+}
