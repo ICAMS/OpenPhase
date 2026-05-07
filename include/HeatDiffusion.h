@@ -64,6 +64,9 @@ class OP_EXPORTS HeatDiffusion : public OPObject                                
     int  SolveImplicit(const PhaseField& Phase, const BoundaryConditions& BC,   ///< Implicit Solver
                        Temperature& Tx, const double dt);
 
+    void SolveSemiImplicit(const PhaseField& Phase, const BoundaryConditions& BC, ///< Semi-implicit solver using Thomas Algorithm (TDMA) with directional sweeps
+                           Temperature& Tx, const double dt);
+
     double MaxThermalConductivity;                                              ///< Maximum thermal conductivity in the system
 
     Storage<double> PhaseThermalConductivity;                                   ///< Thermal conductivity for each phase

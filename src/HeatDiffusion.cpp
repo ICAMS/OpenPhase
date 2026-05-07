@@ -458,4 +458,216 @@ int HeatDiffusion::SolveImplicit(const PhaseField& Phase,
     SolverCallsCounter++;
     return iteration;
 }
+void HeatDiffusion::SolveSemiImplicit(const PhaseField& Phase,
+                                      const BoundaryConditions& BC,
+                                      Temperature& Temp,
+                                      const double dt)
+{
+    /** Solves the heat diffusion equation using a semi-implicit scheme with the
+        Thomas Algorithm (Tridiagonal Matrix Algorithm, TDMA).
+
+        The equation is discretized as:
+            RhoCp * (T^{n+1} - T^n) / dt = Lambda * Laplacian(T^{n+1}) + Qdot
+
+        In each directional sweep the operator along that axis is treated
+        implicitly while contributions from the remaining axes are taken
+        explicitly from the current iterate.  Three sweeps (X → Y → Z)
+        advance the solution one full time step.
+
+        For a sweep along X at row (j, k) the per-node equations are:
+            a_i * T_{i-1} + b_i * T_i + c_i * T_{i+1} = rhs_i
+
+        where:
+            r      = Lambda * dt / (RhoCp * dx^2)
+            a_i    = -r
+            b_i    =  1 + 2*r          (1 + 2*r for interior, adjusted at boundaries)
+            c_i    = -r
+            rhs_i  = T_old_i + (explicit Y/Z contributions) * r + Qdot * dt / RhoCp
+    */
+
+    if ((SolverCallsCounter % SolverCallsInterval) != 0)
+    {
+        SolverCallsCounter++;
+        return;
+    }
+
+    const double dx2 = Grid.dx * Grid.dx;
+
+    // --- X-direction sweep: implicit along X, explicit along Y and Z ---
+    if (Grid.dNx > 0)
+    {
+        OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,Temp.Tx,0,)
+        {
+            TxOld(i,j,k) = Temp(i,j,k);
+        }
+        OMP_PARALLEL_STORAGE_LOOP_END
+
+        #ifdef _OPENMP
+        #pragma omp parallel for schedule(dynamic)
+        #endif
+        for (int j = 0; j < Grid.Ny; ++j)
+        for (int k = 0; k < Grid.Nz; ++k)
+        {
+            const int N = Grid.Nx;
+            std::vector<double> a(N), b(N), c(N), rhs(N);
+            std::vector<double> cp(N), dp(N);
+
+            for (int i = 0; i < N; ++i)
+            {
+                double RhoCp  = EffectiveHeatCapacity(i,j,k);
+                double Lambda = EffectiveThermalConductivity(i,j,k);
+                double r      = Lambda * dt / (RhoCp * dx2);
+
+                double explicitContrib = 0.0;
+                if (Grid.dNy > 0) explicitContrib += Lambda * (TxOld(i,j+1,k) + TxOld(i,j-1,k)) / dx2;
+                if (Grid.dNz > 0) explicitContrib += Lambda * (TxOld(i,j,k+1) + TxOld(i,j,k-1)) / dx2;
+
+                a[i]   = -r;
+                b[i]   =  1.0 + 2.0 * r;
+                c[i]   = -r;
+                rhs[i] = TxOld(i,j,k) + (explicitContrib + Qdot(i,j,k)) * dt / RhoCp;
+            }
+
+            // Dirichlet-like boundary adjustment at the first and last node
+            // (zero-flux: ghost values equal boundary node → coefficient folds into diagonal)
+            a[0]     = 0.0;
+            c[N - 1] = 0.0;
+
+            // Forward sweep
+            cp[0] = c[0] / b[0];
+            dp[0] = rhs[0] / b[0];
+            for (int i = 1; i < N; ++i)
+            {
+                double denom = b[i] - a[i] * cp[i - 1];
+                cp[i] = c[i] / denom;
+                dp[i] = (rhs[i] - a[i] * dp[i - 1]) / denom;
+            }
+
+            // Back substitution
+            Temp(N - 1, j, k) = dp[N - 1];
+            for (int i = N - 2; i >= 0; --i)
+            {
+                Temp(i, j, k) = dp[i] - cp[i] * Temp(i + 1, j, k);
+            }
+        }
+        Temp.SetBoundaryConditions(BC);
+    }
+
+    // --- Y-direction sweep: implicit along Y, explicit along X and Z ---
+    if (Grid.dNy > 0)
+    {
+        OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,Temp.Tx,0,)
+        {
+            TxOld(i,j,k) = Temp(i,j,k);
+        }
+        OMP_PARALLEL_STORAGE_LOOP_END
+
+        #ifdef _OPENMP
+        #pragma omp parallel for schedule(dynamic) collapse(2)
+        #endif
+        for (int i = 0; i < Grid.Nx; ++i)
+        for (int k = 0; k < Grid.Nz; ++k)
+        {
+            const int N = Grid.Ny;
+            std::vector<double> a(N), b(N), c(N), rhs(N);
+            std::vector<double> cp(N), dp(N);
+
+            for (int j = 0; j < N; ++j)
+            {
+                double RhoCp  = EffectiveHeatCapacity(i,j,k);
+                double Lambda = EffectiveThermalConductivity(i,j,k);
+                double r      = Lambda * dt / (RhoCp * dx2);
+
+                double explicitContrib = 0.0;
+                if (Grid.dNx > 0) explicitContrib += Lambda * (TxOld(i+1,j,k) + TxOld(i-1,j,k)) / dx2;
+                if (Grid.dNz > 0) explicitContrib += Lambda * (TxOld(i,j,k+1) + TxOld(i,j,k-1)) / dx2;
+
+                a[j]   = -r;
+                b[j]   =  1.0 + 2.0 * r;
+                c[j]   = -r;
+                rhs[j] = TxOld(i,j,k) + (explicitContrib + Qdot(i,j,k)) * dt / RhoCp;
+            }
+
+            a[0]     = 0.0;
+            c[N - 1] = 0.0;
+
+            cp[0] = c[0] / b[0];
+            dp[0] = rhs[0] / b[0];
+            for (int j = 1; j < N; ++j)
+            {
+                double denom = b[j] - a[j] * cp[j - 1];
+                cp[j] = c[j] / denom;
+                dp[j] = (rhs[j] - a[j] * dp[j - 1]) / denom;
+            }
+
+            Temp(i, N - 1, k) = dp[N - 1];
+            for (int j = N - 2; j >= 0; --j)
+            {
+                Temp(i, j, k) = dp[j] - cp[j] * Temp(i, j + 1, k);
+            }
+        }
+        Temp.SetBoundaryConditions(BC);
+    }
+
+    // --- Z-direction sweep: implicit along Z, explicit along X and Y ---
+    if (Grid.dNz > 0)
+    {
+        OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,Temp.Tx,0,)
+        {
+            TxOld(i,j,k) = Temp(i,j,k);
+        }
+        OMP_PARALLEL_STORAGE_LOOP_END
+
+        #ifdef _OPENMP
+        #pragma omp parallel for schedule(dynamic) collapse(2)
+        #endif
+        for (int i = 0; i < Grid.Nx; ++i)
+        for (int j = 0; j < Grid.Ny; ++j)
+        {
+            const int N = Grid.Nz;
+            std::vector<double> a(N), b(N), c(N), rhs(N);
+            std::vector<double> cp(N), dp(N);
+
+            for (int k = 0; k < N; ++k)
+            {
+                double RhoCp  = EffectiveHeatCapacity(i,j,k);
+                double Lambda = EffectiveThermalConductivity(i,j,k);
+                double r      = Lambda * dt / (RhoCp * dx2);
+
+                double explicitContrib = 0.0;
+                if (Grid.dNx > 0) explicitContrib += Lambda * (TxOld(i+1,j,k) + TxOld(i-1,j,k)) / dx2;
+                if (Grid.dNy > 0) explicitContrib += Lambda * (TxOld(i,j+1,k) + TxOld(i,j-1,k)) / dx2;
+
+                a[k]   = -r;
+                b[k]   =  1.0 + 2.0 * r;
+                c[k]   = -r;
+                rhs[k] = TxOld(i,j,k) + (explicitContrib + Qdot(i,j,k)) * dt / RhoCp;
+            }
+
+            a[0]     = 0.0;
+            c[N - 1] = 0.0;
+
+            cp[0] = c[0] / b[0];
+            dp[0] = rhs[0] / b[0];
+            for (int k = 1; k < N; ++k)
+            {
+                double denom = b[k] - a[k] * cp[k - 1];
+                cp[k] = c[k] / denom;
+                dp[k] = (rhs[k] - a[k] * dp[k - 1]) / denom;
+            }
+
+            Temp(i, j, N - 1) = dp[N - 1];
+            for (int k = N - 2; k >= 0; --k)
+            {
+                Temp(i, j, k) = dp[k] - cp[k] * Temp(i, j, k + 1);
+            }
+        }
+        Temp.SetBoundaryConditions(BC);
+    }
+
+    Qdot.Clear();
+    Temp.CalculateMinMaxAvg();
+    SolverCallsCounter++;
+}
+
 }// namespace openphase
