@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2012
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Johannes Goerler
+ *
+ *  File created :   2012
+ *  Main contributors :   Oleg Shchyglo; Efim Borukhovich; Johannes Goerler
  *
  */
 
@@ -28,6 +28,7 @@
 #include "Containers/dMatrix3x3.h"
 #include "Settings.h"
 #include "SymmetryVariants.h"
+#include "Thermodynamics/ThermodynamicPropertiesEQP.h"
 #include "PhaseField.h"
 #include "Composition.h"
 #include "DrivingForce.h"
@@ -70,6 +71,8 @@ void ElasticProperties::Initialize(Settings& locSettings, std::string ObjectName
     Ncomp = locSettings.Ncomp;
     ElementNames = locSettings.ElementNames;
 
+    EnableDrivingForce.Allocate(Nphases, Nphases);
+
     AppliedStrainMask.set_to_zero();
     AppliedStrainRateMask.set_to_zero();
     AppliedStressMask.set_to_zero();
@@ -102,7 +105,10 @@ void ElasticProperties::Initialize(Settings& locSettings, std::string ObjectName
     VelocityGradientsPlastic.Allocate(Grid, Bcells);
 
     PhaseElasticConstants.Allocate(Nphases);
+    PhaseOrientationRelationships.Allocate(Nphases);
+
     PhaseTransformationStretches.Allocate(Nphases);
+    PhaseTransformationRotations.Allocate(Nphases);
 
     PhaseAlpha.Allocate(Nphases);
     PhaseGamma.Allocate(Nphases);
@@ -133,7 +139,10 @@ void ElasticProperties::Initialize(Settings& locSettings, std::string ObjectName
         Tref[alpha] = 0.0;
 
         PhaseTransformationStretches[alpha].set_to_unity();
+        PhaseTransformationRotations[alpha].set_to_unity();
+
         PhaseElasticConstants[alpha].set_to_zero();
+        PhaseOrientationRelationships[alpha].set_to_unity();
 
         for(size_t comp = 0; comp != Ncomp; comp++)
         {
@@ -183,7 +192,7 @@ void ElasticProperties::InitializeLD(Settings& locSettings)
     {
         StressIncrements(i,j,k).set_to_zero();
         VelocityGradientsTotal(i,j,k).set_to_zero();
-        LocalRotations(i,j,k).set_to_zero();
+        LocalRotations(i,j,k).set_to_zero_rotation();
     }
     OMP_PARALLEL_STORAGE_LOOP_END
 
@@ -204,6 +213,8 @@ void ElasticProperties::ReadInput(const string InputFileName)
     inp.close();
 
     ReadInput(data);
+
+    ConsoleOutput::WriteLine();
 }
 
 void ElasticProperties::ReadInput(stringstream& inp)
@@ -216,7 +227,7 @@ void ElasticProperties::ReadInput(stringstream& inp)
 
     int moduleLocation = FileInterface::FindModuleLocation(inp, thisclassname);
 
-    string tmp1 = FileInterface::ReadParameterK(inp, moduleLocation, "EModel", false, "KHACHATURYAN");
+    string tmp1 = FileInterface::ReadParameterK(inp, moduleLocation, vector<string>{"ElasticityModel","EModel"}, false, "KHACHATURYAN");
 
     if (tmp1 == "KHACHATURYAN")
     {
@@ -247,6 +258,29 @@ void ElasticProperties::ReadInput(stringstream& inp)
         ConsoleOutput::WriteWarning("No or wrong elasticity model specified!\nThe default \"Khachaturyan\" model is used!", thisclassname, "ReadInput()");
     }
 
+    string tmp4 = FileInterface::ReadParameterK(inp, moduleLocation, vector<string>{"StrainModel","SMode"}, false, "SMALL");
+
+    if (tmp4 == "SMALL")
+    {
+        StrainModel = StrainModels::Small;
+    }
+    else if (tmp4 == "FINITE" or tmp4 == "GREENLAGRANGE")
+    {
+        StrainModel = StrainModels::GreenLagrange;
+    }
+    else if (tmp4 == "HENCKY")
+    {
+        StrainModel = StrainModels::Hencky;
+
+    }
+    else if (tmp4 == "BAZANT")
+    {
+        StrainModel = StrainModels::Bazant;
+    }
+    else
+    {
+        ConsoleOutput::WriteWarning("No or wrong strain mode specified!\nThe default \"finite strain\" model is used!", thisclassname, "ReadInput()");
+    }
     /// Mechanical boundary conditions
 
     std::vector<std::string> BCnames {"BCX", "BCY","BCZ","BCYZ","BCXZ","BCXY"};
@@ -295,14 +329,15 @@ void ElasticProperties::ReadInput(stringstream& inp)
         PhaseElasticConstants[alpha].set_to_zero();
     }
     
-    string tmp4 = FileInterface::ReadParameterK(inp, moduleLocation, "ElasticConstantMode", false, "ELASTICMODULI");
+    string tmp5 = FileInterface::ReadParameterK(inp, moduleLocation, "ElasticConstantMode", false, "ELASTICMODULI");
     
-    if (tmp4 != "ELASTICMODULI" and tmp4 != "TENSOR")
+    if (tmp5 != "ELASTICMODULI" and tmp5 != "TENSOR")
     {
         std::cerr << "WARNING: ElasticConstantMode should be ELASTICMODULI or TENSOR, trying ELASTICMODULI." << std::endl;
-        tmp4 = "ELASTICMODULI";        
+        tmp5 = "ELASTICMODULI";        
     }
 
+    // Reading elastic constants
     for(size_t pIndex = 0; pIndex < Nphases; pIndex++)
     {
         // Read elastic moduli if provided
@@ -342,7 +377,7 @@ void ElasticProperties::ReadInput(stringstream& inp)
         else if (G      != 0.0 and M      != 0.0) {lambda = M-2.0*G;}
         else if (nu     != 0.0 and M      != 0.0) {lambda = M*nu/(1.0-nu);                G = M*(1.0-2.0*nu)/(2.0*(1.0-nu));}
 
-        if (std::fabs(lambda) > DBL_EPSILON and std::fabs(G) > DBL_EPSILON and tmp4 == "ELASTICMODULI")
+        if (std::fabs(lambda) > DBL_EPSILON and std::fabs(G) > DBL_EPSILON and tmp5 == "ELASTICMODULI")
         {
             PhaseElasticConstants[pIndex](0,0) = 2.0*G + lambda;
             PhaseElasticConstants[pIndex](1,1) = 2.0*G + lambda;
@@ -393,12 +428,152 @@ void ElasticProperties::ReadInput(stringstream& inp)
         }
     }
 
+    // Reading orientation relationship input mode:
+    std::string OrientationRelationshipInputMode = FileInterface::ReadParameterK(inp, moduleLocation, "OrientationRelationshipInputMode",false, "MATRIX");
+
+    // Reading orientation relationships for different phases (referenced to the frame of reference):
     for(size_t pIndex = 0; pIndex < Nphases; pIndex++)
     {
-        stringstream converter;
-        converter << "U_" << pIndex;
-        PhaseTransformationStretches[pIndex] = FileInterface::ReadParameterM3x3(inp, moduleLocation, converter.str(),true,dMatrix3x3::UnitTensor());
+        stringstream converterOR;
+        converterOR << "OrientationRelationship_" << pIndex;
+        if(OrientationRelationshipInputMode == "MATRIX")
+        {
+            PhaseOrientationRelationships[pIndex] = FileInterface::ReadParameterM3x3(inp, moduleLocation, converterOR.str(),false,dMatrix3x3::UnitTensor());
+        }
+        else if(OrientationRelationshipInputMode == "EULERANGLES")
+        {
+            EulerAngles EAinput = FileInterface::ReadParameterEA(inp, moduleLocation, converterOR.str(),false, EulerAngles({0.0,0.0,0.0}, "XYZ"));
+            PhaseOrientationRelationships[pIndex] = EAinput.get_rotation_matrix();
+        }
+        else if(OrientationRelationshipInputMode == "AXISANGLE")
+        {
+            if(FileInterface::FindParameter(inp, moduleLocation, converterOR.str()) != -1)
+            {
+                dVectorN AAinput = FileInterface::ReadParameterAA(inp, moduleLocation, converterOR.str(),false, dVectorN({1.0,0.0,0.0,0.0}));
+
+                Quaternion Qinput;
+                Qinput.set({AAinput[0],AAinput[1],AAinput[2]},AAinput[3]);
+                PhaseOrientationRelationships[pIndex] = Qinput.get_rotation_matrix()*PhaseOrientationRelationships[pIndex];
+                cout << PhaseOrientationRelationships[pIndex].print() << endl;
+            }
+            else
+            {
+                bool endofangles = false;
+                size_t idx = 0;
+                while(!endofangles)
+                {
+                    stringstream converterORN;
+                    converterORN << converterOR.str() << "_" << idx;
+                    if(FileInterface::FindParameter(inp, moduleLocation, converterORN.str()) != -1)
+                    {
+                        dVectorN AAinput = FileInterface::ReadParameterAA(inp, moduleLocation, converterORN.str(),false, dVectorN({1.0,0.0,0.0,0.0}));
+
+                        Quaternion Qinput;
+                        Qinput.set({AAinput[0],AAinput[1],AAinput[2]},AAinput[3]);
+                        PhaseOrientationRelationships[pIndex] = Qinput.get_rotation_matrix()*PhaseOrientationRelationships[pIndex];
+
+                        cout << PhaseOrientationRelationships[pIndex].print() << endl;
+
+                        idx++;
+                    }
+                    else
+                    {
+                        endofangles = true;
+                    }
+                }
+            }
+        }
+        else if(OrientationRelationshipInputMode == "QUATERNION")
+        {
+            Quaternion Qinput = FileInterface::ReadParameterQ(inp, moduleLocation, converterOR.str(),false, Quaternion());
+            PhaseOrientationRelationships[pIndex] = Qinput.get_rotation_matrix();
+        }
+        else
+        {
+            std::string message = "Unknown orientation relationship input mode. Available modes are MATRIX, EULERANGLES, AXISANGLE and QUATERNION.";
+            ConsoleOutput::WriteExit(message, thisclassname, "ReadInput()");
+            exit(3);
+        }
     }
+
+    // Reading transformation-induced rotations input mode:
+    std::string TransformationRotationsInputMode = FileInterface::ReadParameterK(inp, moduleLocation, "TransformationRotationsInputMode",false, "MATRIX");
+
+    // Reading transformation-induced rotations for different phases (referenced to the frame of reference):
+    for(size_t pIndex = 0; pIndex < Nphases; pIndex++)
+    {
+        stringstream converterR;
+        converterR << "TransformationRotations_" << pIndex;
+        if(TransformationRotationsInputMode == "MATRIX")
+        {
+            PhaseTransformationRotations[pIndex] = FileInterface::ReadParameterM3x3(inp, moduleLocation, converterR.str(),false,dMatrix3x3::UnitTensor());
+        }
+        else if(TransformationRotationsInputMode == "EULERANGLES")
+        {
+            EulerAngles EAinput = FileInterface::ReadParameterEA(inp, moduleLocation, converterR.str(),false, EulerAngles({0.0,0.0,0.0}, "XYZ"));
+            PhaseTransformationRotations[pIndex] = EAinput.get_rotation_matrix();
+        }
+        else if(TransformationRotationsInputMode == "AXISANGLE")
+        {
+            if(FileInterface::FindParameter(inp, moduleLocation, converterR.str()) != -1)
+            {
+                dVectorN AAinput = FileInterface::ReadParameterAA(inp, moduleLocation, converterR.str(),false, dVectorN({1.0,0.0,0.0,0.0}));
+
+                Quaternion Qinput;
+                Qinput.set({AAinput[0],AAinput[1],AAinput[2]},AAinput[3]);
+                PhaseTransformationRotations[pIndex] = Qinput.get_rotation_matrix()*PhaseTransformationRotations[pIndex];
+                cout << PhaseTransformationRotations[pIndex].print() << endl;
+            }
+            else
+            {
+                bool endofangles = false;
+                size_t idx = 0;
+                while(!endofangles)
+                {
+                    stringstream converterRN;
+                    converterRN << converterR.str() << "_" << idx;
+                    if(FileInterface::FindParameter(inp, moduleLocation, converterRN.str()) != -1)
+                    {
+                        dVectorN AAinput = FileInterface::ReadParameterAA(inp, moduleLocation, converterRN.str(),false, dVectorN({1.0,0.0,0.0,0.0}));
+
+                        Quaternion Qinput;
+                        Qinput.set({AAinput[0],AAinput[1],AAinput[2]},AAinput[3]);
+                        PhaseTransformationRotations[pIndex] = Qinput.get_rotation_matrix()*PhaseTransformationRotations[pIndex];
+                        cout << PhaseTransformationRotations[pIndex].print() << endl;
+                        idx++;
+                    }
+                    else
+                    {
+                        endofangles = true;
+                    }
+                }
+            }
+        }
+        else if(TransformationRotationsInputMode == "QUATERNION")
+        {
+            Quaternion Qinput = FileInterface::ReadParameterQ(inp, moduleLocation, converterR.str(),false, Quaternion());
+            PhaseTransformationRotations[pIndex] = Qinput.get_rotation_matrix();
+        }
+        else
+        {
+            std::string message = "Unknown transformation-induced rotations input mode. Available modes are MATRIX, EULERANGLES, AXISANGLE and QUATERNION.";
+            ConsoleOutput::WriteExit(message, thisclassname, "ReadInput()");
+            exit(3);
+        }
+    }
+
+    // Reading transformation stretches for different phases (referenced to the frame of reference):
+    for(size_t pIndex = 0; pIndex < Nphases; pIndex++)
+    {
+        stringstream converterU;
+        converterU << "U_" << pIndex;
+        PhaseTransformationStretches[pIndex] = FileInterface::ReadParameterM3x3(inp, moduleLocation, converterU.str(),true,dMatrix3x3::UnitTensor());
+
+//        stringstream converterTS;
+//        converterTS << "TransformationStretches_" << pIndex;
+//        PhaseTransformationStretches[pIndex] = FileInterface::ReadParameterM3x3(inp, moduleLocation, converterTS.str(),false,dMatrix3x3::UnitTensor());
+    }
+
     // Considering external forces
     ConsiderExternalForces = FileInterface::ReadParameterB(inp, moduleLocation, "ConsiderExternalForces", false, false);
     if(ConsiderExternalForces)
@@ -535,11 +710,22 @@ void ElasticProperties::ReadInput(stringstream& inp)
             ConsoleOutput::WriteWarning("ThermoMechanicalCoupling is ON but no coupling parameters specified", thisclassname, "ReadInput()");
         }
     }
+
+    // Reading driving force switches
+    for (size_t pIndexA = 0; pIndexA < Nphases; pIndexA++)
+    for (size_t pIndexB = pIndexA; pIndexB < Nphases; pIndexB++)
+    {
+        stringstream converter;
+        converter << "EnableDrivingForce_" << pIndexA << "_" << pIndexB;
+        EnableDrivingForce(pIndexA, pIndexB) = FileInterface::ReadParameterB(inp, moduleLocation, converter.str(), false, true);
+        EnableDrivingForce(pIndexB, pIndexA) = EnableDrivingForce(pIndexA, pIndexB);
+    }
+
     ConsoleOutput::WriteLine();
-    ConsoleOutput::WriteBlankLine();
 
     Variants.ReadInput(inp);
 }
+
 
 void ElasticProperties::Remesh(int newNx, int newNy, int newNz, const BoundaryConditions& BC)
 {
@@ -608,10 +794,10 @@ void ElasticProperties::SetGrainsProperties(const PhaseField& Phase)
         size_t pIndex = Phase.FieldsProperties[alpha].Phase;
         size_t vIndex = Phase.FieldsProperties[alpha].Variant;
 
-        GrainTransformationStretches[alpha] = PhaseTransformationStretches[pIndex];
-        GrainElasticConstants[alpha] = PhaseElasticConstants[pIndex];
-        GrainAlpha[alpha] = PhaseAlpha[pIndex];
-        GrainGamma[alpha] = PhaseGamma[pIndex];
+        GrainTransformationStretches[alpha] = PhaseTransformationStretches[pIndex].rotatedU(PhaseTransformationRotations[pIndex]);
+        GrainElasticConstants[alpha] = PhaseElasticConstants[pIndex].rotated(PhaseOrientationRelationships[pIndex]);
+        GrainAlpha[alpha] = PhaseAlpha[pIndex].rotatedU(PhaseTransformationRotations[pIndex]);
+        GrainGamma[alpha] = PhaseGamma[pIndex].rotated(PhaseOrientationRelationships[pIndex]);
 
         if(Variants.set)
         {
@@ -628,8 +814,8 @@ void ElasticProperties::SetGrainsProperties(const PhaseField& Phase)
 
         for(size_t comp = 0; comp != Ncomp; comp++)
         {
-            GrainLambda({alpha, comp}) = PhaseLambda({pIndex, comp});
-            GrainKappa({alpha, comp})  = PhaseKappa({pIndex, comp});
+            GrainLambda({alpha, comp}) = PhaseLambda({pIndex, comp}).rotatedU(PhaseTransformationRotations[pIndex]);
+            GrainKappa({alpha, comp})  = PhaseKappa({pIndex, comp}).rotated(PhaseOrientationRelationships[pIndex]);
 
             if(Variants.set)
             {
@@ -755,7 +941,9 @@ ElasticProperties& ElasticProperties::operator= (const ElasticProperties& rhs)
         if (PhaseElasticConstants.IsNotAllocated())
         {
             PhaseElasticConstants.Allocate(Nphases);
+            PhaseOrientationRelationships.Allocate(Nphases);
             PhaseTransformationStretches.Allocate(Nphases);
+            PhaseTransformationRotations.Allocate(Nphases);
 
             PhaseKappa.Allocate({Nphases, Ncomp});
             PhaseLambda.Allocate({Nphases, Ncomp});
@@ -767,7 +955,10 @@ ElasticProperties& ElasticProperties::operator= (const ElasticProperties& rhs)
         else if (PhaseElasticConstants.size() != rhs.Nphases)
         {
             PhaseElasticConstants.Reallocate(Nphases);
+            PhaseOrientationRelationships.Reallocate(Nphases);
             PhaseTransformationStretches.Reallocate(Nphases);
+            PhaseTransformationRotations.Reallocate(Nphases);
+
             PhaseKappa.Reallocate({Nphases, Ncomp});
             PhaseLambda.Reallocate({Nphases, Ncomp});
             PhaseGamma.Reallocate(Nphases);
@@ -783,7 +974,10 @@ ElasticProperties& ElasticProperties::operator= (const ElasticProperties& rhs)
             Tref[alpha] = rhs.Tref[alpha];
 
             PhaseTransformationStretches[alpha] = rhs.PhaseTransformationStretches[alpha];
+            PhaseTransformationRotations[alpha] = rhs.PhaseTransformationRotations[alpha];
+
             PhaseElasticConstants[alpha] = rhs.PhaseElasticConstants[alpha];
+            PhaseOrientationRelationships[alpha] = rhs.PhaseOrientationRelationships[alpha];
 
             for(size_t comp = 0; comp < Ncomp; comp++)
             {
@@ -1023,6 +1217,7 @@ void ElasticProperties::AddChemicalSoftening(const PhaseField& Phase, const Comp
     }
     OMP_PARALLEL_STORAGE_LOOP_END
 }
+
 void ElasticProperties::SetEffectiveProperties(const PhaseField& Phase)
 {
     SetGrainsProperties(Phase);
@@ -1101,6 +1296,7 @@ void ElasticProperties::SetEffectiveProperties(const PhaseField& Phase, const Co
         ApplyLocalRotationsToDeformationGradientsEigen();
     }
 }
+
 void ElasticProperties::SetEffectiveProperties(const PhaseField& Phase, const InterfaceProperties& IP)
 {
     SetGrainsProperties(Phase);
@@ -1221,138 +1417,138 @@ void ElasticProperties::CalculateDrivingForce(const PhaseField& Phase, DrivingFo
         for(auto  beta  = alpha + 1;
                   beta != Phase.Fields(i, j, k).cend();  ++beta)
         {
-            dMatrix3x3 locStretchesAlpha = TransformationStretches(i,j,k).get_value(alpha->index);
-            dMatrix3x3 locStretchesBeta  = TransformationStretches(i,j,k).get_value( beta->index);
+            size_t pIndexA = Phase.FieldsProperties[alpha->index].Phase;
+            size_t pIndexB = Phase.FieldsProperties[beta->index].Phase;
 
-            vStrain locEigenStrainDifference =
-                EigenStrainDifference(locStretchesAlpha, locStretchesBeta, i,j,k);
-
-            double dG_AB = 0.0;
-            switch(ElasticityModel)
+            if(EnableDrivingForce(pIndexA, pIndexB))
             {
-                case ElasticityModels::Khachaturyan:
+                dMatrix3x3 locStretchesAlpha = TransformationStretches(i,j,k).get_value(alpha->index);
+                dMatrix3x3 locStretchesBeta  = TransformationStretches(i,j,k).get_value( beta->index);
+
+                vStrain locEigenStrainDifference =
+                    EigenStrainDifference(locStretchesAlpha, locStretchesBeta, i,j,k);
+
+                double dG_AB = 0.0;
+                switch(ElasticityModel)
                 {
-                    dG_AB += (ElasticStrains*
-                             ((ElasticConstants(i,j,k).get_value( beta->index) -
-                               ElasticConstants(i,j,k).get_value(alpha->index))*
-                              ElasticStrains))*0.5;
+                    case ElasticityModels::Khachaturyan:
+                    {
+                        dG_AB += (ElasticStrains*
+                                 ((ElasticConstants(i,j,k).get_value( beta->index) -
+                                   ElasticConstants(i,j,k).get_value(alpha->index))*
+                                  ElasticStrains))*0.5;
 
-                    dG_AB -= Stresses(i, j, k)*locEigenStrainDifference;
-                    break;
-                }
-                case ElasticityModels::Steinbach:
-                case ElasticityModels::Reuss:
-                {
-                    dG_AB += (Stresses(i, j, k)*
-                             ((ElasticConstants(i,j,k).get_value(alpha->index).inverted() -
-                               ElasticConstants(i,j,k).get_value( beta->index).inverted())*
-                              Stresses(i, j, k)))*0.5;
+                        dG_AB -= Stresses(i, j, k)*locEigenStrainDifference;
+                        break;
+                    }
+                    case ElasticityModels::Steinbach:
+                    case ElasticityModels::Reuss:
+                    {
+                        dG_AB += (Stresses(i, j, k)*
+                                 ((ElasticConstants(i,j,k).get_value(alpha->index).inverted() -
+                                   ElasticConstants(i,j,k).get_value( beta->index).inverted())*
+                                  Stresses(i, j, k)))*0.5;
 
-                    dG_AB -= Stresses(i, j, k)*locEigenStrainDifference;
-                    break;
-                }
-                case ElasticityModels::Voigt:                                   // Defined in small strain setting
-                {
-                    vStrain locStrain = StrainSmall(DeformationGradientsTotal(i,j,k))
-                                      - StrainSmall(DeformationGradientsPlastic(i,j,k));
-
-                    vStrain locEigenStrainAlpha = StrainSmall(TransformationStretches(i,j,k).get_value(alpha->index));
-                    vStrain locEigenStrainBeta  = StrainSmall(TransformationStretches(i,j,k).get_value( beta->index));
-
-                    dG_AB += ((locStrain - locEigenStrainBeta)*
-                              (ElasticConstants(i,j,k).get_value(beta->index)*
-                              (locStrain - locEigenStrainBeta)) -
-
-                              (locStrain - locEigenStrainAlpha)*
-                              (ElasticConstants(i,j,k).get_value(alpha->index)*
-                              (locStrain - locEigenStrainAlpha)))*0.5;
-                    break;
-                }
-                case ElasticityModels::Rank1:                                   // Defined in small strain setting
-                case ElasticityModels::Rank1NL:                                 // Defined in small strain setting
-                {
-                    if(alpha->value > DBL_EPSILON and beta->value > DBL_EPSILON)
+                        dG_AB -= Stresses(i, j, k)*locEigenStrainDifference;
+                        break;
+                    }
+                    case ElasticityModels::Voigt:                                   // Defined in small strain setting
                     {
                         vStrain locStrain = StrainSmall(DeformationGradientsTotal(i,j,k))
                                           - StrainSmall(DeformationGradientsPlastic(i,j,k));
 
-                        double scale = 1.0;
-                        if(Phase.FieldsProperties[alpha->index].Stage != GrainStages::Stable)
-                        {
-                            scale *= Phase.FieldsProperties[alpha->index].VolumeRatio;
-                        }
-                        if(Phase.FieldsProperties[beta->index].Stage != GrainStages::Stable)
-                        {
-                            scale *= Phase.FieldsProperties[beta->index].VolumeRatio;
-                        }
+                        vStrain locEigenStrainAlpha = StrainSmall(TransformationStretches(i,j,k).get_value(alpha->index));
+                        vStrain locEigenStrainBeta  = StrainSmall(TransformationStretches(i,j,k).get_value( beta->index));
 
-                        dMatrix3x3 locFjumpAlpha = DeformationJumps(i,j,k).get_sym2(alpha->index,  beta->index);
-                        dMatrix3x3 locFjumpBeta  = DeformationJumps(i,j,k).get_sym2( beta->index, alpha->index);
-
-//                        for(auto gamma  = beta + 1;
-//                                 gamma != Phase.Fields(i, j, k).cend(); ++gamma)
-//                        if(gamma->value > DBL_EPSILON)
-//                        {
-//                            locFjumpAlpha += DeformationJumps(i,j,k).get_asym2(alpha->index, gamma->index);
-//                            locFjumpBeta  += DeformationJumps(i,j,k).get_asym2( beta->index, gamma->index);
-//                        }
-
-                        double sign = 1.0;
-                        if(alpha->index > beta->index)
-                        {
-                            sign = -1.0;
-                        }
-
-                        vStrain locStrainJumpA = StrainSmall(locFjumpAlpha + dMatrix3x3::UnitTensor())*scale*sign;
-                        vStrain locStrainJumpB = StrainSmall(locFjumpBeta  + dMatrix3x3::UnitTensor())*scale*(-sign);
-
-                        vStrain StrainAlpha = locStrain - locStrainJumpA* beta->value/(alpha->value + beta->value);// TODO: check effect of normalization by (alpha->value + beta->value)
-                        vStrain StrainBeta  = locStrain - locStrainJumpB*alpha->value/(alpha->value + beta->value);// TODO: check effect of normalization by (alpha->value + beta->value)
-
-                        vStrain locEigenStrainAlpha = StrainSmall(locStretchesAlpha);
-                        vStrain locEigenStrainBeta  = StrainSmall(locStretchesBeta);
-
-                        dG_AB += ((StrainBeta - locEigenStrainBeta)*
+                        dG_AB += ((locStrain - locEigenStrainBeta)*
                                   (ElasticConstants(i,j,k).get_value(beta->index)*
-                                  (StrainBeta - locEigenStrainBeta)) -
+                                  (locStrain - locEigenStrainBeta)) -
 
-                                  (StrainAlpha - locEigenStrainAlpha)*
+                                  (locStrain - locEigenStrainAlpha)*
                                   (ElasticConstants(i,j,k).get_value(alpha->index)*
-                                  (StrainAlpha - locEigenStrainAlpha)))*0.5*scale;
-
-                        dG_AB -= Stresses(i,j,k)*(locStrainJumpA - locStrainJumpB)*0.5*scale;
-
-                        if(ElasticityModel == ElasticityModels::Rank1NL)
-                        {
-                            if(Grid.dNx)
-                            {
-                                dG_AB -= (NonLocalDeformationJumpTerm(i+1,j,k).get_asym1(alpha->index, beta->index)[0] - NonLocalDeformationJumpTerm(i-1,j,k).get_asym1(alpha->index, beta->index)[0])*scale/(2.0*Grid.dx);
-                            }
-                            if(Grid.dNy)
-                            {
-                                dG_AB -= (NonLocalDeformationJumpTerm(i,j+1,k).get_asym1(alpha->index, beta->index)[1] - NonLocalDeformationJumpTerm(i,j-1,k).get_asym1(alpha->index, beta->index)[1])*scale/(2.0*Grid.dx);
-                            }
-                            if(Grid.dNz)
-                            {
-                                dG_AB -= (NonLocalDeformationJumpTerm(i,j,k+1).get_asym1(alpha->index, beta->index)[2] - NonLocalDeformationJumpTerm(i,j,k-1).get_asym1(alpha->index, beta->index)[2])*scale/(2.0*Grid.dx);
-                            }
-                        }
-
-                        //Use Khachaturyan's driving force for small nuclei
-                        if((1.0 - scale) > FLT_EPSILON)
-                        {
-                            dG_AB += (ElasticStrains*
-                                     ((ElasticConstants(i,j,k).get_value( beta->index) -
-                                       ElasticConstants(i,j,k).get_value(alpha->index))*
-                                      ElasticStrains))*0.5*(1.0 - scale);
-
-                            dG_AB -= Stresses(i, j, k)*locEigenStrainDifference*(1.0 - scale);
-                        }
+                                  (locStrain - locEigenStrainAlpha)))*0.5;
+                        break;
                     }
-                    break;
+                    case ElasticityModels::Rank1:                                   // Defined in small strain setting
+                    case ElasticityModels::Rank1NL:                                 // Defined in small strain setting
+                    {
+                        if(alpha->value > DBL_EPSILON and beta->value > DBL_EPSILON)
+                        {
+                            vStrain locStrain = StrainSmall(DeformationGradientsTotal(i,j,k))
+                                              - StrainSmall(DeformationGradientsPlastic(i,j,k));
+
+                            double scale = 1.0;
+                            if(Phase.FieldsProperties[alpha->index].Stage != GrainStages::Stable)
+                            {
+                                scale *= Phase.FieldsProperties[alpha->index].VolumeRatio;
+                            }
+                            if(Phase.FieldsProperties[beta->index].Stage != GrainStages::Stable)
+                            {
+                                scale *= Phase.FieldsProperties[beta->index].VolumeRatio;
+                            }
+
+                            dMatrix3x3 locFjumpAlpha = DeformationJumps(i,j,k).get_asym2(alpha->index,  beta->index);
+                            dMatrix3x3 locFjumpBeta  = DeformationJumps(i,j,k).get_asym2(beta->index,  alpha->index);
+
+    //                        for(auto gamma  = beta + 1;
+    //                                 gamma != Phase.Fields(i, j, k).cend(); ++gamma)
+    //                        if(gamma->value > DBL_EPSILON)
+    //                        {
+    //                            locFjumpAlpha += DeformationJumps(i,j,k).get_asym2(alpha->index, gamma->index);
+    //                            locFjumpBeta  += DeformationJumps(i,j,k).get_asym2( beta->index, gamma->index);
+    //                        }
+
+                            vStrain locStrainJumpA = StrainSmall(locFjumpAlpha + dMatrix3x3::UnitTensor())*scale;
+                            vStrain locStrainJumpB = StrainSmall(locFjumpBeta  + dMatrix3x3::UnitTensor())*scale;
+
+                            vStrain StrainAlpha = locStrain - locStrainJumpA* beta->value/(alpha->value + beta->value);// TODO: check effect of normalization by (alpha->value + beta->value)
+                            vStrain StrainBeta  = locStrain - locStrainJumpB*alpha->value/(alpha->value + beta->value);// TODO: check effect of normalization by (alpha->value + beta->value)
+
+                            vStrain locEigenStrainAlpha = StrainSmall(locStretchesAlpha);
+                            vStrain locEigenStrainBeta  = StrainSmall(locStretchesBeta);
+
+                            dG_AB += ((StrainBeta - locEigenStrainBeta)*
+                                      (ElasticConstants(i,j,k).get_value(beta->index)*
+                                      (StrainBeta - locEigenStrainBeta)) -
+
+                                      (StrainAlpha - locEigenStrainAlpha)*
+                                      (ElasticConstants(i,j,k).get_value(alpha->index)*
+                                      (StrainAlpha - locEigenStrainAlpha)))*0.5*scale;
+
+                            dG_AB -= Stresses(i,j,k)*(locStrainJumpA - locStrainJumpB)*0.5*scale;
+
+                            if(ElasticityModel == ElasticityModels::Rank1NL)
+                            {
+                                if(Grid.dNx)
+                                {
+                                    dG_AB -= (NonLocalDeformationJumpTerm(i+1,j,k).get_asym1(alpha->index, beta->index)[0] - NonLocalDeformationJumpTerm(i-1,j,k).get_asym1(alpha->index, beta->index)[0])*scale/(2.0*Grid.dx);
+                                }
+                                if(Grid.dNy)
+                                {
+                                    dG_AB -= (NonLocalDeformationJumpTerm(i,j+1,k).get_asym1(alpha->index, beta->index)[1] - NonLocalDeformationJumpTerm(i,j-1,k).get_asym1(alpha->index, beta->index)[1])*scale/(2.0*Grid.dx);
+                                }
+                                if(Grid.dNz)
+                                {
+                                    dG_AB -= (NonLocalDeformationJumpTerm(i,j,k+1).get_asym1(alpha->index, beta->index)[2] - NonLocalDeformationJumpTerm(i,j,k-1).get_asym1(alpha->index, beta->index)[2])*scale/(2.0*Grid.dx);
+                                }
+                            }
+
+                            //Use Khachaturyan's driving force for small nuclei
+                            if((1.0 - scale) > FLT_EPSILON)
+                            {
+                                dG_AB += (ElasticStrains*
+                                         ((ElasticConstants(i,j,k).get_value( beta->index) -
+                                           ElasticConstants(i,j,k).get_value(alpha->index))*
+                                          ElasticStrains))*0.5*(1.0 - scale);
+
+                                dG_AB -= Stresses(i, j, k)*locEigenStrainDifference*(1.0 - scale);
+                            }
+                        }
+                        break;
+                    }
                 }
+                dGab.Force(i,j,k).add_raw(alpha->index, beta->index, dG_AB);
             }
-            dGab.Force(i,j,k).add_raw(alpha->index, beta->index, dG_AB);
         }
     }
     OMP_PARALLEL_STORAGE_LOOP_END
@@ -1412,8 +1608,7 @@ void ElasticProperties::CalculateDeformationJumps(const PhaseField& Phase)
                         dMatrix3x3 projCij = Cij.project(locNormalAB);
                         dVector3 locJump = projCij.inverted()*(Cij_alpha*dStrainA - Cij_beta*dStrainB).tensor()*locNormalAB;
                         dMatrix3x3 locDefJump = locJump.dyadic(locNormalAB);
-                        locJumps.set_asym1(alpha->index, beta->index, locJump);
-                        locJumps.set_asym2(alpha->index, beta->index, locDefJump);
+                        locJumps.set_asym_pair(alpha->index, beta->index, locJump, locDefJump);
 
                         dVector3 locJumpOLD = DeformationJumps(i,j,k).get_asym1(alpha->index, beta->index);
                         residual = max((locJumpOLD - locJump).abs()*beta->value, residual);
@@ -1467,6 +1662,48 @@ void ElasticProperties::CalculateNonlocalJumpContribution(const PhaseField& Phas
     }
     OMP_PARALLEL_STORAGE_LOOP_END
 }
+
+void ElasticProperties::CalculateChemicalPotentialContribution(
+                                                const PhaseField& Phase,
+                                                ThermodynamicPropertiesEQP& TP)
+{
+    /** This function calculates the partial derivative of the mechanical
+    energy with respect to the composition. This is later used in the EQP-model
+    to calculate an additional diffusion flux. */
+
+    if(ChemoMechanicalCoupling)
+
+    OMP_PARALLEL_STORAGE_LOOP_BEGIN(i, j, k, TP.dMu, TP.dMu.Bcells(),)
+    {
+        vStrain locStrain = ElasticStrains(i,j,k);
+
+        for(size_t comp = 0; comp < Ncomp; comp++)
+        {
+            for(auto alpha  = Phase.Fields(i, j, k).cbegin();
+                     alpha != Phase.Fields(i, j, k).cend(); ++alpha)
+            {
+                double locdMuEl = 0.0;
+                vStrain locLambda = VoigtStrain(GrainLambda({alpha->index, comp}));
+
+                for(int ii = 0; ii < 6; ii++)
+                {
+                    locdMuEl -= locLambda[ii]*Stresses(i, j, k)[ii];
+                    for(int jj = 0; jj < 6; jj++)
+                    {
+                        locdMuEl += 0.5 * GrainKappa({alpha->index, comp})(ii,jj)*
+                                          locStrain[ii]*
+                                          GrainElasticConstants[alpha->index](ii,jj)*
+                                          locStrain[jj];
+                    }
+                }
+                size_t pIndex = Phase.FieldsProperties[alpha->index].Phase;
+                TP.dMu(i,j,k,{pIndex,comp}) += locdMuEl*alpha->value;
+            }
+        }
+    }
+    OMP_PARALLEL_STORAGE_LOOP_END
+}
+
 void ElasticProperties::CalculateChemicalPotentialContribution(
                                         const PhaseField& Phase,
                                         EquilibriumPartitionDiffusionBinary& DF)
@@ -1549,9 +1786,6 @@ void ElasticProperties::WriteTotalRotationsVTK(Settings& locSettings, const int 
 
     std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, "Rotations_", tStep, ".vts");
     VTK::Write(Filename, locSettings, ListOfFields);
-    #ifndef WIN32       
-    locSettings.Meta.AddPart(Filename, "File", "VTK file with rotations data", "application/xml");
-    #endif
 }
 
 vStrain ElasticProperties::AveragePlasticStrain(void) const
@@ -1641,9 +1875,6 @@ void ElasticProperties::WriteTotalStrainsVTK(Settings& locSettings,
 
     std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, "TotalStrain_", tStep, ".vts");
     VTK::Write(Filename, locSettings, ListOfFields, precision);
-    #ifndef WIN32       
-    locSettings.Meta.AddPart(Filename, "File", "VTK file with total strain data", "application/xml");
-    #endif
 }
 
 void ElasticProperties::WritePlasticStrainsVTK(Settings& locSettings,
@@ -1655,9 +1886,6 @@ void ElasticProperties::WritePlasticStrainsVTK(Settings& locSettings,
 
     std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, "PlasticStrain_", tStep, ".vts");
     VTK::Write(Filename, locSettings, ListOfFields, precision);
-    #ifndef WIN32       
-    locSettings.Meta.AddPart(Filename, "File", "VTK file with plastic strain data", "application/xml");
-    #endif
 }
 
 void ElasticProperties::WriteStressesVTK(Settings& locSettings,
@@ -1671,9 +1899,6 @@ void ElasticProperties::WriteStressesVTK(Settings& locSettings,
 
     std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, "Stresses_", tStep, ".vts");
     VTK::Write(Filename, locSettings, ListOfFields, precision);
-    #ifndef WIN32       
-    locSettings.Meta.AddPart(Filename, "File", "VTK file with stress data", "application/xml");
-    #endif
 }
 
 void ElasticProperties::WriteElasticStrainsVTK(Settings& locSettings,
@@ -1685,9 +1910,6 @@ void ElasticProperties::WriteElasticStrainsVTK(Settings& locSettings,
 
     std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, "ElasticStrains_", tStep, ".vts");
     VTK::Write(Filename, locSettings, ListOfFields, precision);
-    #ifndef WIN32       
-    locSettings.Meta.AddPart(Filename, "File", "VTK file with elastic strain data", "application/xml");
-    #endif
 }
 
 void ElasticProperties::WriteEigenStrainsVTK(Settings& locSettings,
@@ -1699,9 +1921,6 @@ void ElasticProperties::WriteEigenStrainsVTK(Settings& locSettings,
 
     std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, "EigenStrains_", tStep, ".vts");
     VTK::Write(Filename, locSettings, ListOfFields, precision);
-    #ifndef WIN32       
-    locSettings.Meta.AddPart(Filename, "File", "VTK file with Eigen strain data", "application/xml");
-    #endif
 }
 
 void ElasticProperties::WriteDeformationGradientsTotalVTK(Settings& locSettings,
@@ -1712,9 +1931,6 @@ void ElasticProperties::WriteDeformationGradientsTotalVTK(Settings& locSettings,
     ListOfFields.push_back((VTK::Field_t) {"DeformationGradientsTotal", [this](int i,int j,int k){return DeformationGradientsTotal(i,j,k);}});
     std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, "DeformationGradientsTotal_", tStep, ".vts");
     VTK::Write(Filename, locSettings, ListOfFields, precision);
-    #ifndef WIN32       
-    locSettings.Meta.AddPart(Filename, "File", "VTK file with deformation gradient data", "application/xml");
-    #endif
 }
 
 void ElasticProperties::WriteEffectiveElasticConstantsVTK(Settings& locSettings,
@@ -1726,9 +1942,6 @@ void ElasticProperties::WriteEffectiveElasticConstantsVTK(Settings& locSettings,
 
     std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, "EffectiveElasticConstants_", tStep, ".vts");
     VTK::Write(Filename, locSettings, ListOfFields, precision);
-    #ifndef WIN32       
-    locSettings.Meta.AddPart(Filename, "File", "VTK file with elastic constants data", "application/xml");
-    #endif
 }
 
 void ElasticProperties::WriteForceDensityVTK(Settings& locSettings,
@@ -1742,9 +1955,6 @@ void ElasticProperties::WriteForceDensityVTK(Settings& locSettings,
 
         std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, "ForceDensity_", tStep, ".vts");
         VTK::Write(Filename, locSettings, ListOfFields, precision);
-        #ifndef WIN32       
-        locSettings.Meta.AddPart(Filename, "File", "VTK file with force density data", "application/xml");
-        #endif
     }
     else
     {
@@ -1764,9 +1974,6 @@ void ElasticProperties::WriteForceDensityDistortedVTK(Settings& locSettings,
 
         std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, "ForceDensity_", tStep, ".vts");
         VTK::WriteDistorted(Filename, locSettings, *this, ListOfFields, precision);
-        #ifndef WIN32       
-        locSettings.Meta.AddPart(Filename, "File", "VTK file with distorted force density data", "application/xml");
-        #endif
     }
     else
     {
@@ -1774,6 +1981,20 @@ void ElasticProperties::WriteForceDensityDistortedVTK(Settings& locSettings,
         exit(EXIT_FAILURE);
     }
 }
+
+void ElasticProperties::WriteCauchyStressesVTK(Settings& locSettings,
+                                               const int tStep,
+                                               const int precision) const
+{
+    std::vector<VTK::Field_t> ListOfFields;
+    ListOfFields.push_back((VTK::Field_t) {"CauchyStresses", [this](int i,int j,int k){return CauchyStress(i,j,k);}});
+    ListOfFields.push_back((VTK::Field_t) {"Pressure", [this](int i,int j,int k){return CauchyStress(i,j,k).Pressure();}});
+    ListOfFields.push_back((VTK::Field_t) {"vonMises", [this](int i,int j,int k){return CauchyStress(i,j,k).Mises();}});
+
+    std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, "CauchyStresses_", tStep, ".vts");
+    VTK::WriteDistorted(Filename, locSettings, *this, ListOfFields, precision);
+}
+
 void ElasticProperties::WriteStressIncrementsVTK(Settings& locSettings,
                                                  const int tStep,
                                                  const int precision) const
@@ -1864,8 +2085,7 @@ void ElasticProperties::WriteStressStrainData(int time_step, double time, string
     if(!std::filesystem::exists(filename) or time_step <= 0)
     {
         ofstream file(filename, ios::out);
-        file << "TimeStep"   << separator
-             << "Time"       << separator
+        file << "Time"       << separator
              << "Epsilon_xx" << separator
              << "Epsilon_yy" << separator
              << "Epsilon_zz" << separator
@@ -1885,8 +2105,7 @@ void ElasticProperties::WriteStressStrainData(int time_step, double time, string
     }
 
     ofstream outputFile(filename, ios::app);
-    outputFile << time_step        << separator
-               << time             << separator
+    outputFile << time             << separator
 
                << AverageStrain[0] << separator
                << AverageStrain[1] << separator
@@ -2124,18 +2343,19 @@ double ElasticProperties::EnergyDensity(const PhaseField& Phase, int i, int j, i
         case ElasticityModels::Rank1:
         case ElasticityModels::Rank1NL:
         {
-            if(Phase.Fields(i,j,k).interface())
+            if(Phase.Fields(i, j, k).interface())
             {
                 vStrain locStrain = TotalStrains(i,j,k);
-
                 for(auto alpha  = Phase.Fields(i, j, k).cbegin();
-                         alpha != Phase.Fields(i, j, k).cend() - 1; ++alpha)
+                         alpha != Phase.Fields(i, j, k).cend(); ++alpha)
                 {
                     vStrain StrainAlpha = locStrain;
 
-                    for(auto  beta  = alpha + 1;
+                    for(auto  beta  = Phase.Fields(i, j, k).cbegin();
                               beta != Phase.Fields(i, j, k).cend();  ++beta)
-                    if(alpha->value > DBL_EPSILON and beta->value > DBL_EPSILON)
+                    if(alpha != beta and
+                       alpha->value > DBL_EPSILON and
+                        beta->value > DBL_EPSILON)
                     {
                         double scale = 1.0;
                         if(Phase.FieldsProperties[alpha->index].Stage != GrainStages::Stable)
@@ -2151,12 +2371,8 @@ double ElasticProperties::EnergyDensity(const PhaseField& Phase, int i, int j, i
 
                         dMatrix3x3 locStrainJumpA = (locFjumpAlpha + locFjumpAlpha.transposed())*0.5;
 
-                        int sign = 1.0;
-                        if(alpha->index > beta->index)
-                        {
-                            sign = -1.0;
-                        }
-                        StrainAlpha -= VoigtStrain(locStrainJumpA)*scale*sign*beta->value/(alpha->value + beta->value);
+                        StrainAlpha -= VoigtStrain(locStrainJumpA)*scale*beta->value/(alpha->value + beta->value);
+
                     }
                     vStrain locEigenStrainAlpha = StrainSmall(GrainTransformationStretches[alpha->index]);
 
@@ -2196,78 +2412,421 @@ vStress ElasticProperties::ShearStresses(int i, int j, int k) const
     return tmpStress;
 }
 
-dMatrix3x3 ElasticProperties::AverageDeformationGradient(double accuracy) const
+vStrain ElasticProperties::TotalStrains(int i, int j, int k) const
 {
-    return AverageStrain.tensor() + dMatrix3x3::UnitTensor();
-}
+    vStrain locStrain;
+    switch(StrainModel)
+    {
+        case StrainModels::Small:
+        {
+            locStrain = StrainSmall(DeformationGradientsTotal(i,j,k));
+            break;
+        };
+        case StrainModels::GreenLagrange:
+        {
+            locStrain = StrainGreenLagrange(DeformationGradientsTotal(i,j,k));
+            break;
+        };
+        case StrainModels::Hencky:
+        {
+            locStrain = StrainHencky(DeformationGradientsTotal(i,j,k));
+            break;
+        };
+        case StrainModels::Bazant:
+        {
+            locStrain = StrainBazant(DeformationGradientsTotal(i,j,k));
+            break;
+        };
+    }
+    return locStrain;
+};
+vStrain ElasticProperties::EigenStrains(int i, int j, int k) const
+{
+    vStrain locStrain;
+    switch(StrainModel)
+    {
+        case StrainModels::Small:
+        {
+            locStrain = StrainSmall(DeformationGradientsEigen(i,j,k));
+            break;
+        };
+        case StrainModels::GreenLagrange:
+        {
+            locStrain = StrainGreenLagrange(DeformationGradientsEigen(i,j,k));
+            break;
+        };
+        case StrainModels::Hencky:
+        {
+            locStrain = StrainHencky(DeformationGradientsEigen(i,j,k));
+            break;
+        };
+        case StrainModels::Bazant:
+        {
+            locStrain = StrainBazant(DeformationGradientsEigen(i,j,k));
+            break;
+        };
+    }
+    return locStrain;
+};
+vStrain ElasticProperties::PlasticStrains(int i, int j, int k) const
+{
+    vStrain locStrain;
+    switch(StrainModel)
+    {
+        case StrainModels::Small:
+        {
+            locStrain = StrainSmall(DeformationGradientsPlastic(i,j,k));
+            break;
+        };
+        case StrainModels::GreenLagrange:
+        {
+            locStrain = StrainGreenLagrange(DeformationGradientsPlastic(i,j,k));
+            break;
+        };
+        case StrainModels::Hencky:
+        {
+            locStrain = StrainHencky(DeformationGradientsPlastic(i,j,k));
+            break;
+        };
+        case StrainModels::Bazant:
+        {
+            locStrain = StrainBazant(DeformationGradientsPlastic(i,j,k));
+            break;
+        };
+    }
+    return locStrain;
+};
+vStrain ElasticProperties::StressFreeStrains(int i, int j, int k) const
+{
+    vStrain locStrain;
+    switch(StrainModel)
+    {
+        case StrainModels::Small:
+        {
+            locStrain = StrainSmall(DeformationGradientsEigen(i,j,k));
+            if(AnyPlasticity)
+            {
+                locStrain += StrainSmall(DeformationGradientsPlastic(i,j,k));
+            }
+            break;
+        };
+        case StrainModels::GreenLagrange:
+        {
+            dMatrix3x3 locDefGrad = DeformationGradientsEigen(i,j,k);
+            if(AnyPlasticity)
+            {
+                locDefGrad = DeformationGradientsPlastic(i,j,k)*locDefGrad;
+            }
+            locStrain = StrainGreenLagrange(locDefGrad);
+            break;
+        };
+        case StrainModels::Hencky:
+        {
+            dMatrix3x3 locDefGrad = DeformationGradientsEigen(i,j,k);
+            if(AnyPlasticity)
+            {
+                locDefGrad = DeformationGradientsPlastic(i,j,k)*locDefGrad;
+            }
+            locStrain = StrainHencky(locDefGrad);
+            break;
+        };
+        case StrainModels::Bazant:
+        {
+            dMatrix3x3 locDefGrad = DeformationGradientsEigen(i,j,k);
+            if(AnyPlasticity)
+            {
+                locDefGrad = DeformationGradientsPlastic(i,j,k)*locDefGrad;
+            }
+            locStrain = StrainBazant(locDefGrad);
+            break;
+        };
+    }
+    return locStrain;
+};
+vStrain ElasticProperties::ElasticStrains(int i, int j, int k) const
+{
+    vStrain locStrain;
+    switch(StrainModel)
+    {
+        case StrainModels::Small:
+        {
+            locStrain = StrainSmall(DeformationGradientsElastic(i,j,k));
+            break;
+        };
+        case StrainModels::GreenLagrange:
+        {
+            locStrain = StrainGreenLagrange(DeformationGradientsElastic(i,j,k));
+            break;
+        };
+        case StrainModels::Hencky:
+        {
+            locStrain = StrainHencky(DeformationGradientsElastic(i,j,k));
+            break;
+        };
+        case StrainModels::Bazant:
+        {
+            locStrain = StrainBazant(DeformationGradientsElastic(i,j,k));
+            break;
+        };
+    }
+    return locStrain;
+};
 
 vStrain ElasticProperties::EigenStrainDifference(
         const dMatrix3x3 locStretchesAlpha,
         const dMatrix3x3 locStretchesBeta,
         const int i, const int j, const int k) const
 {
-    dMatrix3x3 dFeigenAlphaBeta = locStretchesBeta - locStretchesAlpha;
-    return VoigtStrain(dFeigenAlphaBeta.transposed() + dFeigenAlphaBeta)*0.5;
-}
-
-vStrain ElasticProperties::TotalStrains(int i, int j, int k) const
-{
-    return StrainSmall(DeformationGradientsTotal(i,j,k));
-}
-
-vStrain ElasticProperties::EigenStrains(int i, int j, int k) const
-{
-    return StrainSmall(DeformationGradientsEigen(i,j,k));
-}
-
-vStrain ElasticProperties::PlasticStrains(int i, int j, int k) const
-{
-    return StrainSmall(DeformationGradientsPlastic(i,j,k));
-}
-
-vStrain ElasticProperties::StressFreeStrains(int i, int j, int k) const
-{
-    vStrain locStrain = StrainSmall(DeformationGradientsEigen(i,j,k));
-    if(AnyPlasticity)
+    vStrain locEigenStrainDifference;
+    switch(StrainModel)
     {
-        locStrain += StrainSmall(DeformationGradientsPlastic(i,j,k));
+        case StrainModels::Small:
+        {
+            dMatrix3x3 dFeigenAlphaBeta = locStretchesBeta - locStretchesAlpha;
+            locEigenStrainDifference = VoigtStrain(dFeigenAlphaBeta.transposed() + dFeigenAlphaBeta)*0.5;
+            break;
+        }
+        case StrainModels::GreenLagrange:
+        {
+            dMatrix3x3 FeigenI   = DeformationGradientsEigen(i,j,k).inverted();
+            dMatrix3x3 FplasticI = DeformationGradientsPlastic(i,j,k).inverted();
+            dMatrix3x3 Ftotal    = DeformationGradientsTotal(i,j,k);
+
+            dMatrix3x3 Felastic  = DeformationGradientsElastic(i,j,k);
+
+            dMatrix3x3 dFeigenAlphaBeta = (Felastic.transposed()*Ftotal*FeigenI*
+                                          (locStretchesBeta - locStretchesAlpha)*
+                                           FeigenI*FplasticI)*DeformationGradientsEigen(i,j,k).determinant();
+
+            locEigenStrainDifference = VoigtStrain(dFeigenAlphaBeta.transposed() + dFeigenAlphaBeta)*0.5;
+            break;
+        }
+        case StrainModels::Hencky:
+        {
+            dMatrix3x3 FeigenI   = DeformationGradientsEigen(i,j,k).inverted();
+            dMatrix3x3 FplasticI = DeformationGradientsPlastic(i,j,k).inverted();
+            dMatrix3x3 Ftotal    = DeformationGradientsTotal(i,j,k);
+
+            dMatrix3x3 Felastic  = DeformationGradientsElastic(i,j,k);
+            dMatrix3x3 CelasticI = (Felastic.transposed()*Felastic).inverted();
+
+            dMatrix3x3 dFeigenAlphaBeta = (CelasticI*
+                                           Felastic.transposed()*Ftotal*FeigenI*
+                                          (locStretchesBeta - locStretchesAlpha)*
+                                           FeigenI*FplasticI)*DeformationGradientsEigen(i,j,k).determinant();
+
+            locEigenStrainDifference = VoigtStrain(dFeigenAlphaBeta.transposed() + dFeigenAlphaBeta)*0.5;
+            break;
+        }
+        case StrainModels::Bazant:
+        {
+            dMatrix3x3 FeigenI   = DeformationGradientsEigen(i,j,k).inverted();
+            dMatrix3x3 FplasticI = DeformationGradientsPlastic(i,j,k).inverted();
+            dMatrix3x3 Ftotal    = DeformationGradientsTotal(i,j,k);
+
+            dMatrix3x3 Felastic  = DeformationGradientsElastic(i,j,k);
+            dMatrix3x3 CelasticI = (Felastic.transposed()*Felastic).inverted();
+
+            dMatrix3x3 dFeigenAlphaBeta = (Felastic.transposed()*Ftotal*FeigenI*
+                                          (locStretchesBeta - locStretchesAlpha)*
+                                           FeigenI*FplasticI)*DeformationGradientsEigen(i,j,k).determinant();
+
+            dMatrix3x3 locFdifference = (dFeigenAlphaBeta + CelasticI*dFeigenAlphaBeta*CelasticI)*0.5;
+
+            locEigenStrainDifference = VoigtStrain(locFdifference.transposed() + locFdifference)*0.5;
+            break;
+        }
     }
-    return locStrain;
+    return locEigenStrainDifference;
 }
 
-vStrain ElasticProperties::ElasticStrains(int i, int j, int k) const
+dMatrix3x3 ElasticProperties::AverageDeformationGradient(double accuracy) const
 {
-    return StrainSmall(DeformationGradientsElastic(i,j,k));
+    dMatrix3x3 avgDefGrad;
+    avgDefGrad.set_to_unity();
+    switch(StrainModel)
+    {
+        case StrainModels::Small:
+        {
+            avgDefGrad = AverageStrain.tensor() + dMatrix3x3::UnitTensor();
+            break;
+        };
+        case StrainModels::GreenLagrange:
+        {
+            avgDefGrad = sqrtM3x3(AverageStrain.tensor()*2.0 + dMatrix3x3::UnitTensor(),accuracy*0.1);
+            break;
+        };
+        case StrainModels::Hencky:
+        {
+            avgDefGrad = expM3x3(AverageStrain.tensor(),accuracy*0.1);
+            break;
+        };
+        case StrainModels::Bazant:
+        {
+            dMatrix3x3 CauchyGreenDeformation = avgDefGrad.transposed()*avgDefGrad;
+            dMatrix3x3 locStrainDifference;
+
+            int locIterations = 0;
+            do
+            {
+                locStrainDifference = (AverageStrain - StrainBazant(avgDefGrad)).tensor();
+                CauchyGreenDeformation += locStrainDifference*0.25;
+
+                avgDefGrad = sqrtM3x3(CauchyGreenDeformation,accuracy*0.1);
+                locIterations++;
+            }
+            while(locStrainDifference.norm() > accuracy and locIterations < 100);
+
+            break;
+        };
+    }
+    return avgDefGrad;
 }
 
+vStress ElasticProperties::CauchyStress(int i, int j, int k) const
+{
+    dMatrix3x3 locDefGrad = DeformationGradientsTotal(i,j,k);
+    double J_1 = 1.0/locDefGrad.determinant();
+    dMatrix3x3 locCauchyStressTensor = (locDefGrad*Stresses(i,j,k).tensor()*
+                                        locDefGrad.transposed())*J_1;
+    return VoigtStress(locCauchyStressTensor);
+}
 vStress ElasticProperties::Stress2PK(int i, int j, int k, const dMatrix3x3& locDefGrad) const
 {
-    vStress locStress = EffectiveElasticConstants(i, j, k)*
+    vStress locStress;
+    switch(StrainModel)
+    {
+        case StrainModels::Small:
+        {
+            locStress = EffectiveElasticConstants(i, j, k)*
                         (StrainSmall(locDefGrad) - StressFreeStrains(i, j, k));
+            break;
+        }
+        case StrainModels::GreenLagrange:
+        {
+            locStress = EffectiveElasticConstants(i, j, k)*
+                        StrainGreenLagrange(locDefGrad*(DeformationGradientsPlastic(i,j,k)*DeformationGradientsEigen(i,j,k)).inverted());
+            break;
+        }
+        case StrainModels::Hencky:
+        {
+            locStress = EffectiveElasticConstants(i, j, k)*
+                        StrainHencky(locDefGrad*(DeformationGradientsPlastic(i,j,k)*DeformationGradientsEigen(i,j,k)).inverted());
+            break;
+        }
+        case StrainModels::Bazant:
+        {
+            locStress = EffectiveElasticConstants(i, j, k)*
+                        StrainBazant(locDefGrad*(DeformationGradientsPlastic(i,j,k)*DeformationGradientsEigen(i,j,k)).inverted());
+            break;
+        }
+    }
     return locStress;
-}
+};
 
 dMatrix3x3 ElasticProperties::Stress2PKpullBack(int i, int j, int k) const
 {
     dMatrix3x3 Elastic2PKstress = (EffectiveElasticConstants(i,j,k)*ElasticStrains(i,j,k)).tensor();
 
+    //Pull 2PK stress back to the reference configuration
+    switch(StrainModel)
+    {
+        case StrainModels::Small:
+        {
+            break;
+        }
+        case StrainModels::GreenLagrange:
+        {
+            dMatrix3x3 DeformationGradientsSF   = DeformationGradientsPlastic(i,j,k)*DeformationGradientsEigen(i,j,k);
+            dMatrix3x3 DeformationGradientsSF_1 = DeformationGradientsSF.inverted();
+            dMatrix3x3 DeformationGradientsSF_T = DeformationGradientsSF_1.transposed();
+            double     JacobianSF               = DeformationGradientsSF.determinant();
+
+            Elastic2PKstress = (DeformationGradientsSF_1*Elastic2PKstress*DeformationGradientsSF_T)*JacobianSF;
+            break;
+        }
+        case StrainModels::Hencky:
+        {
+            dMatrix3x3 ElasticDefGrad           = DeformationGradientsElastic(i,j,k);
+            dMatrix3x3 ElasticCauchyStrain_1    = (ElasticDefGrad.transposed()*ElasticDefGrad).inverted();
+            dMatrix3x3 DeformationGradientsSF   = DeformationGradientsPlastic(i,j,k)*DeformationGradientsEigen(i,j,k);
+            dMatrix3x3 DeformationGradientsSF_1 = DeformationGradientsSF.inverted();
+            dMatrix3x3 DeformationGradientsSF_T = DeformationGradientsSF_1.transposed();
+            double     JacobianSF               = DeformationGradientsSF.determinant();
+
+            Elastic2PKstress = (DeformationGradientsSF_1*ElasticCauchyStrain_1*Elastic2PKstress*DeformationGradientsSF_T)*JacobianSF;
+            break;
+        }
+        case StrainModels::Bazant:
+        {
+            dMatrix3x3 ElasticDefGrad           = DeformationGradientsElastic(i,j,k);
+            dMatrix3x3 ElasticCauchyStrain_1    = (ElasticDefGrad.transposed()*ElasticDefGrad).inverted();
+            dMatrix3x3 DeformationGradientsSF   = DeformationGradientsPlastic(i,j,k)*DeformationGradientsEigen(i,j,k);
+            dMatrix3x3 DeformationGradientsSF_1 = DeformationGradientsSF.inverted();
+            dMatrix3x3 DeformationGradientsSF_T = DeformationGradientsSF_1.transposed();
+            double     JacobianSF               = DeformationGradientsSF.determinant();
+
+            dMatrix3x3 Elastic2PKStressPullBack1 = DeformationGradientsSF_1*Elastic2PKstress*DeformationGradientsSF_T;
+            dMatrix3x3 Elastic2PKStressPullBack2 = DeformationGradientsSF_1*ElasticCauchyStrain_1*Elastic2PKstress*ElasticCauchyStrain_1*DeformationGradientsSF_T;
+
+            Elastic2PKstress = (Elastic2PKStressPullBack1 + Elastic2PKStressPullBack2)*(0.5*JacobianSF);
+            break;
+        }
+    }
     return Elastic2PKstress;
-}
+};
 
 dMatrix3x3 ElasticProperties::Stress1PK(int i, int j, int k) const
 {
-    return Stress2PKpullBack(i,j,k);
+    dMatrix3x3 Elastic2PKstressPullBack = Stress2PKpullBack(i,j,k);
+    dMatrix3x3 Elastic1PKstress;
+
+    switch(StrainModel)
+    {
+        case StrainModels::Small:
+        {
+            Elastic1PKstress = Elastic2PKstressPullBack;
+            break;
+        }
+        case StrainModels::GreenLagrange:
+        case StrainModels::Hencky:
+        case StrainModels::Bazant:
+        {
+            Elastic1PKstress = DeformationGradientsTotal(i,j,k)*Elastic2PKstressPullBack;
+            break;
+        }
+    }
+    return Elastic1PKstress;
 }
 
 dMatrix3x3 ElasticProperties::DeformationGradientsElastic(int i, int j, int k) const
 {
     dMatrix3x3 locDeformationGradientsElastic = DeformationGradientsTotal(i,j,k);
-    locDeformationGradientsElastic -= DeformationGradientsEigen(i,j,k) - dMatrix3x3::UnitTensor();
-    if(AnyPlasticity)
+    switch(StrainModel)
     {
-        locDeformationGradientsElastic -= DeformationGradientsPlastic(i,j,k) - dMatrix3x3::UnitTensor();
+        case StrainModels::Small:
+        {
+            locDeformationGradientsElastic -= DeformationGradientsEigen(i,j,k) - dMatrix3x3::UnitTensor();
+            if(AnyPlasticity)
+            {
+                locDeformationGradientsElastic -= DeformationGradientsPlastic(i,j,k) - dMatrix3x3::UnitTensor();
+            }
+            break;
+        };
+        case StrainModels::GreenLagrange:
+        case StrainModels::Hencky:
+        case StrainModels::Bazant:
+        {
+            dMatrix3x3 locDefGrad = DeformationGradientsEigen(i,j,k);
+            if(AnyPlasticity)
+            {
+                locDefGrad = DeformationGradientsPlastic(i,j,k)*locDefGrad;
+            }
+            locDeformationGradientsElastic *= locDefGrad.inverted();
+            break;
+        };
     }
     return locDeformationGradientsElastic;
-}
+};
 
 }// namespace openphase

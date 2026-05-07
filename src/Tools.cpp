@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2011
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Philipp Engels;
+ *
+ *  File created :   2011
+ *  Main contributors :   Oleg Shchyglo; Efim Borukhovich; Philipp Engels;
  *                         Muhammad Adil Ali; Hesham Salama
  *
  */
@@ -625,7 +625,7 @@ double Tools::getMisorientationCubic(const dMatrix3x3 RotMatA, const dMatrix3x3 
 
 double Tools::getDisorientationCubic(const Quaternion OrientationA, const Quaternion OrientationB)
 {
-    // Taken from Grimmer 1974
+    // Taken from H. Grimmer, Acta Cryst. (1974). A30, 685-688, https://doi.org/10.1107/S0567739474001719
     // Only for cubic system. Needs to be generalized!
 
     double Angle[24];
@@ -677,13 +677,13 @@ double Tools::getDisorientationCubic(const Quaternion OrientationA, const Quater
     return misorientation;
 }
 
-EulerAngles Tools::RotationToEuler(const dMatrix3x3& Rot, const EulerConvention EConvention )
+EulerAngles Tools::RotationToEuler(const dMatrix3x3& Rot, const EulerConventions EConvention )
 {
     EulerAngles Euler;
-    Euler.Convention = EConvention;
+    Euler.set_convention(EConvention);
     dMatrix3x3 RT = Rot.transposed();
 
-    if(EConvention == ZXZ)
+    if(EConvention == EulerConventions::ZXZ)
     {
         // Euler ZXZ passive (following formulation by Martin Boeff)
         double squvw = sqrt(RT(0,0)*RT(0,0)
@@ -720,19 +720,19 @@ EulerAngles Tools::RotationToEuler(const dMatrix3x3& Rot, const EulerConvention 
             Euler.Q[2] = acos(tempval);
             if(RT(0,2) < 0.0) {Euler.Q[2] = 2.0*Pi - Euler.Q[2];}
             // calculate phi1
-            tempval = - RT(2,1)/Euler.SinQ[1];
+            tempval = - RT(2,1)/sin(Euler.Q[1]);
             if(tempval >  1.0) {tempval = 1.0;}
             if(tempval < -1.0) {tempval = -1.0;}
 
             Euler.Q[0] = acos(tempval);
             if(RT(2,0) < 0.0) {Euler.Q[0] = 2.0*Pi - Euler.Q[0];}
         }
-        Euler.setTrigonometricFunctions();
+        Euler.set_trigonometric_functions();
     }
     else
     {
         std::stringstream message;
-        message<< "Wrong/Unknown/None Euler convention used: " << EConvention ;
+        message<< "Wrong/Unknown/None Euler convention used: " << EulerConventionStrings[(int)EConvention];
 
         ConsoleOutput::WriteExit(message.str(), "Tools", "RotationToEulerAngles()");
         exit(13);
@@ -802,8 +802,8 @@ void Tools::SetRandomGrainOrientations(PhaseField& Phase, const int seed)
                 if(Phase.Grid.dNx == 0) a1 = A1Distribution(generator);
                 if(Phase.Grid.dNy == 0) a2 = A2Distribution(generator);
                 if(Phase.Grid.dNz == 0) a3 = A3Distribution(generator);
-                EulerAngles ph1({a1,a2,a3},XYZ);
-                Phase.FieldsProperties[alpha].Orientation = ph1.getQuaternion().normalized();
+                EulerAngles ph1({a1,a2,a3},"XYZ");
+                Phase.FieldsProperties[alpha].Orientation = ph1.get_quaternion().normalized();
                 break;
             }
             case 3: // 3D Full Rotation
@@ -844,7 +844,7 @@ void Tools::ExtractRotation(dMatrix3x3 &Mat, Quaternion& Quat, const size_t maxI
 {
     for (size_t iter = 0; iter < maxIter; iter++)
     {
-        dMatrix3x3 Rot = Quat.getRotationMatrix();
+        dMatrix3x3 Rot = Quat.get_rotation_matrix();
 
         std::vector<dVector3> Rot_col = Col(Rot);
         std::vector<dVector3> Mat_col = Col(Mat);

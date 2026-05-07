@@ -1,5 +1,5 @@
 #ifndef BUILD_INFO_H
 #define BUILD_INFO_H
-#define GIT_COMMIT_SHA "ACADEMIC_2.0"
-#define BUILD_TIME "2025-10-31T12:00:00+01:00"
+#define GIT_COMMIT_SHA ""
+#define BUILD_TIME "Do 30. Apr 09:27:38 CEST 2026"
 #endif

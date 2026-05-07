@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,6 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2020
- *   Main contributors :   Oleg Shchyglo
  *
  */
 
@@ -89,7 +86,7 @@ const double GradientStencil3D[3][3][3] = {{{ 0.085/4.64, 0.245/4.64, 0.085/4.64
 
                                            {{ 0.085/4.64, 0.245/4.64, 0.085/4.64},
                                             { 0.245/4.64,   1.0/4.64, 0.245/4.64},
-                                            { 0.085/4.64, 0.245/4.64, 0.085/4.64}}};///< 27 point 3D Gradient stencil from "M.Alfaraj, Y. Wang and Y. Luo, Geophysical prospecting 62 (2014) 507-517"
+                                            { 0.085/4.64, 0.245/4.64, 0.085/4.64}}};///< 26 point 3D Gradient stencil from "M.Alfaraj, Y. Wang and Y. Luo, Geophysical prospecting 62 (2014) 507-517"
 
 /// Gradient stencils based on lattice Boltzmann stencils
 
@@ -105,6 +102,7 @@ const double GradientStencil2D_LB[3][3][3] = {{{     0.0, 1.0/12.0,      0.0},
                                                 {1.0/12.0, 1.0/3.0,  1.0/12.0},
                                                 {     0.0, 1.0/12.0,      0.0}}};///< Isotropic gradient stencil based on D2Q9 lattice Boltzmann stencil. It is the same as the 8 point 2D Gradient stencil from "M.Alfaraj, Y. Wang and Y. Luo, Geophysical prospecting 62 (2014) 507-517"
 
+
 const double GradientStencil3D_LB[3][3][3] = {{{1.0/72.0, 1.0/18.0, 1.0/72.0},
                                                {1.0/18.0, 2.0/9.0,  1.0/18.0},
                                                {1.0/72.0, 1.0/18.0, 1.0/72.0}},
@@ -117,17 +115,18 @@ const double GradientStencil3D_LB[3][3][3] = {{{1.0/72.0, 1.0/18.0, 1.0/72.0},
                                                {1.0/18.0, 2.0/9.0,  1.0/18.0},
                                                {1.0/72.0, 1.0/18.0, 1.0/72.0}}};///< Isotropic gradient stencil based on D3Q27 lattice Boltzmann stencil. It is very close to the 27 point 2D Gradient stencil from "M.Alfaraj, Y. Wang and Y. Luo, Geophysical prospecting 62 (2014) 507-517"
 
+
 class GradientStencil                                                           ///< Gradient stencil class (uses user specified stencil as the basis). Allows replacing the loop over array elements by the iterator which is beneficial for compact stencils
 {
  public:
     struct GradientStencilEntry
     {
-        int di;                                                                 ///< x coordinate of stencil element
-        int dj;                                                                 ///< y coordinate of stencil element
-        int dk;                                                                 ///< z coordinate of stencil element
-        double weightX;                                                         ///< Weight associated with the stencil element
-        double weightY;                                                         ///< Weight associated with the stencil element
-        double weightZ;                                                         ///< Weight associated with the stencil element
+        int di;                                                                 ///< X coordinate of stencil element
+        int dj;                                                                 ///< Y coordinate of stencil element
+        int dk;                                                                 ///< Z coordinate of stencil element
+        double weightX;                                                         ///< Weight associated with the X component of the stencil element
+        double weightY;                                                         ///< Weight associated with the Y component of the stencil element
+        double weightZ;                                                         ///< Weight associated with the Z component of the stencil element
     };
     void Set(const double UserStencil[3][3][3], double dx,
              int dNx = 1, int dNy = 1, int dNz = 1)                             ///< Sets nonzero stencil entries for gradient components using user specified stencil
@@ -158,14 +157,14 @@ class GradientStencil                                                           
     {
         Set(UserStencil, Dimensions.dx, Dimensions.dNx, Dimensions.dNy, Dimensions.dNz);
     }
-    size_t size() const {return StencilElements.size();};                       ///< Returns the size of stencil.
-    typedef std::vector<GradientStencilEntry>::iterator iterator;               ///< Iterator over stencil
-    typedef std::vector<GradientStencilEntry>::const_iterator citerator;        ///< Constant iterator over stencil
-    iterator  begin() {return StencilElements.begin();};                        ///< Iterator to the begin of stencil
-    iterator  end()   {return StencilElements.end();};                          ///< Iterator to the end of stencil
-    citerator cbegin() const {return StencilElements.cbegin();};                ///< Constant iterator to the begin of stencil
-    citerator cend()   const {return StencilElements.cend();};                  ///< Constant iterator to the end of stencil
-    iterator erase(iterator it) {it = StencilElements.erase(it); return it;}    ///< Erases entry
+    size_t size() const {return StencilElements.size();};                       ///< Returns the size of the stencil.
+    typedef std::vector<GradientStencilEntry>::iterator iterator;               ///< Iterator over the stencil
+    typedef std::vector<GradientStencilEntry>::const_iterator citerator;        ///< Constant iterator over the stencil
+    iterator  begin() {return StencilElements.begin();};                        ///< Iterator to the begin of the stencil
+    iterator  end()   {return StencilElements.end();};                          ///< Iterator to the end of the stencil
+    citerator cbegin() const {return StencilElements.cbegin();};                ///< Constant iterator to the begin of the stencil
+    citerator cend()   const {return StencilElements.cend();};                  ///< Constant iterator to the end of the stencil
+    iterator erase(iterator it) {it = StencilElements.erase(it); return it;}    ///< Erases the entry pointed to by the given iterator
  protected:
  private:
     std::vector< GradientStencilEntry > StencilElements;                        ///< Stencil storage

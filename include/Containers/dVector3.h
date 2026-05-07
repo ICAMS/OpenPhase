@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,6 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2011
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev;
- *                         Philipp Engels
  *
  */
 
@@ -85,6 +81,11 @@ class dVector3
         }
     }
 
+    static dVector3 ZeroVector(void)
+    {
+        return dVector3();
+    }
+
     double& operator[](const size_t i)
     {
         assert(i < 3 && "Access beyond storage range");
@@ -97,24 +98,19 @@ class dVector3
         return storage[i];
     }
 
-    bool operator<(dVector3 rhs)
-    {
-        return length() < rhs.length();
-    }
-
-    bool operator>(dVector3 rhs)
-    {
-        return length() > rhs.length();
-    }
+//    bool operator<(dVector3 rhs)
+//    {
+//        return length() < rhs.length();
+//    }
+//
+//    bool operator>(dVector3 rhs)
+//    {
+//        return length() > rhs.length();
+//    }
 
     double getX(void) const
     {
         return storage[0];
-    }
-
-    void setX(const double newX)
-    {
-        storage[0] = newX;
     }
 
     double getY(void) const
@@ -122,14 +118,19 @@ class dVector3
         return storage[1];
     }
 
-    void setY(const double newY)
-    {
-        storage[1] = newY;
-    }
-
     double getZ(void) const
     {
         return storage[2];
+    }
+
+    void setX(const double newX)
+    {
+        storage[0] = newX;
+    }
+
+    void setY(const double newY)
+    {
+        storage[1] = newY;
     }
 
     void setZ(const double newX)
@@ -137,63 +138,48 @@ class dVector3
         storage[2] = newX;
     }
 
-    void pack(std::vector<double>& buffer)
-    {
-        for (int i = 0; i < 3; ++i)
-        {
-            buffer.push_back(storage[i]);
-        }
-    }
-
-    void unpack(std::vector<double>& buffer, size_t& it)
-    {
-        for (int i = 0; i < 3; ++i)
-        {
-            storage[i] = buffer[it]; ++it;
-        }
-    }
-
     void set_to_zero(void)
     {
         storage.fill(0.0);
     }
 
-    void set_to_unitX(void)
-    {
-        storage[0] = 1.0;
-        storage[1] = 0.0;
-        storage[2] = 0.0;
-    }
-
-    void set_to_unitY(void)
-    {
-        storage[0] = 0.0;
-        storage[1] = 1.0;
-        storage[2] = 0.0;
-    }
-
-    void set_to_unitZ(void)
-    {
-        storage[0] = 0.0;
-        storage[1] = 0.0;
-        storage[2] = 1.0;
-    }
+//    void set_to_unit_X(void)/
+//    {
+//        storage[0] = 1.0;
+//        storage[1] = 0.0;
+//        storage[2] = 0.0;
+//    }
+//
+//    void set_to_unit_Y(void)
+//    {
+//        storage[0] = 0.0;
+//        storage[1] = 1.0;
+//        storage[2] = 0.0;
+//    }
+//
+//    void set_to_unit_Z(void)
+//    {
+//        storage[0] = 0.0;
+//        storage[1] = 0.0;
+//        storage[2] = 1.0;
+//    }
 
     dVector3 operator*(const double m) const
     {
-        dVector3 tmp;
-        tmp[0] = storage[0]*m;
-        tmp[1] = storage[1]*m;
-        tmp[2] = storage[2]*m;
+        dVector3 tmp(*this);
+        tmp[0] *= m;
+        tmp[1] *= m;
+        tmp[2] *= m;
         return tmp;
     }
 
     dVector3 operator/(const double m) const
     {
-        dVector3 tmp;
-        tmp[0] = storage[0]/m;
-        tmp[1] = storage[1]/m;
-        tmp[2] = storage[2]/m;
+        assert(std::fabs(m) > std::numeric_limits<double>::epsilon() && "Division by zero in dVector3::operator/.");
+        dVector3 tmp(*this);
+        tmp[0] /= m;
+        tmp[1] /= m;
+        tmp[2] /= m;
         return tmp;
     }
 
@@ -212,6 +198,17 @@ class dVector3
     double length(void) const
     {
         return abs();
+    }
+
+    double p_norm(double p)
+    {
+        assert(p >= 1.0 && "p should be >= 1.0 in dVector3::p_norm to be a valid norm.");
+        double norm = 0.0;
+        for (size_t i = 0; i < size(); i++)
+        {
+            norm += std::pow(std::fabs(storage[i]),p);
+        }
+        return std::pow(norm, 1.0/p);
     }
 
     dVector3 cross(const dVector3& rhs) const
@@ -236,19 +233,19 @@ class dVector3
 
     dVector3 operator+(const dVector3& rhs) const
     {
-        dVector3 tmp;
-        tmp[0] = storage[0] + rhs[0];
-        tmp[1] = storage[1] + rhs[1];
-        tmp[2] = storage[2] + rhs[2];
+        dVector3 tmp(*this);
+        tmp[0] += rhs[0];
+        tmp[1] += rhs[1];
+        tmp[2] += rhs[2];
         return tmp;
     }
 
     dVector3 operator-(const dVector3& rhs) const
     {
-        dVector3 tmp;
-        tmp[0] = storage[0] - rhs[0];
-        tmp[1] = storage[1] - rhs[1];
-        tmp[2] = storage[2] - rhs[2];
+        dVector3 tmp(*this);
+        tmp[0] -= rhs[0];
+        tmp[1] -= rhs[1];
+        tmp[2] -= rhs[2];
         return tmp;
     }
 
@@ -262,6 +259,7 @@ class dVector3
 
     dVector3& operator/=(const double m)
     {
+        assert(std::fabs(m) > std::numeric_limits<double>::epsilon() && "Division by zero in dVector3::operator/=.");
         storage[0] /= m;
         storage[1] /= m;
         storage[2] /= m;
@@ -270,17 +268,17 @@ class dVector3
 
     dVector3& operator-=(const dVector3& rhs)
     {
-        storage[0] = storage[0] - rhs[0];
-        storage[1] = storage[1] - rhs[1];
-        storage[2] = storage[2] - rhs[2];
+        storage[0] -= rhs[0];
+        storage[1] -= rhs[1];
+        storage[2] -= rhs[2];
         return *this;
     }
 
     dVector3& operator+=(const dVector3& rhs)
     {
-        storage[0] = storage[0] + rhs[0];
-        storage[1] = storage[1] + rhs[1];
-        storage[2] = storage[2] + rhs[2];
+        storage[0] += rhs[0];
+        storage[1] += rhs[1];
+        storage[2] += rhs[2];
         return *this;
     }
 
@@ -317,19 +315,8 @@ class dVector3
 
     dVector3 normalized(void) const
     {
-        double norm = length();
-        dVector3 tmp;
-        if(norm > DBL_EPSILON)
-        {
-            double norm_inv = 1.0/norm;
-            tmp[0] = storage[0]*norm_inv;
-            tmp[1] = storage[1]*norm_inv;
-            tmp[2] = storage[2]*norm_inv;
-        }
-        else
-        {
-            tmp.set_to_zero();
-        }
+        dVector3 tmp(*this);
+        tmp.normalize();
         return tmp;
     }
 
@@ -347,88 +334,35 @@ class dVector3
 
     dVector3 rotated(const dMatrix3x3& RotationMatrix) const
     {
-        dVector3 Out;
-        Out.set_to_zero();
-        for(int i = 0; i < 3; ++i)
-        for(int j = 0; j < 3; ++j)
-        {
-            Out[i] += RotationMatrix(i,j) * storage[j];
-        }
+        dVector3 Out(*this);
+        Out.rotate(RotationMatrix);
         return Out;
     }
 
     dVector3 Xreflected(void) const
     {
         dVector3 Out(*this);
-        for(int i = 0; i < 3; ++i)
-        {
-            Out[i] = storage[i];
-        }
         Out[0] *= -1.0;
         return Out;
     }
 
     dVector3 Yreflected(void) const
     {
-        dVector3 Out;
-        for(int i = 0; i < 3; ++i)
-        {
-            Out[i] = storage[i];
-        }
+        dVector3 Out(*this);
         Out[1] *= -1.0;
         return Out;
     }
 
     dVector3 Zreflected(void) const
     {
-        dVector3 Out;
-        for(int i = 0; i < 3; ++i)
-        {
-            Out[i] = storage[i];
-        }
+        dVector3 Out(*this);
         Out[2] *= -1.0;
         return Out;
     }
 
-    std::string print(void) const
+    constexpr size_t size(void) const
     {
-        std::stringstream out;
-
-        out << "(" << storage[0] << ", "
-                   << storage[1] << ", "
-                   << storage[2] << ")";
-        return out.str();
-    }
-
-    std::string write(const int precision = 16, const char sep = ' ') const
-    {
-        std::stringstream out;
-        out << std::setprecision(precision) << std::defaultfloat;
-        for(int i = 0; i < 3; i++)
-        {
-            out << storage[i] << sep;
-        }
-        return out.str();
-    }
-
-    std::vector<float> writeCompressed() const
-    {
-        std::vector<float> out;
-        for(int i = 0; i < 3; i++)
-        {
-            out.push_back((float)storage[i]);
-        }
-        return out;
-    }
-
-	std::vector<double> writeBinary() const
-    {
-        std::vector<double> out;
-        for(int i = 0; i < 3; i++)
-        {
-            out.push_back((double)storage[i]);
-        }
-        return out;
+        return 3;
     }
 
     double* data(void)
@@ -441,40 +375,142 @@ class dVector3
         return storage.data();
     }
 
-    void read(std::fstream& inp)
+    void pack(std::vector<double>& buffer)
     {
-        for(int i = 0; i < 3; i++)
+        for (int i = 0; i < 3; ++i)
+        {
+            buffer.push_back(storage[i]);
+        }
+    }
+
+    void unpack(std::vector<double>& buffer, size_t& it)
+    {
+        for (int i = 0; i < 3; ++i)
+        {
+            storage[i] = buffer[it]; ++it;
+        }
+    }
+
+    std::string print(void) const
+    {
+        std::stringstream out;
+
+        out << "(" << storage[0] << ", "
+                   << storage[1] << ", "
+                   << storage[2] << ")";
+        return out.str();
+    }
+
+    void read_binary(std::istream& inp)
+    {
+        for(size_t i = 0; i < 3; i++)
         {
             inp >> storage[i];
         }
     }
 
-    void read(std::stringstream& inp)
+    void read_ASCII(std::istream& inp)
     {
-        for(int i = 0; i < 3; i++)
+        for(size_t i = 0; i < 3; i++)
         {
             inp >> storage[i];
         }
     }
 
-    static dVector3 ZeroVector(void)
+    void write_binary(std::ostream& outp) const
     {
-        return dVector3({0.0,0.0,0.0});
+        for(size_t i = 0; i < 3; i++)
+        {
+            outp << storage[i];
+        }
     }
 
-    constexpr size_t size(void) const
+    void write_ASCII(std::ostream& outp, const int precision = std::numeric_limits<double>::digits10 + 1, const char sep = ' ') const
     {
-        return 3u;
-    }
-    double p_norm(double p)
-    {
-        double norm = 0.0;
-        for (size_t i = 0; i < size(); i++)
+        outp << std::setprecision(precision) << std::defaultfloat;
+        for(size_t i = 0; i < 3; i++)
         {
-            norm += std::pow(storage[i],p);
+            outp << storage[i] << sep;
         }
-        return std::pow(norm, 1.0/p);
+        outp << std::endl;
     }
+
+    std::string get_output_string(const int precision = std::numeric_limits<double>::digits10 + 1, const char sep = ' ') const
+    {
+        std::stringstream out;
+        out << std::setprecision(precision) << std::defaultfloat;
+        for(int i = 0; i < 3; i++)
+        {
+            out << storage[i] << sep;
+        }
+        return out.str();
+    }
+
+    std::vector<double> get_vector() const
+    {
+        std::vector<double> out(3);
+        for(int i = 0; i < 3; i++)
+        {
+            out[i] = storage[i];
+        }
+        return out;
+    }
+
+    std::vector<float> get_vector_float() const
+    {
+        std::vector<float> out(3);
+        for(int i = 0; i < 3; i++)
+        {
+            out[i] = (float)storage[i];
+        }
+        return out;
+    }
+
+    //============================= Deprecated methods==========================
+    [[deprecated]]
+    void read(std::istream& inp)
+    {
+        for(size_t i = 0; i < 3; i++)
+        {
+            inp >> storage[i];
+        }
+    }
+
+    [[deprecated]]
+    std::string write(const int precision = std::numeric_limits<double>::digits10 + 1, const char sep = ' ') const
+    {
+        std::stringstream out;
+        out << std::setprecision(precision) << std::defaultfloat;
+        for(int i = 0; i < 3; i++)
+        {
+            out << storage[i] << sep;
+        }
+        return out.str();
+    }
+
+    [[deprecated]]
+    std::vector<float> writeCompressed() const
+    {
+        std::vector<float> out;
+        for(int i = 0; i < 3; i++)
+        {
+            out.push_back((float)storage[i]);
+        }
+        return out;
+    }
+
+    [[deprecated]]
+    std::vector<double> writeBinary() const
+    {
+        std::vector<double> out;
+        for(int i = 0; i < 3; i++)
+        {
+            out.push_back((double)storage[i]);
+        }
+        return out;
+    }
+    //==========================================================================
+
  protected:
  private:
     std::array<double, 3> storage;

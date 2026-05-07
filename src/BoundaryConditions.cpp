@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2014
- *   Main contributors :   Oleg Shchyglo; Raphael Schiedung
+ *
+ *  File created :   2014
+ *  Main contributors :   Oleg Shchyglo; Raphael Schiedung
  *
  */
 
@@ -50,6 +50,11 @@ BoundaryConditionTypes BoundaryConditions::TranslateBoundaryConditions(string Ke
         myBC = BoundaryConditionTypes::Free;
         check = true;
     }
+    if(Key == "FREEGRADIENT")
+    {
+        myBC = BoundaryConditionTypes::FreeGradient;
+        check = true;
+    }
     if(Key == "FIXED")
     {
         myBC = BoundaryConditionTypes::Fixed;
@@ -65,7 +70,7 @@ BoundaryConditionTypes BoundaryConditions::TranslateBoundaryConditions(string Ke
     {
         ConsoleOutput::WriteExit(string("Illegal Boundary Conditions Input. ") +
                                  string("Legal boundary conditions are ") +
-                                 string("Periodic, NoFlux, Free, Fixed or Mirror."),
+                                 string("Periodic, NoFlux, Free, FreeGradient, Fixed, or Mirrorr."),
                                  thisclassname, "ReadInput()");
         OP_Exit(EXIT_FAILURE);
     }
@@ -100,32 +105,32 @@ void BoundaryConditions::ReadInput(const string InputFileName)
     ConsoleOutput::WriteStandard("Source", InputFileName);
 
     std::string filetype = FileInterface::getFileExtension(InputFileName); 
-	if (filetype == "opi")
-	{
-		fstream inp(InputFileName.c_str(), ios::in | ios_base::binary);
+    if (filetype == "opi")
+    {
+        fstream inp(InputFileName.c_str(), ios::in | ios_base::binary);
 
-		if (!inp)
-		{
-		    ConsoleOutput::WriteExit("File \"" + InputFileName + "\" could not be opened", thisclassname, "ReadInput()");
-		    OP_Exit(EXIT_FAILURE);
-		};
+        if (!inp)
+        {
+            ConsoleOutput::WriteExit("File \"" + InputFileName + "\" could not be opened", thisclassname, "ReadInput()");
+            OP_Exit(EXIT_FAILURE);
+        };
 
-		std::stringstream data;
-		data << inp.rdbuf();
-		ReadInput(data);
+        std::stringstream data;
+        data << inp.rdbuf();
+        ReadInput(data);
 
-		inp.close();
-	}
-	else
-	if (filetype == "json")
-	{
-		ReadJSON(InputFileName);
-	}
-	else
-	{
-		std::cerr << "Filetype " << filetype << " not recognized. Filetype must be opi or json." << std::endl;
-		OP_Exit(1);
-	}
+        inp.close();
+    }
+    else
+    if (filetype == "json")
+    {
+        ReadJSON(InputFileName);
+    }
+    else
+    {
+        std::cerr << "Filetype " << filetype << " not recognized. Filetype must be opi or json." << std::endl;
+        OP_Exit(1);
+    }
 }
 
 void BoundaryConditions::ReadInput(stringstream& inp)
@@ -165,32 +170,32 @@ void BoundaryConditions::ReadInput(stringstream& inp)
 void BoundaryConditions::ReadJSON(const string InputFileName)
 {
     std::ifstream f(InputFileName);
-	json data = json::parse(f);
-	if (data.contains(thisclassname))
-	{
-		json bc = data[thisclassname];
+    json data = json::parse(f);
+    if (data.contains(thisclassname))
+    {
+        json bc = data[thisclassname];
 
-		string BC0Xstring = FileInterface::ReadParameter<std::string>(bc, {"BC0X"});
-		string BCNXstring = FileInterface::ReadParameter<std::string>(bc, {"BCNX"});
-		string BC0Ystring = FileInterface::ReadParameter<std::string>(bc, {"BC0Y"});
-		string BCNYstring = FileInterface::ReadParameter<std::string>(bc, {"BCNY"});
-		string BC0Zstring = FileInterface::ReadParameter<std::string>(bc, {"BC0Z"});
-		string BCNZstring = FileInterface::ReadParameter<std::string>(bc, {"BCNZ"});
-		
-		std::transform(BC0Xstring.begin(), BC0Xstring.end(), BC0Xstring.begin(), ::toupper);
-		std::transform(BCNXstring.begin(), BCNXstring.end(), BCNXstring.begin(), ::toupper);
-		std::transform(BC0Ystring.begin(), BC0Ystring.end(), BC0Ystring.begin(), ::toupper);
-		std::transform(BCNYstring.begin(), BCNYstring.end(), BCNYstring.begin(), ::toupper);
-		std::transform(BC0Zstring.begin(), BC0Zstring.end(), BC0Zstring.begin(), ::toupper);
-		std::transform(BCNZstring.begin(), BCNZstring.end(), BCNZstring.begin(), ::toupper);
+        string BC0Xstring = FileInterface::ReadParameter<std::string>(bc, {"BC0X"});
+        string BCNXstring = FileInterface::ReadParameter<std::string>(bc, {"BCNX"});
+        string BC0Ystring = FileInterface::ReadParameter<std::string>(bc, {"BC0Y"});
+        string BCNYstring = FileInterface::ReadParameter<std::string>(bc, {"BCNY"});
+        string BC0Zstring = FileInterface::ReadParameter<std::string>(bc, {"BC0Z"});
+        string BCNZstring = FileInterface::ReadParameter<std::string>(bc, {"BCNZ"});
 
-		BC0X = TranslateBoundaryConditions(BC0Xstring);
-		BCNX = TranslateBoundaryConditions(BCNXstring);
-		BC0Y = TranslateBoundaryConditions(BC0Ystring);
-		BCNY = TranslateBoundaryConditions(BCNYstring);
-		BC0Z = TranslateBoundaryConditions(BC0Zstring);
-		BCNZ = TranslateBoundaryConditions(BCNZstring);
-	}
+        std::transform(BC0Xstring.begin(), BC0Xstring.end(), BC0Xstring.begin(), ::toupper);
+        std::transform(BCNXstring.begin(), BCNXstring.end(), BCNXstring.begin(), ::toupper);
+        std::transform(BC0Ystring.begin(), BC0Ystring.end(), BC0Ystring.begin(), ::toupper);
+        std::transform(BCNYstring.begin(), BCNYstring.end(), BCNYstring.begin(), ::toupper);
+        std::transform(BC0Zstring.begin(), BC0Zstring.end(), BC0Zstring.begin(), ::toupper);
+        std::transform(BCNZstring.begin(), BCNZstring.end(), BCNZstring.begin(), ::toupper);
+
+        BC0X = TranslateBoundaryConditions(BC0Xstring);
+        BCNX = TranslateBoundaryConditions(BCNXstring);
+        BC0Y = TranslateBoundaryConditions(BC0Ystring);
+        BCNY = TranslateBoundaryConditions(BCNYstring);
+        BC0Z = TranslateBoundaryConditions(BC0Zstring);
+        BCNZ = TranslateBoundaryConditions(BCNZstring);
+    }
 #ifdef MPI_PARALLEL
     if(MPI_3D_DECOMPOSITION)
     {

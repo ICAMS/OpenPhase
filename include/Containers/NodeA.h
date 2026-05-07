@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,6 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2009
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich;
- *                         Reza Darvishi Kamachali; Dmitry Medvedev
  *
  */
 
@@ -34,19 +30,19 @@
 
 namespace openphase
 {
-/********************************* Declaration *******************************/
+/********************************* Declaration ********************************/
 template<class T = double >
 struct SingleIndexFieldEntry                                                    ///< Structure for storing the single index entries. Used in the NodeA class as a storage unit.
 {
     size_t index;                                                               ///< Field index.
     T      value;                                                               ///< Stored value.
 
-    SingleIndexFieldEntry<T>() :                                                ///< Default constructor.
+    SingleIndexFieldEntry() :                                                   ///< Default constructor.
         index(0)
     {
 
     }
-    SingleIndexFieldEntry<T>(const SingleIndexFieldEntry<T>& entry) :           ///< Copy constructor.
+    SingleIndexFieldEntry(const SingleIndexFieldEntry<T>& entry) :              ///< Copy constructor.
         index(entry.index),
         value(entry.value)
     {
@@ -63,12 +59,12 @@ template<class T>
 class NodeA                                                                     ///< Stores the single-valued fields at a grid point. Provides access and manipulation methods for the entries.
 {
  public:
-    NodeA<T>()                                                                  ///< Constructor used to allocate space for at least 3 fields
+    NodeA()                                                                     ///< Constructor used to allocate space for at least 3 fields
     {
         Fields.reserve(3);
     }
 
-    NodeA<T>(const NodeA& n) :                                                  ///< Copy constructor
+    NodeA(const NodeA& n) :                                                     ///< Copy constructor
         Fields(n.Fields)
     {
 
@@ -79,23 +75,23 @@ class NodeA                                                                     
         Fields.clear();
     };
 
-    NodeA<T>   operator+(const NodeA<T>& n) const;                              ///< Plus operator. Takes as input another NodeA type entry.
-    NodeA<T>   operator-(const NodeA<T>& n) const;                              ///< Minus operator. Takes as input another NodeA type entry.
-    NodeA<T>   operator*(const double n) const;                                 ///< Multiplies all fields by a number.
-    NodeA<T>&  operator=(const NodeA<T>& n);                                    ///< Assignment operator.
+    NodeA<T>  operator+(const NodeA<T>& n) const;                               ///< Plus operator. Takes as input another NodeA type entry.
+    NodeA<T>  operator-(const NodeA<T>& n) const;                               ///< Minus operator. Takes as input another NodeA type entry.
+    NodeA<T>  operator*(const double n) const;                                  ///< Multiplies all fields by a number.
+    NodeA<T>& operator=(const NodeA<T>& n);                                     ///< Assignment operator.
 
-    NodeA<T>&  operator+=(const NodeA<T>& n);                                   ///< Plus-equal operator. Takes as input another NodeA type entry.
-    NodeA<T>&  operator-=(const NodeA<T>& n);                                   ///< Minus-equal operator. Takes as input another NodeA type entry.
-    NodeA<T>&  operator*=(const double n);                                      ///< Multiply all fields by a number.
+    NodeA<T>& operator+=(const NodeA<T>& n);                                    ///< Plus-equal operator. Takes as input another NodeA type entry.
+    NodeA<T>& operator-=(const NodeA<T>& n);                                    ///< Minus-equal operator. Takes as input another NodeA type entry.
+    NodeA<T>& operator*=(const double n);                                       ///< Multiply all fields by a number.
 
-    bool    present(const size_t idx) const;                                    ///< Returns true if the field with a given index is present in the node, false otherwise.
+    bool present(const size_t idx) const;                                       ///< Returns true if the field with a given index is present in the node, false otherwise.
 
-    void    set_value(const size_t n, const T& value);                          ///< Sets value.
-    void    add_value(const size_t n, const T& value);                          ///< Increments value.
-    T       get_value(const size_t n) const;                                    ///< Returns value.
+    void set_value(const size_t n, const T& value);                             ///< Sets value.
+    void add_value(const size_t n, const T& value);                             ///< Increments value.
+    T    get_value(const size_t n) const;                                       ///< Returns value.
 
-    void    add_values         (const NodeA<T>& value);                         ///< Adds values of two nodes.
-    void    add_existing_values(const NodeA<T>& value);                         ///< Adds only values existing in two nodes simultaneously.
+    void add_values         (const NodeA<T>& value);                            ///< Adds values of two nodes.
+    void add_existing_values(const NodeA<T>& value);                            ///< Adds only values existing in two nodes simultaneously.
 
     typedef typename std::vector<SingleIndexFieldEntry<T>>::iterator iterator;  ///< Iterator over storage vector.
     typedef typename std::vector<SingleIndexFieldEntry<T>>::const_iterator citerator; ///< Constant iterator over storage vector.
@@ -104,22 +100,23 @@ class NodeA                                                                     
     citerator cbegin() const {return Fields.cbegin();};                         ///< Constant iterator to the begin of storage vector.
     citerator cend()   const {return Fields.cend();};                           ///< Constant iterator to the end of storage vector.
     size_t    size() const {return Fields.size();};                             ///< Returns the size of storage.
-    size_t    capacity() const {return Fields.capacity();};                     ///< Returns the size of storage.
+    size_t    capacity() const {return Fields.capacity();};                     ///< Returns the capacity of storage.
     iterator  erase(iterator it) {return Fields.erase(it);};                    ///< Erase a single record pointed by iterator it.
     SingleIndexFieldEntry<T>& front(void) {return Fields.front();};             ///< Reference to the first FieldEntry.
     const SingleIndexFieldEntry<T>& front(void) const {return Fields.front();}; ///< Constant reference to the first FieldEntry.
 
-    void pack(std::vector<double>& buffer);
-    void unpack(std::vector<double>& buffer, size_t& it);
-    void read(std::istream& inp);
-    void write(std::ostream& outp) const;
+    void pack(std::vector<double>& buffer);                                     ///< Writes NodeA into the buffer (used for MPI mode communication)
+    void unpack(std::vector<double>& buffer, size_t& it);                       ///< Read NodeA from the buffer (used for MPI mode communication)
+    void read(std::istream& inp);                                               ///< Reads NodeA content from the input stream.
+    void write(std::ostream& outp) const;                                       ///< Writes NodeA content into the output stream.
 
  protected:
  private:
     std::vector<SingleIndexFieldEntry<T>> Fields;                               ///< Storage vector.
 };
 
-/******************************* Implementation ******************************/
+/******************************* Implementation *******************************/
+
 template<class T>
 inline bool NodeA<T>::present(const size_t index) const
 {
@@ -129,6 +126,7 @@ inline bool NodeA<T>::present(const size_t index) const
     }
     return false;
 }
+
 template<class T>
 inline void NodeA<T>::set_value(const size_t n, const T& value)
 {
@@ -143,6 +141,7 @@ inline void NodeA<T>::set_value(const size_t n, const T& value)
     NewEntry.value      = value;
     Fields.push_back(NewEntry);
 }
+
 template<class T>
 inline void NodeA<T>::add_value(const size_t n, const T& value)
 {
@@ -158,6 +157,7 @@ inline void NodeA<T>::add_value(const size_t n, const T& value)
     NewEntry.value      = value;
     Fields.push_back(NewEntry);
 }
+
 template<class T>
 inline T NodeA<T>::get_value(const size_t n) const
 {
@@ -172,6 +172,7 @@ inline T NodeA<T>::get_value(const size_t n) const
     }
     return result;
 }
+
 template<class T>
 inline NodeA<T> NodeA<T>::operator+(const NodeA<T>& n) const
 {
@@ -183,6 +184,7 @@ inline NodeA<T> NodeA<T>::operator+(const NodeA<T>& n) const
     }
     return result;
 }
+
 template<class T>
 inline NodeA<T> NodeA<T>::operator-(const NodeA<T>& n) const
 {
@@ -199,6 +201,7 @@ inline NodeA<T> NodeA<T>::operator-(const NodeA<T>& n) const
     }
     return result;
 }
+
 template<class T>
 inline NodeA<T> NodeA<T>::operator*(const double n) const
 {
@@ -210,6 +213,7 @@ inline NodeA<T> NodeA<T>::operator*(const double n) const
     }
     return result;
 }
+
 template<class T>
 inline NodeA<T>& NodeA<T>::operator+=(const NodeA<T>& n)
 {
@@ -274,6 +278,7 @@ inline void NodeA<double>::pack(std::vector<double>& buffer)
         buffer.push_back(it->value);
     }
 }
+
 template<>
 inline void NodeA<double>::unpack(std::vector<double>& buffer, size_t& it)
 {
@@ -286,6 +291,7 @@ inline void NodeA<double>::unpack(std::vector<double>& buffer, size_t& it)
         Fields[i].value = buffer[it]; ++it;
     }
 }
+
 template<>
 inline void NodeA<double>::read(std::istream& inp)
 {
@@ -299,6 +305,7 @@ inline void NodeA<double>::read(std::istream& inp)
         inp.read(reinterpret_cast<char*>(&Field.value), sizeof(double));
     }
 }
+
 template<>
 inline void NodeA<double>::write(std::ostream& outp) const
 {

@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2011
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev
+ *
+ *  File created :   2011
+ *  Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev
  *
  */
 
@@ -29,16 +29,13 @@
 
 #include "Includes.h"
 #include "BoundaryConditions.h"
-#ifndef WIN32
 #include "MetaData.h"
-#endif
+
 namespace openphase
 {
 class BoundaryConditions;
 class OPObject;
-#ifndef WIN32
 class MetaData;
-#endif
 class GridParameters;
 
 class OP_EXPORTS Settings                                                       ///< System settings module. Reads and stores system settings
@@ -103,11 +100,10 @@ class OP_EXPORTS Settings                                                       
     std::string RawDataDir;                                                     ///< Directory name for the raw data files
     std::string InputRawDataDir;                                                ///< Directory name for the raw data files
     std::string TextDir;                                                        ///< Directory name for the text files
+    std::filesystem::path BaseDir;
 
     Settings& operator= (const Settings& rhs);                                  ///< Assignment operator
-#ifndef WIN32
     MetaData Meta;
-#endif
     std::vector<GridParameters> GridHistory;                                    ///< Stores grid parameters evolution history over the simulation time. Syntax: {{TimeStep1, Nx1, Ny1, Nz1}, ... ,{TimeStepN, NxN, NyN, NzN}}
 
  protected:

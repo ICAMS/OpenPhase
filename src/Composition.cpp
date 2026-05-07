@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2012
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Matthias Stratmann
+ *
+ *  File created :   2012
+ *  Main contributors :   Oleg Shchyglo; Efim Borukhovich; Matthias Stratmann
  *
  */
 
@@ -116,6 +116,8 @@ void Composition::Initialize(Settings& locSettings, std::string ObjectNameSuffix
 
 void Composition::ReadInput(const string InputFileName)
 {
+    ConsoleOutput::WriteStandard("Source", InputFileName);
+
     fstream inp(InputFileName.c_str(), ios::in);
     if (!inp)
     {
@@ -127,17 +129,12 @@ void Composition::ReadInput(const string InputFileName)
     data << inp.rdbuf();
     inp.close();
 
-    ConsoleOutput::WriteLine();
-    ConsoleOutput::WriteLineInsert(thisclassname+" input");
-    ConsoleOutput::WriteStandard("Source", InputFileName);
-
     ReadInput(data);
-
-    ConsoleOutput::WriteLine();
 }
 
 void Composition::ReadInput(stringstream& inp)
 {
+    ConsoleOutput::WriteLineInsert(thisclassname+" input");
     int moduleLocation = FileInterface::FindModuleLocation(inp, thisclassname);
 
     //Read reference elements
@@ -329,17 +326,18 @@ void Composition::ReadInput(stringstream& inp)
 
     SortedElementMatrix = CalculateSortedElementMatrix(); 
 
-    PrintData();
 
     //CalculateMolefractionLimits();
 
     ConsoleOutput::WriteLine();
     ConsoleOutput::WriteBlankLine();
+
+    PrintData();
 }
 
 void Composition::SetInitiaMoleFractions1Dextension(Composition1Dextension& CxExt)
 {
-    for(size_t x = 0; x < CxExt.Data.total_size(); x++)
+    for(size_t x = 0; x < CxExt.Data.size(); x++)
     for(size_t comp = 0; comp < Ncomp; comp++)
     {
         CxExt.Data[x]({comp}) = Initial({CxExt.PhaseIndex,comp});
@@ -359,6 +357,7 @@ void Composition::SetInitialMoleFractions(PhaseField& Phi)
     CalculateMoleFractionsTotalAverage();
     CalculateMoleFractionsAverage(Phi);
     CalculateTotalMolarVolume();
+
 
 #ifdef MPI_PARALLEL
     if(MPI_RANK == 0)
@@ -876,9 +875,6 @@ void Composition::WriteDistortedVTK(Settings& locSettings, const ElasticProperti
     std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, thisclassname + "Distorted_", tStep, ".vts");
 
     VTK::WriteDistorted(Filename, locSettings, EP, ListOfFields);
-    #ifndef WIN32       
-    locSettings.Meta.AddPart(Filename, "File", "VTK file with distorted composition data", "application/xml");
-    #endif
 }
 
 void Composition::WriteVTK(Settings& locSettings, const int tStep, const int precision) const
@@ -899,9 +895,6 @@ void Composition::WriteVTK(Settings& locSettings, const int tStep, const int pre
     std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, thisclassname + '_', tStep, ".vts");
 
     VTK::Write(Filename, locSettings, ListOfFields);
-    #ifndef WIN32       
-    locSettings.Meta.AddPart(Filename, "File", "VTK file with composition data", "application/xml");
-    #endif
 }
 
 void Composition::PrintPointStatistics(int x, int y, int z)
@@ -930,6 +923,7 @@ void Composition::WriteStatistics(const Settings& locSettings, const int tStep, 
 {
     vector<double> total(Ncomp, 0);
     vector<double> deviation(Ncomp, 0);
+    string separator = " ";
 
     CalculateMoleFractionsTotalAverage();
     if (AtStart)
@@ -950,21 +944,21 @@ void Composition::WriteStatistics(const Settings& locSettings, const int tStep, 
     if (tStep == 0)
     {
         output_file.open(locSettings.TextDir + "CompositionStatistics.opd", ios::out);
-        output_file << "sim_time" << "   ";
+        output_file << "sim_time" << separator;
         for(size_t comp = 0; comp < Ncomp; comp++)
         {
-            output_file << "total_" << Component[comp].Name << "   "
-                        << "deviation_" << Component[comp].Name << "   ";
+            output_file << "total_" << Component[comp].Name << separator
+                        << "deviation_" << Component[comp].Name << separator;
         }
         output_file << endl;
         output_file.close();
     }
 
     output_file.open(locSettings.TextDir + "CompositionStatistics.opd", ios::app);
-    output_file << sim_time << "   ";
+    output_file << sim_time << separator;
     for(size_t comp = 0; comp < Ncomp; comp++)
     {
-        output_file << MoleFractionsTotalAverage({comp})  << "   " << deviation[comp] << "   ";
+        output_file << MoleFractionsTotalAverage({comp})  << separator << deviation[comp] << separator;
     }
     output_file << endl;
     output_file.close();
@@ -972,6 +966,242 @@ void Composition::WriteStatistics(const Settings& locSettings, const int tStep, 
     }
 #endif
 }
+
+void Composition::WriteLineScan(PhaseField& Phi,
+                                string filename, double timestep,
+                                string type, string axis,
+                                int x, int y, int z)
+{
+    /** This function will create a separate file each time it is called, with
+    a different file name according to the current time step. In this file, the
+    tabulated composition data will be written down along a single line along a
+    given axis with type = "X", "Y" or "Z". The line can be positioned with a
+    point on it given with "x", "y" and "z". The output can be weight fraction
+    with type = "WF", weight percent "WP", mole fraction "MF" and mole percent
+    with "MP".*/
+
+    int mode = -1;
+    int dir = -1;
+    int tablength = 16;
+    std::stringstream ss;
+
+    if(type == "WF")
+    {
+        mode = 0;
+    }
+    else if(type == "WP")
+    {
+        mode = 1;
+    }
+    else if(type == "MF")
+    {
+        mode = 2;
+    }
+    else if(type == "MP")
+    {
+        mode = 3;
+    }
+    else
+    {
+        cout << "Undefined type " << type
+             << " in TextOutput::LineConcentration()! Chose \"WF\", \"WP\", "
+             << "\"MF\" or \"MP\". Now exiting!\n";
+        OP_Exit(EXIT_FAILURE);
+    }
+
+    if(axis == "X")
+    {
+        dir = 0;
+    }
+    else if(axis == "Y")
+    {
+        dir = 1;
+    }
+    else if(axis == "Z")
+    {
+        dir = 2;
+    }
+    else
+    {
+        cout << "Undefined axis direction " << axis
+             << " in TextOutput::LineConcentration()! Chose \"X\", \"Y\" or"
+             << "\"Z\". Now exiting!\n";
+        OP_Exit(EXIT_FAILURE);
+    }
+
+    ss << fixed << std::setw(9) << std::setfill('0') << int(timestep);
+    std::string s = ss.str();
+    string name = filename + s + ".txt";
+
+    ofstream file(name, ios::out);                                              //Create file and write header (or overwrite)
+
+    file << std::setw(5) << std::setfill(' ');
+    switch (dir)
+    {
+        case 0:
+        {
+            file << "x";
+            break;
+        }
+        case 1:
+        {
+            file << "y";
+            break;
+        }
+        case 2:
+        {
+            file << "z";
+            break;
+        }
+    }
+
+    for(size_t comp = 0; comp < Ncomp; comp++)
+    {
+        string temp;
+        string name(Component[comp].Name);
+
+        if(mode == 0)
+        {
+            temp = "wf." + name;
+        }
+        else if(mode == 1)
+        {
+            temp = "wp." + name;
+        }
+        else if(mode == 2)
+        {
+            temp = "mf." + name;
+        }
+        else if(mode == 3)
+        {
+            temp = "mp." + name;
+        }
+
+        file << std::setw(tablength) << std::setfill(' ') << temp;
+    }
+
+    file << "\n";
+
+    switch(dir)                                                                 // Write data to the file
+    {
+        case 0:
+        {
+            for(int x = 0; x < Grid.Nx; x++)
+            {
+                file << fixed << std::setw(5) << std::setfill(' ') << x;
+                for(size_t comp = 0; comp < Ncomp; comp++)
+                {
+                    double val = 0.0;
+                    switch(mode)
+                    {
+                        case 0:
+                        {//WF
+                            val = WeightFractionsTotal(x,y,z)({comp});
+                            break;
+                        }
+                        case 1:
+                        {//WP
+                            val = WeightFractionsTotal(x,y,z)({comp})*100.0;
+                            break;
+                        }
+                        case 2:
+                        {//MF
+                            val = MoleFractionsTotal(x,y,z,{comp});
+                            break;
+                        }
+                        case 3:
+                        {//MP
+                            val = MoleFractionsTotal(x,y,z,{comp})*100.0;
+                            break;
+                        }
+                    }
+                    file << scientific << std::setw(tablength) << std::setfill(' ')
+                         << val;
+                }
+                file << "\n";
+            }
+            break;
+        }
+        case 1:
+        {
+            for(int y = 0; y < Grid.Ny; y++)
+            {
+                file << fixed << std::setw(5) << std::setfill(' ') << y;
+                for(size_t comp = 0; comp < Ncomp; comp++)
+                {
+                    double val = 0.0;
+                    switch(mode)
+                    {
+                        case 0:
+                        {//WF
+                            val = WeightFractionsTotal(x,y,z)({comp});
+                            break;
+                        }
+                        case 1:
+                        {//WP
+                            val = WeightFractionsTotal(x,y,z)({comp})*100.0;
+                            break;
+                        }
+                        case 2:
+                        {//MF
+                            val = MoleFractionsTotal(x,y,z,{comp});
+                            break;
+                        }
+                        case 3:
+                        {//MP
+                            val = MoleFractionsTotal(x,y,z,{comp})*100.0;
+                            break;
+                        }
+                    }
+                    file << scientific << std::setw(tablength) << std::setfill(' ')
+                         << val;
+                }
+                file << "\n";
+            }
+            break;
+        }
+        case 2:
+        {
+            for(int z = 0; z < Grid.Nz; z++)
+            {
+                file << fixed << std::setw(5) << std::setfill(' ') << z;
+                for(size_t comp = 0; comp < Ncomp; comp++)
+                {
+                    double val = 0.0;
+                    switch(mode)
+                    {
+                        case 0:
+                        {//WF
+                            val = WeightFractionsTotal(x,y,z)({comp});
+                            break;
+                        }
+                        case 1:
+                        {//WP
+                            val = WeightFractionsTotal(x,y,z)({comp})*100.0;
+                            break;
+                        }
+                        case 2:
+                        {//MF
+                            val = MoleFractionsTotal(x,y,z,{comp});
+                            break;
+                        }
+                        case 3:
+                        {//MP
+                            val = MoleFractionsTotal(x,y,z,{comp})*100.0;
+                            break;
+                        }
+                    }
+                    file << scientific << std::setw(tablength) << std::setfill(' ')
+                         << val;
+                }
+                file << "\n";
+            }
+            break;
+        }
+    }
+    file.close();                                                               //Close file
+}
+
 
 void Composition::Advect(AdvectionHR& Adv, const Velocities& Vel, PhaseField& Phi, const BoundaryConditions& BC, const double dt, const double tStep)
 {
@@ -1016,6 +1246,7 @@ void Composition::PrintData(void)
     ConsoleOutput::WriteStandard("Phases in the system", ptmp);
 
     ConsoleOutput::WriteLine();
+    ConsoleOutput::WriteBlankLine();
 }
 
 size_t Composition::PhaseNumber(string name)

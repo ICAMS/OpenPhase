@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,10 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2011
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Philipp Engels;
- *                         Muhammad Adil Ali; Hesham Salama
+ *
+ *  File created :   2011
+ *  Main contributors :   Oleg Shchyglo; Efim Borukhovich; Philipp Engels;
+ *                        Muhammad Adil Ali; Hesham Salama
  *
  */
 
@@ -51,7 +51,7 @@ class OP_EXPORTS Tools
     static double getMisorientation(const dMatrix3x3 RotMatA, const dMatrix3x3 RotMatB); ///< Calculates missorientation between two matrices without consideration of symmetries
     static double getMisorientationCubic(const dMatrix3x3 RotMatA, const dMatrix3x3 RotMatB, const Crystallography& CR); ///< Calculates missorientation between two matrices considering cubic symmetry
     static double getDisorientationCubic(const Quaternion OrientationA, const Quaternion OrientationB); ///< Calculates Disorientation between two quaternions considering cubic symmetry
-    static EulerAngles RotationToEuler(const dMatrix3x3& Rot, const EulerConvention locConvention);
+    static EulerAngles RotationToEuler(const dMatrix3x3& Rot, const EulerConventions locConvention);
     static dVector3 MillerConversion(const std::vector<double>& hkil, dVector3 hkl, bool PlaneNormal = true); ///< Hexagonal Miller plane Normal indices to Miller-Bravais // flase for directions --
 
     static void SetRandomGrainOrientations(PhaseField& Phase, const int seed = 0);///< Sets random grains orientations

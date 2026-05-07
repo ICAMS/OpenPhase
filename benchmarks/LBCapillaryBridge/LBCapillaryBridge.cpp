@@ -349,7 +349,7 @@ int main(int argc, char **argv)
             if (WallGapRescaled < 1.25) break;
         }
 
-        Phase.ClearGrainsForcesAndAccelerations();
+        Phase.FieldsProperties.ClearGrainsForcesAndAccelerations();
         LB.Solve(Phase, Vel, BC);
 
         // Let walls move

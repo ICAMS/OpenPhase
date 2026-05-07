@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2012
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Matthias Stratmann
+ *
+ *  File created :   2012
+ *  Main contributors :   Oleg Shchyglo; Efim Borukhovich; Matthias Stratmann
  *
  */
 
@@ -112,12 +112,12 @@ class Composition1Dextension                                                    
     void moveFrame(const int dx, const BoundaryConditionTypes extBC)            ///< Moves the data according to the moving frame motion
     {
         if(dx > 0)
-        for(long int x = 0; x < (long int) Data.size(); x++)
+        for(long int x = 0; x < (long int) size(); x++)
         {
             Data(x) = Data(x+dx);
         }
         if(dx < 0)
-        for(long int x = (long int) Data.size() - 1; x >= 0; x--)
+        for(long int x = (long int) size() - 1; x >= 0; x--)
         {
             Data(x) = Data(x+dx);
         }
@@ -129,22 +129,22 @@ class Composition1Dextension                                                    
     }
     size_t size() const
     {
-        return Data.size();
+        return Data.sizeX();
     }
     void read(std::ifstream& out)
     {
-        out.read(reinterpret_cast<char*>(Data.data()),Data.total_size()*Ncomp*sizeof(double));
+        out.read(reinterpret_cast<char*>(Data.data()),Data.size()*Data.tensor_size()*sizeof(double));
     }
     void write(std::ofstream& out)
     {
-        out.write(reinterpret_cast<char*>(Data.data()),Data.total_size()*Ncomp*sizeof(double));
+        out.write(reinterpret_cast<char*>(Data.data()),Data.size()*Data.tensor_size()*sizeof(double));
     }
 
     size_t PhaseIndex;                                                          ///< Index of thermodynamic phase for the extension
     size_t Ncomp;                                                               ///< Number of chemical components
 
-    Storage1D<double,1> Data;                                                   ///< Data storage array
-    Storage1D<double,1> DataDot;                                                ///< Diffusion increments storage for diffusion solver
+    Storage1DTensor<double,1> Data;                                             ///< Data storage array
+    Storage1DTensor<double,1> DataDot;                                          ///< Diffusion increments storage for diffusion solver
     iVector3 Direction;                                                         ///< Selects the extension's direction: 0 -> direction inactive, 1 -> upper boundary extension, -1 -> lower boundary extension
 
  protected:
@@ -197,6 +197,12 @@ class OP_EXPORTS Composition : public OPObject                                  
     void PrintPointStatistics(int x, int y, int z);                             ///< Prints to screen composition at a given point (x, y, z)
     void WriteStatistics(const Settings& locSettings,
                          const int tStep, double dt);                           ///< Writes composition statistics into file, input: time step
+
+    void WriteLineScan(PhaseField& Phi,
+                                   std::string filename, double timestep,
+                                   std::string type,
+                                   std::string axis,
+                                   int x, int y,int z);                         ///< Writes total composition over a straight line in separate files
 
     void Advect(AdvectionHR& Adv, const Velocities& Vel, PhaseField& Phi,
                 const BoundaryConditions& BC,

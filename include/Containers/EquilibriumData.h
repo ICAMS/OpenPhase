@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,6 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2011
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev
  *
  */
 
@@ -32,7 +29,7 @@
 namespace openphase
 {
 
-class EquilibriumData                                                          ///< Structure for storing pair equilibrium data
+class EquilibriumData                                                           ///< Structure for storing pair equilibrium data
 {
  public:
     double eq_temperature;                                                      ///< Equilibrium temperature at which the data is taken
@@ -45,8 +42,9 @@ class EquilibriumData                                                          /
     Tensor<double,1> eq_composition;                                            ///< Equilibrium composition of the phase
     Tensor<double,1> eq_slope;                                                  ///< Slope of the solvus line of the phase
 
-    bool valid;                                                                 ///< True if the dataset has valid data
-    bool out_of_range;                                                          ///< True if dataset is out of temperature or composition range
+    bool is_set;                                                                ///< True if the dataset has been set
+    bool out_of_T_range;                                                        ///< True if dataset is out of temperature range
+    bool out_of_C_range;                                                        ///< True if dataset is out of composition range
 
     double eq_composition_extra(size_t comp, double locTx) const                ///< Equilibrium composition of a given component extrapolated to local temperature
     {
@@ -71,8 +69,9 @@ class EquilibriumData                                                          /
         nom_composition(),
         eq_composition(),
         eq_slope(),
-        valid(false),
-        out_of_range(true)
+        is_set(false),
+        out_of_T_range(true),
+        out_of_C_range(true)
     {
 
     }
@@ -85,8 +84,9 @@ class EquilibriumData                                                          /
         nom_composition({Ncomp}),
         eq_composition({Ncomp}),
         eq_slope({Ncomp}),
-        valid(false),
-        out_of_range(true)
+        is_set(false),
+        out_of_T_range(true),
+        out_of_C_range(true)
     {
 
     }
@@ -99,8 +99,9 @@ class EquilibriumData                                                          /
         nom_composition(rhs.nom_composition),
         eq_composition(rhs.eq_composition),
         eq_slope(rhs.eq_slope),
-        valid(rhs.valid),
-        out_of_range(rhs.out_of_range)
+        is_set(rhs.is_set),
+        out_of_T_range(rhs.out_of_T_range),
+        out_of_C_range(rhs.out_of_C_range)
     {
 
     }
@@ -113,8 +114,9 @@ class EquilibriumData                                                          /
         nom_composition(rhs.nom_composition),
         eq_composition(rhs.eq_composition),
         eq_slope(rhs.eq_slope),
-        valid(rhs.valid),
-        out_of_range(rhs.out_of_range)
+        is_set(rhs.is_set),
+        out_of_T_range(rhs.out_of_T_range),
+        out_of_C_range(rhs.out_of_C_range)
     {
 
     }
@@ -128,8 +130,9 @@ class EquilibriumData                                                          /
         nom_composition  = rhs.nom_composition;
         eq_composition   = rhs.eq_composition;
         eq_slope         = rhs.eq_slope;
-        valid            = rhs.valid;
-        out_of_range     = rhs.out_of_range;
+        is_set           = rhs.is_set;
+        out_of_T_range = rhs.out_of_T_range;
+        out_of_C_range = rhs.out_of_C_range;
 
         return *this;
     }
@@ -143,8 +146,9 @@ class EquilibriumData                                                          /
         nom_composition  = rhs.nom_composition;
         eq_composition   = rhs.eq_composition;
         eq_slope         = rhs.eq_slope;
-        valid            = rhs.valid;
-        out_of_range     = rhs.out_of_range;
+        is_set           = rhs.is_set;
+        out_of_T_range = rhs.out_of_T_range;
+        out_of_C_range = rhs.out_of_C_range;
 
         return *this;
     }

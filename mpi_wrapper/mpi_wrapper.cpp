@@ -1,23 +1,26 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
+ *  This file is part of the OpenPhase (R) software library.
  *
- *   Copyright (c) 2009-2020 Ruhr-Universitaet Bochum,
- *                 Universitaetsstrasse 150, D-44801 Bochum, Germany
- *             AND 2018-2020 OpenPhase Solutions GmbH,
- *                 Wasserstrasse 494, D-44795 Bochum, Germany.
+ *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *                Universitaetsstrasse 150, D-44801 Bochum, Germany
+ *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
+ *  
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *     
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- *    All rights reserved.
- *
- *
- *    DEVELOPMENT VERSION, DO NOT PUBLISH OR DISTRIBUTE.
- *
- *
- *   OpenPhase (R) is a joint development of Interdisciplinary Centre for
- *   Advanced Materials Simulation (ICAMS), Ruhr University Bochum
- *   and OpenPhase Solutions GmbH.
- *
- *   File created :   2023
- *   Main contributors :   Marvin Tegeler; Oleg Shchyglo;
+ *  File created :   2023
+ *  Main contributors :   Marvin Tegeler; Oleg Shchyglo;
  *
  */
 
@@ -75,6 +78,15 @@ MPI_Op getOp(OP_MPI_Op op_mpi_op)
     }
     abortInvalidMPI();
 }
+MPI_Comm getCommunicator(OP_MPI_Comm communicator)
+{
+    switch (communicator)
+    {
+        case OP_MPI_COMM_WORLD: return MPI_COMM_WORLD;
+        case OP_MPI_COMM_SELF: return MPI_COMM_SELF;
+    }
+    abortInvalidMPI();
+}
 
 void* create_request()
 {
@@ -107,18 +119,26 @@ int OP_MPI_Init_thread(int* argc, char ***argv, OP_MPI_Threads required, int* pr
             break;
     }
     int result = MPI_Init_thread(argc, argv, op_required, provided);
+
+#ifdef DEBUG
+    MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+    MPI_Comm_set_errhandler(MPI_COMM_SELF, MPI_ERRORS_RETURN);
+#endif
+
     return result;
 }
 
 int OP_MPI_Comm_rank(OP_MPI_Comm communicator, int* MPI_RANK)
 {
-    int result = MPI_Comm_rank(MPI_COMM_WORLD, MPI_RANK);
+    MPI_Comm comm = getCommunicator(communicator);
+    int result = MPI_Comm_rank(comm, MPI_RANK);
     return result;
 }
 
 int OP_MPI_Comm_size(OP_MPI_Comm communicator, int* MPI_SIZE)
 {
-    int result = MPI_Comm_size(MPI_COMM_WORLD, MPI_SIZE);
+    MPI_Comm comm = getCommunicator(communicator);
+    int result = MPI_Comm_size(comm, MPI_SIZE);
     return result;
 }
 
@@ -128,8 +148,8 @@ int OP_MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
 {
     MPI_Datatype datatype = getDatatype(op_mpi_datatype);
     MPI_Op op = getOp(op_mpi_op);
-    int result = MPI_Allreduce(sendbuf, recvbuf, count,
-                               datatype, op, MPI_COMM_WORLD);
+    MPI_Comm comm = getCommunicator(communicator);
+    int result = MPI_Allreduce(sendbuf, recvbuf, count, datatype, op, comm);
     return result;
 }
 
@@ -139,9 +159,8 @@ int OP_MPI_Allreduce(OP_MPI_Options inplace, void *buf, int count,
 {
     MPI_Datatype datatype = getDatatype(op_mpi_datatype);
     MPI_Op op = getOp(op_mpi_op);
-    int result = MPI_Allreduce(MPI_IN_PLACE, buf, count,
-                   datatype, op, MPI_COMM_WORLD);
-
+    MPI_Comm comm = getCommunicator(communicator);
+    int result = MPI_Allreduce(MPI_IN_PLACE, buf, count, datatype, op, comm);
     return result;
 }
 
@@ -151,8 +170,8 @@ int OP_MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
 {
     MPI_Datatype datatype = getDatatype(op_mpi_datatype);
     MPI_Op op = getOp(op_mpi_op);
-    int result = MPI_Reduce(sendbuf, recvbuf, count,
-                            datatype, op, root, MPI_COMM_WORLD);
+    MPI_Comm comm = getCommunicator(communicator);
+    int result = MPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
     return result;
 }
 
@@ -161,8 +180,8 @@ int OP_MPI_Isend(const void *buf, int count,
                  OP_MPI_Comm communicator, void *request)
 {
     MPI_Datatype datatype = getDatatype(op_mpi_datatype);
-    int result = MPI_Isend(buf, count, datatype, dest, tag,
-                           MPI_COMM_WORLD, (MPI_Request*)request);
+    MPI_Comm comm = getCommunicator(communicator);
+    int result = MPI_Isend(buf, count, datatype, dest, tag, comm, (MPI_Request*)request);
     return result;
 }
 
@@ -171,8 +190,8 @@ int OP_MPI_Irecv(void *buf, int count,
                  OP_MPI_Comm communicator, void *request)
 {
     MPI_Datatype datatype = getDatatype(op_mpi_datatype);
-    int result = MPI_Irecv(buf, count, datatype, dest, tag,
-                           MPI_COMM_WORLD, (MPI_Request*)request);
+    MPI_Comm comm = getCommunicator(communicator);
+    int result = MPI_Irecv(buf, count, datatype, dest, tag, comm, (MPI_Request*)request);
     return result;
 }
 
@@ -198,13 +217,15 @@ int OP_MPI_Bcast(void *buffer, int count,
                  OP_MPI_Comm communicator)
 {
     MPI_Datatype datatype = getDatatype(op_mpi_datatype);
-    int result = MPI_Bcast(buffer, count, datatype, root, MPI_COMM_WORLD);
+    MPI_Comm comm = getCommunicator(communicator);
+    int result = MPI_Bcast(buffer, count, datatype, root, comm);
     return result;
 }
 
 void OP_MPI_Barrier(OP_MPI_Comm communicator)
 {
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Comm comm = getCommunicator(communicator);
+    MPI_Barrier(comm);
 }
 
 void OP_MPI_Finalize()
@@ -222,7 +243,8 @@ fftw_plan op_fftw_mpi_plan_dft_r2c_3d(ptrdiff_t n0, ptrdiff_t n1, ptrdiff_t n2,
                                       OP_MPI_Comm communicator,
                                       unsigned int flags)
 {
-    return fftw_mpi_plan_dft_r2c_3d(n0, n1, n2, in, out, MPI_COMM_WORLD, flags);
+    MPI_Comm comm = getCommunicator(communicator);
+    return fftw_mpi_plan_dft_r2c_3d(n0, n1, n2, in, out, comm, flags);
 }
 
 fftw_plan op_fftw_mpi_plan_dft_c2r_3d(ptrdiff_t n0, ptrdiff_t n1, ptrdiff_t n2,
@@ -230,14 +252,16 @@ fftw_plan op_fftw_mpi_plan_dft_c2r_3d(ptrdiff_t n0, ptrdiff_t n1, ptrdiff_t n2,
                                       OP_MPI_Comm communicator,
                                       unsigned int flags)
 {
-    return fftw_mpi_plan_dft_c2r_3d(n0, n1, n2, in, out, MPI_COMM_WORLD, flags);
+    MPI_Comm comm = getCommunicator(communicator);
+    return fftw_mpi_plan_dft_c2r_3d(n0, n1, n2, in, out, comm, flags);
 }
 
 ptrdiff_t op_fftw_mpi_local_size_3d(ptrdiff_t n0, ptrdiff_t n1, ptrdiff_t n2,
                                     OP_MPI_Comm communicator,
                                     ptrdiff_t *local_n0, ptrdiff_t *local_0_start)
 {
-    return fftw_mpi_local_size_3d(n0, n1, n2, MPI_COMM_WORLD, local_n0, local_0_start);
+    MPI_Comm comm = getCommunicator(communicator);
+    return fftw_mpi_local_size_3d(n0, n1, n2, comm, local_n0, local_0_start);
 }
 
 void op_fftw_mpi_cleanup()

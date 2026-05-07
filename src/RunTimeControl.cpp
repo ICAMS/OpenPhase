@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2018
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev
+ *
+ *  File created :   2018
+ *  Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev
  *
  */
 
@@ -60,7 +60,6 @@ void RunTimeControl::Initialize(Settings& locSettings, std::string ObjectNameSuf
 
 void RunTimeControl::ReadInput(const string InputFileName)
 {
-    ConsoleOutput::WriteLineInsert("RunTimeControl input");
     ConsoleOutput::WriteStandard("Source", InputFileName);
 
     std::string filetype = FileInterface::getFileExtension(InputFileName); 
@@ -80,20 +79,65 @@ void RunTimeControl::ReadInput(const string InputFileName)
 
 		inp.close();
 	}
-	else
-	if (filetype == "json")
+	else if (filetype == "json")
 	{
 		ReadJSON(InputFileName);
 	}
 	else
 	{
 		std::cerr << "Filetype " << filetype << " not recognized. Filetype must be opi or json." << std::endl;
-		OP_Exit(1);
+		OP_Exit(EXIT_FAILURE);
 	}
 }
 
+
+void RunTimeControl::SetOMPThreads()
+{
+#ifdef _OPENMP
+    int threads = OpenMPThreads;  // start from user-specified value
+    bool from_env = false;
+
+    // Check if OMP_NUM_THREADS is set in the environment
+    if (const char* env = std::getenv("OMP_NUM_THREADS")) {
+        try {
+            threads = std::stoi(env);
+            from_env = true;
+        } catch (...) {
+            threads = 0; // force fallback
+        }
+    }
+
+    // Validate thread count
+    if (threads <= 0) {
+        threads = omp_get_max_threads();
+    }
+
+    // Clamp ONLY if not controlled by environment (HPC-safe)
+    if (!from_env) {
+        int max_hw = omp_get_num_procs();
+        threads = std::min(threads, max_hw);
+    }
+
+    omp_set_num_threads(threads);
+    OpenMPThreads = threads;
+
+    if (from_env) {
+        ConsoleOutput::WriteSimple(
+            "OpenMP threads set from OMP_NUM_THREADS: " +
+            std::to_string(OpenMPThreads));
+    } else {
+        ConsoleOutput::WriteSimple(
+            "OpenMP threads set from user/default: " +
+            std::to_string(OpenMPThreads));
+    }
+#endif
+}
+
+
 void RunTimeControl::ReadInput(stringstream& inp)
 {
+    ConsoleOutput::WriteLineInsert(thisclassname + " input");
+
     int moduleLocation    = FileInterface::FindModuleLocation(inp, thisclassname);
 
     SimulationTitle       = FileInterface::ReadParameterF(inp, moduleLocation, {string("SimulationTitle"), string("SimTtl")});
@@ -103,10 +147,8 @@ void RunTimeControl::ReadInput(stringstream& inp)
     UnitsOfTime           = FileInterface::ReadParameterS(inp, moduleLocation, {string("UnitsOfTime"), string("TUnits")}, false, "s");
     UnitsOfEnergy         = FileInterface::ReadParameterS(inp, moduleLocation, {string("UnitsOfEnergy"), string("EUnits")}, false, "J");
 
-#ifdef _OPENMP
-    OpenMPThreads         = FileInterface::ReadParameterI(inp, moduleLocation, {string("OpenMPThreads"), string("nOMP")});
-    omp_set_num_threads(OpenMPThreads);
-#endif
+    OpenMPThreads         = FileInterface::ReadParameterI(inp, moduleLocation, {string("OpenMPThreads"), string("nOMP")}, false, 0);
+    SetOMPThreads();
 
     MaxTimeStep           = FileInterface::ReadParameterI(inp, moduleLocation, {string("MaxTimeStep"), string("nSteps")});
     dt                    = FileInterface::ReadParameterD(inp, moduleLocation, string("dt"));
@@ -130,8 +172,6 @@ void RunTimeControl::ReadInput(stringstream& inp)
     LogScreenFactor       = FileInterface::ReadParameterI(inp, moduleLocation, string("LogScreenF"), false, 1);
     LogVTKFactor          = FileInterface::ReadParameterI(inp, moduleLocation, string("LogVTKF"),    false, 1);
 
-    ConsoleOutput::WriteLine();
-    ConsoleOutput::WriteLine();
 
     if (VTKOutputInterval < 1)
     {
@@ -179,10 +219,8 @@ void RunTimeControl::ReadJSON(const string InputFileName)
 		UnitsOfTime           = FileInterface::ReadParameter<std::string>(RTC, {"UnitsOfTime"}, "s");
 		UnitsOfEnergy         = FileInterface::ReadParameter<std::string>(RTC, {"UnitsOfTime"}, "J");
 
-	#ifdef _OPENMP
-		OpenMPThreads         = FileInterface::ReadParameter<int>(RTC, {"OpenMPThreads"}, 1);
-		omp_set_num_threads(OpenMPThreads);
-	#endif
+		OpenMPThreads         = FileInterface::ReadParameter<int>(RTC, {"OpenMPThreads"}, 0);
+        SetOMPThreads();
 
 		MaxTimeStep           = FileInterface::ReadParameter<int>(RTC, {"MaxTimeStep"});
 		dt                    = FileInterface::ReadParameter<double>(RTC, {"dt"});
@@ -267,9 +305,7 @@ RunTimeControl& RunTimeControl::operator= (const RunTimeControl& rhs)
         RawDataDir            = rhs.RawDataDir;
         TextDir               = rhs.TextDir;
 
-#ifdef _OPENMP
-        omp_set_num_threads(OpenMPThreads);
-#endif
+        SetOMPThreads();
     }
     return *this;
 }

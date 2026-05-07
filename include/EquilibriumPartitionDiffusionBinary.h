@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2010
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev
+ *
+ *  File created :   2010
+ *  Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev
  *
  */
 
@@ -28,6 +28,7 @@
 #define EQUILIBRIUMPARTITIONDIFFUSIONBINARY_H
 
 #include "Includes.h"
+#include "Temperature.h"
 
 namespace openphase
 {
@@ -45,14 +46,14 @@ class BoundaryConditions;
 
 enum class BoundaryConditionTypes;
 
-enum class OP_EXPORTS BinaryDrivingForceModels
+enum class BinaryDrivingForceModels
 {
     Standard,
     LowerSlope,
     Weighted
 };
 
-class OP_EXPORTS EquilibriumPartitionDiffusionBinary : public OPObject                     ///<  Solver for diffusion using binary linearized phase diagrams
+class OP_EXPORTS EquilibriumPartitionDiffusionBinary : public OPObject          ///<  Solver for diffusion using binary linearized phase diagrams
 {
     friend ElasticProperties;
     friend FractureField;
@@ -85,7 +86,20 @@ class OP_EXPORTS EquilibriumPartitionDiffusionBinary : public OPObject          
                                     Temperature& Tx,
                                     BoundaryConditions& BC,
                                     InterfaceProperties& IP);                   ///<  Calculates concentration-dependent mobility
-    double ReportMaximumTimeStep(Temperature& Tx);                              ///<  Returns maximum time step for diffusion solver
+   double ReportMaximumTimeStep(Temperature& Tx);                              ///<  Returns maximum time step for diffusion solver
+
+    const std::vector<double>& DiffusionCoefficient() const { return DC; };     ///<  Returns the diffusion coefficients
+    double EquilibriumComposition(size_t n, size_t m, double Temp) const;       ///<  Returns equilibrium composition for phase {n} in {n,m} phase pair
+    double InterfaceMobility0(size_t alpha, size_t beta) const                  ///<  Returns the interface mobility for a given pair of phases without curvature correction
+    {
+        assert(IntMob.IsAllocated());
+        return IntMob(alpha, beta);
+    }
+    double getEntropy(size_t PhaseIdx) const  { return Entropy[PhaseIdx]; };
+    double PhaseBoundarySlope(size_t alpha, size_t beta) const
+    {
+        return Slope({alpha,beta});
+    };
 
  protected:
     Storage3D<double, 2> dMu;                                                   ///<  External contribution to the chemical potential.
@@ -123,15 +137,16 @@ class OP_EXPORTS EquilibriumPartitionDiffusionBinary : public OPObject          
 
     bool EnableAntiTrapping;                                                    ///<  Enables antitrapping current calculation
     bool ConsiderChemicalPotential;                                             ///<  Enables chemical potential consideration
-
+    
+    Matrix<double> IntMob;                                                      ///< Interface mobility matrix for zeroth order
+   
     void CalculateDiffusionCoefficients(Temperature& Tx);                       ///<  Calculates temperature dependent diffusion coefficients depending on the average temperature
 
     void CalculateLocalPhaseConcentrations(PhaseField& Phase,
                                            Composition& Cx,
                                            Temperature& Tx,
                                            int i, int j, int k);                ///<  Distributes the total concentrations into concentrations in each phase for a given point
-    double EquilibriumComposition(size_t n, size_t m, double Temp);             ///<  Returns equilibrium composition for phase {n} in {n,m} phase pair
-    double PartitioningCoefficient(size_t n, size_t m);                         ///<  Returns partitioning coefficient for phases {n,m}
+    double PartitioningCoefficient(size_t n, size_t m) const;                   ///<  Returns partitioning coefficient for phases {n,m}
 
     void CalculatePhaseConcentrations(PhaseField& Phase,
                                       Composition& Cx,

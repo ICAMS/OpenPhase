@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,6 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2011
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev;
- *                         Philipp Engels; Muhammad Adil Ali; Hesham Salama
  *
  */
 
@@ -35,12 +31,11 @@
 #include "iVector3.h"
 #include "vStrain.h"
 #include "vStress.h"
-#include "vStress.h"
 
 namespace openphase
 {
 
-extern inline dVector3 operator*(const dMatrix3x3& lhs, const dVector3& rhs)
+extern inline dVector3 operator*(const dMatrix3x3& lhs, const dVector3& rhs)    ///< Dot product of matrix and vector.
 {
     dVector3 tmp;
     for(int i = 0; i < 3; i++)
@@ -51,7 +46,7 @@ extern inline dVector3 operator*(const dMatrix3x3& lhs, const dVector3& rhs)
     return tmp;
 }
 
-extern inline dVector3 operator*(const dMatrix3x3& lhs, const iVector3& rhs)
+extern inline dVector3 operator*(const dMatrix3x3& lhs, const iVector3& rhs)    ///< Dot product of matrix and vector. Operator overload for integer-valued vector.
 {
     dVector3 tmp;
     for(int i = 0; i < 3; i++)
@@ -62,7 +57,7 @@ extern inline dVector3 operator*(const dMatrix3x3& lhs, const iVector3& rhs)
     return tmp;
 }
 
-extern inline double operator*(const iVector3& lhs, const dVector3& rhs)
+extern inline double operator*(const iVector3& lhs, const dVector3& rhs)        ///< Dot product of two vectors. Operator overload for integer-valued lhs vector.
 {
     double tmp = 0.0;
     for(int i = 0; i < 3; i++)
@@ -72,7 +67,7 @@ extern inline double operator*(const iVector3& lhs, const dVector3& rhs)
     return tmp;
 }
 
-extern inline double operator*(const dVector3& lhs, const iVector3& rhs)
+extern inline double operator*(const dVector3& lhs, const iVector3& rhs)        ///< Dot product of two vectors. Operator overload for integer-valued rhs vector.
 {
     double tmp = 0.0;
     for(int i = 0; i < 3; i++)
@@ -82,7 +77,7 @@ extern inline double operator*(const dVector3& lhs, const iVector3& rhs)
     return tmp;
 }
 
-extern inline dVector3 operator+(const iVector3& lhs, const dVector3& rhs)
+extern inline dVector3 operator+(const iVector3& lhs, const dVector3& rhs)      ///< Sum of two vectors. Operator overload for integer-valued lhs vector.
 {
     dVector3 tmp;
     for(int i = 0; i < 3; i++)
@@ -92,7 +87,7 @@ extern inline dVector3 operator+(const iVector3& lhs, const dVector3& rhs)
     return tmp;
 }
 
-extern inline dVector3 operator+(const dVector3& lhs, const iVector3& rhs)
+extern inline dVector3 operator+(const dVector3& lhs, const iVector3& rhs)      ///< Sum of two vectors. Operator overload for integer-valued rhs vector.
 {
     dVector3 tmp;
     for(int i = 0; i < 3; i++)
@@ -102,7 +97,7 @@ extern inline dVector3 operator+(const dVector3& lhs, const iVector3& rhs)
     return tmp;
 }
 
-extern inline dVector3 operator-(const iVector3& lhs, const dVector3& rhs)
+extern inline dVector3 operator-(const iVector3& lhs, const dVector3& rhs)      ///< Subtraction operator. Operator overload for integer-valued lhs vector.
 {
     dVector3 tmp;
     for(int i = 0; i < 3; i++)
@@ -112,7 +107,7 @@ extern inline dVector3 operator-(const iVector3& lhs, const dVector3& rhs)
     return tmp;
 }
 
-extern inline dVector3 operator-(const dVector3& lhs, const iVector3& rhs)
+extern inline dVector3 operator-(const dVector3& lhs, const iVector3& rhs)      ///< Subtraction operator. Operator overload for integer-valued rhs vector.
 {
     dVector3 tmp;
     for(int i = 0; i < 3; i++)
@@ -122,7 +117,7 @@ extern inline dVector3 operator-(const dVector3& lhs, const iVector3& rhs)
     return tmp;
 }
 
-extern inline dMatrix6x6 outer(const dMatrix3x3& lhs, const dMatrix3x3& rhs)
+extern inline dMatrix6x6 outer(const dMatrix3x3& lhs, const dMatrix3x3& rhs)    ///< Outer product of two 3x3 matries. Returns 6x6 matrix in Voigt notations instead of a fourth rank 3x3x3x3 tensor.
 {
     dMatrix6x6 tmp;
 
@@ -211,7 +206,7 @@ extern inline dMatrix6x6 outer(const dMatrix3x3& lhs, const dMatrix3x3& rhs)
     return tmp;
 }
 
-extern inline vStrain VoigtStrain(const dMatrix3x3& locStrainTensor)
+extern inline vStrain VoigtStrain(const dMatrix3x3& locStrainTensor)            ///< Converts strain tensor to the corresponding 6-component Voigt vector.
 {
     vStrain locStrain;
     locStrain[0] = locStrainTensor(0,0);
@@ -223,7 +218,7 @@ extern inline vStrain VoigtStrain(const dMatrix3x3& locStrainTensor)
     return locStrain;
 }
 
-extern inline vStress VoigtStress(const dMatrix3x3& locStressTensor)
+extern inline vStress VoigtStress(const dMatrix3x3& locStressTensor)            ///< Converts stress tensor to the corresponding 6-component Voigt vector.
 {
     vStress locStress;
     locStress[0] = locStressTensor(0,0);
@@ -235,8 +230,7 @@ extern inline vStress VoigtStress(const dMatrix3x3& locStressTensor)
     return locStress;
 }
 
-// Return columns of a matrix
-extern inline std::vector<dVector3> Col(const dMatrix3x3& Mat)
+extern inline std::vector<dVector3> Col(const dMatrix3x3& Mat)                  ///< Returns vector containing columns of the matrix Mat.
 {
     std::vector<dVector3> Col;
     for(int i = 0; i < 3; i++)
@@ -251,7 +245,8 @@ extern inline std::vector<dVector3> Col(const dMatrix3x3& Mat)
     return Col;
 }
 
-extern inline vStrain operator*(const dMatrix6x6& locCompliance, const vStress& locStress)
+extern inline vStrain operator*(const dMatrix6x6& locCompliance,
+                                const vStress& locStress)                       ///< Compliance-stress product. Returns Voigt strain vector.
 {
     vStrain locStrain;
     for(int i = 0; i < 6; i++)
@@ -262,7 +257,8 @@ extern inline vStrain operator*(const dMatrix6x6& locCompliance, const vStress& 
     return locStrain;
 }
 
-extern inline vStress operator*(const dMatrix6x6& locStiffness, const vStrain& locStrain)
+extern inline vStress operator*(const dMatrix6x6& locStiffness,
+                                const vStrain& locStrain)                       ///< Striffness-strain product. Returns Voigt stress vector.
 {
     vStress locStress;
     for(int i = 0; i < 6; i++)
@@ -273,7 +269,8 @@ extern inline vStress operator*(const dMatrix6x6& locStiffness, const vStrain& l
     return locStress;
 }
 
-extern inline double operator*(const vStrain& locStrain, const vStress& locStress)
+extern inline double operator*(const vStrain& locStrain,
+                               const vStress& locStress)                        ///< Strain-stress product. Returns elastic eergy density.
 {
     double locEnergy = locStrain[0] * locStress[0]
                      + locStrain[1] * locStress[1]
@@ -284,7 +281,8 @@ extern inline double operator*(const vStrain& locStrain, const vStress& locStres
     return locEnergy;
 }
 
-extern inline double operator*(const vStress& locStress, const vStrain& locStrain)
+extern inline double operator*(const vStress& locStress,
+                               const vStrain& locStrain)                        ///< Stress-strain product. Returns elastic energy density.
 {
     double locEnergy = locStrain[0] * locStress[0]
                      + locStrain[1] * locStress[1]
@@ -463,7 +461,7 @@ extern inline void PolarDecomposition(const dMatrix3x3& D, dMatrix3x3& R, dMatri
     R = D*U.inverted();
 }
 
-extern inline dMatrix3x3 AlignBaseAxes(dMatrix3x3 M)                            /// Aligns X, Y and Z axes of tensor M with the base vectors.
+extern inline dMatrix3x3 AlignBaseAxes(dMatrix3x3 M)                            ///< Aligns X, Y and Z axes of tensor M with the base vectors.
 {
     /*
      * This function uses Givens rotation algorithm to zero (1,0), (2,0) and

@@ -21,7 +21,7 @@ using namespace openphase;
 class LocalLBM : public FlowSolverLBM                                           ///< Modification of FLowSolverLBM which are only used in this example
 {
  public:
-    LocalLBM(Settings& locSettings, double in_dt): FlowSolverLBM(locSettings, in_dt){};
+    LocalLBM(Settings& locSettings): FlowSolverLBM(locSettings){};
 
     void InitializeSingle();                                                    ///<  Initializes a single density
     void InitializeSphere(const double Radius, const std::array<double,3> pos,
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
     UserDrivingForce                    UDF(OPSettings);
 
     InterfaceProperties                 IP    (OPSettings);
-    LocalLBM                            LB    (OPSettings, RTC.dt);
+    LocalLBM                            LB    (OPSettings);
     Nucleation                          Nuc   (OPSettings);
     PhaseField                          Phi   (OPSettings);
     Temperature                         Tx    (OPSettings);

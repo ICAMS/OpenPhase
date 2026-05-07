@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2016
- *   Main contributors :   Raphael Schiedung
+ *
+ *  File created :   2016
+ *  Main contributors :   Raphael Schiedung
  *
  */
 
@@ -88,7 +88,7 @@ void ElectricProperties::ReadInput(std::stringstream& inp)
     int moduleLocation = FileInterface::FindModuleLocation(inp, thisclassname);
     for(size_t comp = 0; comp < Ncomp; comp++)
     {
-        const std::string name = "MolarCharge_" + comp;
+        const std::string name = "MolarCharge_" + std::to_string(comp);
         MolarCharge[comp] = FileInterface::ReadParameterD(inp, moduleLocation, name, false, 0.0);
     }
 }
@@ -133,9 +133,10 @@ void ElectricProperties::WriteVTK(const Settings& locSettings, const int tStep, 
     ListOfFields.push_back((VTK::Field_t) {"Electric Potential [V]", [this](int i,int j,int k){return ElectricPotential(i,j,k);}});
     ListOfFields.push_back((VTK::Field_t) {"Wave Vector [1/m]", [this](int i,int j,int k){return WaveVector(i,j,k);}});
 
-    std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, "ElectricProperties", tStep, ".vts");
+    std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, "ElectricProperties_", tStep, ".vts");
 
     VTK::Write(Filename, locSettings, ListOfFields);
 }
+
 
 }// end of namespace openphase

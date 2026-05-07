@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,10 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2012
- *   Main contributors :   Oleg Shchyglo; Raphael Schiedung; Marvin Tegeler;
- *                         Matthias Stratmann
+ *
+ *  File created :   2012
+ *  Main contributors :   Oleg Shchyglo; Raphael Schiedung; Marvin Tegeler;
+ *                        Matthias Stratmann
  *
  */
 
@@ -32,6 +32,7 @@
 #include "FluidDynamics/FlowSolverLBM.h"
 #include "PhaseField.h"
 #include "Settings.h"
+#include "Thermodynamics/ThermodynamicPropertiesEQP.h"
 #include "VTK.h"
 #include "RunTimeControl.h"
 #include "Velocities.h"
@@ -104,13 +105,18 @@ void Temperature::Initialize(Settings& locSettings, std::string ObjectNameSuffix
     locSettings.AddForRemeshing(*this);
     locSettings.AddForReading(*this);
 
+    BaseDir = locSettings.BaseDir;
+
     initialized = true;
     ConsoleOutput::WriteStandard(thisclassname, "Initialized");
 }
 
 void Temperature::ReadInput(const string InputFileName)
 {
-    fstream inp(InputFileName.c_str(), ios::in | ios_base::binary);
+    std::filesystem::path InputFilePath(InputFileName);
+    if (BaseDir.empty()) BaseDir = InputFilePath.parent_path();
+
+    fstream inp(InputFilePath, ios::in | ios_base::binary);
     if (!inp)
     {
         ConsoleOutput::WriteExit("File \"" + InputFileName + "\" could not be opened", thisclassname, "ReadInput()");
@@ -153,12 +159,14 @@ void Temperature::ReadInput(stringstream& inp)
 
     if(ReadFromFile)
     {
-        string DataFile = FileInterface::ReadParameterF(inp, moduleLocation, "DataFile");
+        std::filesystem::path DataFile = FileInterface::ReadParameterF(inp, moduleLocation, "DataFile");
 
-        fstream inp(DataFile.c_str(), ios::in);
+        if (DataFile.is_relative()) DataFile = BaseDir / DataFile;
+
+        fstream inp(DataFile, ios::in);
         if (!inp)
         {
-            ConsoleOutput::WriteExit("File \"" + DataFile + "\" could not be opened",
+            ConsoleOutput::WriteExit("File \"" + DataFile.string() + "\" could not be opened",
                             thisclassname, "ReadInput()");
             OP_Exit(EXIT_FAILURE);
         };
@@ -177,7 +185,7 @@ void Temperature::ReadInput(stringstream& inp)
 
         if(TemperatureProfile.size() == 0)
         {
-            ConsoleOutput::WriteExit("Could not extract temperature information from file \"" + DataFile + "\".",
+            ConsoleOutput::WriteExit("Could not extract temperature information from file \"" + DataFile.string() + "\".",
                             thisclassname, "ReadInput()");
             OP_Exit(EXIT_FAILURE);
         }
@@ -308,6 +316,21 @@ void Temperature::ReadInput(stringstream& inp)
         if(ZN_size > 0) {ExtensionZN.Initialize(ZN_size,(iVector3){ 0, 0, 1}); ExtensionsActive = true;};
     }
 }
+#ifndef ACADEMIC
+void Temperature::SetThermodynamicProperties(const ThermodynamicPropertiesEQP& TP)
+{
+    for(size_t n = 0; n < Nphases; n++)
+    {
+        HeatCapacity[n] = TP.GlobalExtrapolationData({n,n}).heat_capacity;
+    }
+    for(size_t n = 0; n < Nphases; n++)
+    for(size_t m = 0; m < Nphases; m++)
+    {
+        LatentHeat({n,m}) = Tavg * (TP.GlobalExtrapolationData({n,m}).eq_entropy
+                                  - TP.GlobalExtrapolationData({m,n}).eq_entropy);
+    }
+}
+#endif
 double Temperature::CalculateLatentHeatEffect(const PhaseField& Phase,
                                               const double dt)
 {
@@ -813,7 +836,7 @@ bool Temperature::Write(const Settings& locSettings, const int tStep) const
         return false;
     };
 
-    out.write(reinterpret_cast<const char*>(&Tx[0]), Tx.tot_size()*sizeof(double));
+    out.write(reinterpret_cast<const char*>(&Tx[0]), Tx.size()*sizeof(double));
     out.close();
 
     if(ExtensionsActive)
@@ -859,7 +882,7 @@ bool Temperature::Read(const Settings& locSettings, const BoundaryConditions& BC
         return false;
     };
 
-    inp.read(reinterpret_cast<char*>(&Tx[0]), Tx.tot_size()*sizeof(double));
+    inp.read(reinterpret_cast<char*>(&Tx[0]), Tx.size()*sizeof(double));
     inp.close();
 
     CalculateMinMaxAvg();
@@ -906,6 +929,7 @@ void Temperature::WriteH5(H5Interface& H5, const int tStep)
 
     dbuffer = Tx.pack();
     H5.WriteCheckPoint(tStep, "Tx", dbuffer);
+
 
     if(ExtensionX0.isActive()) {
         H5.WriteCheckPoint(tStep, "TxExX0", ExtensionX0.Data);
@@ -1019,9 +1043,6 @@ void Temperature::WriteVTK(Settings& locSettings, const int tStep) const
     std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, thisclassname+"_", tStep, ".vts");
     ListOfFields.push_back((VTK::Field_t) {"T", [this](int i,int j,int k){return Tx(i,j,k);}});
     VTK::Write(Filename, locSettings, ListOfFields);
-    #ifndef WIN32       
-    locSettings.Meta.AddPart(Filename, "File", "VTK file with temperature data", "application/xml");
-    #endif
 }
 void Temperature::WriteGradientVTK(Settings& locSettings, const int tStep) const
 {
@@ -1029,9 +1050,6 @@ void Temperature::WriteGradientVTK(Settings& locSettings, const int tStep) const
     std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, thisclassname+"Gradient_", tStep, ".vts");
     ListOfFields.push_back((VTK::Field_t) {"dT_dx", [this](int i,int j,int k){return (dVector3){0.5*(Tx(i+1,j,k)-Tx(i-1,j,k))/Grid.dx,0.5*(Tx(i,j+1,k)-Tx(i,j-1,k))/Grid.dx,0.5*(Tx(i,j,k+1)-Tx(i,j,k-1))/Grid.dx};}});
     VTK::Write(Filename, locSettings, ListOfFields);
-    #ifndef WIN32       
-    locSettings.Meta.AddPart(Filename, "File", "VTK file with temperature gradient data", "application/xml");
-    #endif
 }
 
 void Temperature::WriteMinMaxAverage(int time_step, double time, string filename) const
@@ -1045,8 +1063,7 @@ void Temperature::WriteMinMaxAverage(int time_step, double time, string filename
         if(!std::filesystem::exists(filename) or time_step <= 0)
         {
             ofstream file(filename, ios::out);
-            file << "TimeStep" << separator
-                 << "Time"     << separator
+            file << "Time"     << separator
                  << "Min"      << separator
                  << "Max"      << separator
                  << "Average"  << endl;
@@ -1054,8 +1071,7 @@ void Temperature::WriteMinMaxAverage(int time_step, double time, string filename
         }
 
         ofstream file(filename, ios::app);
-        file << time_step << separator
-             << time      << separator
+        file << time      << separator
              << Tmin      << separator
              << Tmax      << separator
              << Tavg      << endl;

@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,6 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2011
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev;
- *                         Philipp Engels
  *
  */
 
@@ -39,6 +35,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <array>
 
 #include "dMatrix3x3.h"
 
@@ -93,44 +90,17 @@ class vStrain
         return *this;
     }
 
-    void pack(std::vector<double>& buffer)
-    {
-        for (int i = 0; i < 6; ++i)
-        {
-            buffer.push_back(storage[i]);
-        }
-    }
-
-    void unpack(std::vector<double>& buffer, size_t& it)
-    {
-        for (int i = 0; i < 6; ++i)
-        {
-            storage[i] = buffer[it]; ++it;
-        }
-    }
-
-    vStrain& set_to_unity(void)
-    {
-        storage[0] = 1.0;
-        storage[1] = 1.0;
-        storage[2] = 1.0;
-        storage[3] = 0.0;
-        storage[4] = 0.0;
-        storage[5] = 0.0;
-        return *this;
-    }
-
-    bool operator==(const vStrain& rhs)
-    {
-        for (int i = 0; i < 6; i++)
-        {
-            if (fabs(storage[i] - rhs[i]) > FLT_EPSILON)
-            {
-                return false;
-            };
-        }
-        return true;
-    }
+//    bool operator==(const vStrain& rhs)
+//    {
+//        for (int i = 0; i < 6; i++)
+//        {
+//            if (fabs(storage[i] - rhs[i]) > FLT_EPSILON)
+//            {
+//                return false;
+//            };
+//        }
+//        return true;
+//    }
 
     vStrain operator*(const double m) const
     {
@@ -178,30 +148,6 @@ class vStrain
         storage[4] *= num;
         storage[5] *= num;
         return *this;
-    }
-
-    vStrain operator+(const double m) const
-    {
-        vStrain tmp;
-        tmp[0] = storage[0]+m;
-        tmp[1] = storage[1]+m;
-        tmp[2] = storage[2]+m;
-        tmp[3] = storage[3]+m;
-        tmp[4] = storage[4]+m;
-        tmp[5] = storage[5]+m;
-        return tmp;
-    }
-
-    vStrain operator-(const double m) const
-    {
-        vStrain tmp;
-        tmp[0] = storage[0]-m;
-        tmp[1] = storage[1]-m;
-        tmp[2] = storage[2]-m;
-        tmp[3] = storage[3]-m;
-        tmp[4] = storage[4]-m;
-        tmp[5] = storage[5]-m;
-        return tmp;
     }
 
     vStrain operator-(const vStrain& rhs) const
@@ -297,7 +243,8 @@ class vStrain
 
     vStrain rotated(const dMatrix3x3& RotationMatrix)
     {
-        dMatrix3x3 locStrainTensor = tensor().rotated(RotationMatrix);
+        const dMatrix3x3& locStrainTensor = tensor().rotated(RotationMatrix);
+
         vStrain locStrain;
         locStrain[0] = locStrainTensor(0,0);
         locStrain[1] = locStrainTensor(1,1);
@@ -310,7 +257,7 @@ class vStrain
 
     vStrain& rotate(const dMatrix3x3& RotationMatrix)
     {
-        dMatrix3x3 locStrainTensor = tensor().rotated(RotationMatrix);
+        const dMatrix3x3& locStrainTensor = tensor().rotated(RotationMatrix);
 
         storage[0] = locStrainTensor(0,0);
         storage[1] = locStrainTensor(1,1);
@@ -355,18 +302,117 @@ class vStrain
         return tmp;
     }
 
+    constexpr size_t size(void) const
+    {
+        return 6u;
+    }
+
+    double* data(void)
+    {
+        return storage.data();
+    }
+
+    const double* data(void) const
+    {
+        return storage.data();
+    }
+
+    void pack(std::vector<double>& buffer)
+    {
+        for (int i = 0; i < 6; ++i)
+        {
+            buffer.push_back(storage[i]);
+        }
+    }
+
+    void unpack(std::vector<double>& buffer, size_t& it)
+    {
+        for (int i = 0; i < 6; ++i)
+        {
+            storage[i] = buffer[it]; ++it;
+        }
+    }
+
     std::string print(void) const
     {
         std::stringstream out;
         out << "< | ";
         for(int i = 0; i < 6; i++)
         {
-            out << storage[i]<< " " << " | ";
+            out << storage[i] << " " << " | ";
         }
         out << " >";
         return out.str();
     }
 
+    void read_binary(std::istream& inp)
+    {
+        for(size_t i = 0; i < 6; i++)
+        {
+            inp >> storage[i];
+        }
+    }
+
+    void read_ASCII(std::istream& inp)
+    {
+        for(size_t i = 0; i < 6; i++)
+        {
+            inp >> storage[i];
+        }
+    }
+
+    void write_binary(std::ostream& outp) const
+    {
+        for(size_t i = 0; i < 6; i++)
+        {
+            outp << storage[i];
+        }
+    }
+
+    void write_ASCII(std::ostream& outp, const int precision = std::numeric_limits<double>::digits10 + 1, const char sep = ' ') const
+    {
+        outp << std::setprecision(precision) << std::defaultfloat;
+        for(int i = 0; i < 6; i++)
+        {
+            outp << storage[i] << sep;
+        }
+        outp << std::endl;
+    }
+
+    std::string get_output_string(const int precision = std::numeric_limits<double>::digits10 + 1, const char sep = ' ') const
+    {
+        std::stringstream out;
+        out << std::setprecision(precision) << std::defaultfloat;
+        for(int i = 0; i < 6; i++)
+        {
+            out << storage[i] << sep;
+        }
+        return out.str();
+    }
+
+    std::vector<double> get_vector() const
+    {
+        std::vector<double> out(6);
+        for(int i = 0; i < 6; i++)
+        {
+            out[i] = storage[i];
+        }
+        return out;
+    }
+
+    std::vector<float> get_vector_float() const
+    {
+        std::vector<float> out(6);
+        for(int i = 0; i < 6; i++)
+        {
+            out[i] = (float)storage[i];
+        }
+        return out;
+    }
+
+    //============================= Deprecated methods==========================
+
+    [[deprecated]]
     std::string print_line(void) const
     {
         std::stringstream out;
@@ -380,57 +426,59 @@ class vStrain
         return out.str();
     }
 
-    std::string write(const int precision = 16, const char sep = ' ') const
+    [[deprecated]]
+    void read(std::istream& inp)
+    {
+        for(size_t i = 0; i < 6; i++)
+        {
+            inp >> storage[i];
+        }
+    }
+
+    [[deprecated]]
+    void write(std::ostream& outp) const
+    {
+        for(size_t i = 0; i < 6; i++)
+        {
+            outp << storage[i];
+        }
+    }
+
+    [[deprecated]]
+    std::string write(const int precision = std::numeric_limits<double>::digits10 + 1, const char sep = ' ') const
     {
         std::stringstream out;
         out << std::setprecision(precision) << std::defaultfloat;
-        out << storage[0] << sep;
-        out << storage[1] << sep;
-        out << storage[2] << sep;
-        out << storage[5] << sep;
-        out << storage[3] << sep;
-        out << storage[4] << sep;
+        for(int i = 0; i < 6; i++)
+        {
+            out << storage[i] << sep;
+        }
         return out.str();
     }
 
+    [[deprecated]]
     std::vector<float> writeCompressed() const
     {
-        std::vector<float> out;
-        out.push_back((float)storage[0]);
-        out.push_back((float)storage[1]);
-        out.push_back((float)storage[2]);
-        out.push_back((float)storage[5]);
-        out.push_back((float)storage[3]);
-        out.push_back((float)storage[4]);
+        std::vector<float> out(6);
+        for(int i = 0; i < 6; i++)
+        {
+            out[i] = (float)storage[i];
+        }
         return out;
     }
 
+    [[deprecated]]
     std::vector<double> writeBinary() const
     {
-        std::vector<double> out;
-        out.push_back((double)storage[0]);
-        out.push_back((double)storage[1]);
-        out.push_back((double)storage[2]);
-        out.push_back((double)storage[5]);
-        out.push_back((double)storage[3]);
-        out.push_back((double)storage[4]);
+        std::vector<double> out(6);
+        for(int i = 0; i < 6; i++)
+        {
+            out[i] = storage[i];
+        }
         return out;
     }
+    //==========================================================================
 
-    double* data(void)
-    {
-        return storage.data();
-    }
-
-    const double* data(void) const
-    {
-        return storage.data();
-    }
-
-    constexpr size_t size(void) const
-    {
-        return 6u;
-    }
  protected:
  private:
     std::array<double,6> storage;

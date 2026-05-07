@@ -97,7 +97,7 @@ int main(int argc, char **argv)
         // Calculation of the interface diffusion
         IP.Set(Phase, BC);
         ID.CalculatePhaseFieldIncrements(Phase, IP);
-        Phase.MergeIncrements(BC, RTC.dt, false);
+        Phase.MergeIncrements(BC, RTC.dt);
     }
     return 0;
 
@@ -198,10 +198,7 @@ op::dVector3 InterfaceDirection(const op::PhaseField& Phase, const int Tx,
     }
 
     // Calculate direction vector
-    op::dVector3 direction = op::dVector3();
-    direction.setX(Px-Tx);
-    direction.setY(0.0);
-    direction.setZ(Pz-Tz);
+    op::dVector3 direction({Px-Tx,0.0, Pz-Tz});
     direction.normalize();
     return direction;
 }

@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2011
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev
+ *
+ *  File created :   2011
+ *  Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev
  *
  */
 
@@ -57,7 +57,12 @@ void Settings::Initialize(std::string ObjectNameSuffix)
 
 void Settings::ReadInput(const string InputFileName)
 {
-    ConsoleOutput::WriteLineInsert(thisclassname+" input");
+    std::filesystem::path filePath(InputFileName);
+    if (BaseDir.empty() && filePath.has_parent_path())
+    {
+        BaseDir = filePath.parent_path();
+        ConsoleOutput::WriteStandard("Base directory", BaseDir);
+    }
     ConsoleOutput::WriteStandard("Source", InputFileName);
 
     std::string filetype = FileInterface::getFileExtension(InputFileName); 
@@ -85,20 +90,20 @@ void Settings::ReadInput(const string InputFileName)
     else
     {
         std::cerr << "Filetype " << filetype << " not recognized. Filetype must be opi or json." << std::endl;
-        OP_Exit(1);
+        OP_Exit(EXIT_FAILURE);
     }
 }
 
 void Settings::ReadInput(std::stringstream& inp)
 {
+
     Grid.ReadInput(inp);
 
-    ConsoleOutput::WriteLine();
-    ConsoleOutput::WriteLineInsert("Settings");
+    ConsoleOutput::WriteLineInsert(thisclassname+" input");
 
     int moduleLocation = FileInterface::FindModuleLocation(inp, thisclassname);
 
-    ConsoleOutput::WriteLineInsert("Active phases");
+    //ConsoleOutput::WriteLineInsert("Active phases");
 
     bool endofnames = false;
     size_t n = 0;

@@ -112,8 +112,8 @@ int main(int argc, char **argv)
         const double Q1 =  0 * Pi/180.0;
         const double Q2 =  0 * Pi/180.0;
         const double Q3 = 45 * Pi/180.0;
-        EulerAngles locAngles({Q1, Q2, Q3}, XYZ);
-        Phase.FieldsProperties[idxB].Orientation = locAngles.getQuaternion();
+        EulerAngles locAngles({Q1, Q2, Q3}, EulerConventions::XYZ);
+        Phase.FieldsProperties[idxB].Orientation = locAngles.get_quaternion();
     }
 
     ConsoleOutput::WriteSimple("Entering the Time Loop!!!");

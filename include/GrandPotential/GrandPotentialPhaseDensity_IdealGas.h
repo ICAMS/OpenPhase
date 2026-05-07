@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2021
- *   Main contributors :   Raphael Schiedung
+ *
+ *  File created :   2021
+ *  Main contributors :   Raphael Schiedung
  *
  */
 
@@ -39,10 +39,10 @@ struct GrandPotentialPhaseDensity_IdealGas: GrandPotentialPhaseDensity          
     void Initialize(Settings& locSettings) override;                            ///<  Initializes global settings
     void ReadInput(std::stringstream& InputFile, int moduleLocation) override;  ///<  Reads input parameters from a file
 
-    double PhasePressure (double Temperature, const Tensor<double,1>& ChemicalPotential) const override
+    double PhasePotential (double Temperature, const Tensor<double,1>& ChemicalPotential) const override
     {
         assert(Temperature > 0);
-        double locPressure = 0.0;
+        double locPotential = 0.0;
         for (size_t comp = 0; comp < Ncomp; ++comp)
         {
             const double& M   = MolarMass[comp];
@@ -51,9 +51,9 @@ struct GrandPotentialPhaseDensity_IdealGas: GrandPotentialPhaseDensity          
             const double& h   = PhysicalConstants::h;
             const double& R   = PhysicalConstants::R;
             const double& N_A = PhysicalConstants::N_A;
-            locPressure += 2*std::sqrt(2.0*Pi*M*R*T)*Pi*std::exp(mu/R/T)*M*R*R*T*T/N_A/N_A/N_A/N_A/h/h/h;
+            locPotential -= 2*std::sqrt(2.0*Pi*M*R*T)*Pi*std::exp(mu/R/T)*M*R*R*T*T/N_A/N_A/N_A/N_A/h/h/h;
         }
-        return locPressure;
+        return locPotential;
     }
     double PhaseConcentration (double Temperature, double ChemicalPotential, size_t comp) const override
     {
@@ -79,10 +79,10 @@ struct GrandPotentialPhaseDensity_IdealGas: GrandPotentialPhaseDensity          
         const double& N_A = PhysicalConstants::N_A;
         return 2*std::sqrt(2.0*Pi*M*R*T)*Pi*std::exp(mu/R/T)*M/N_A/N_A/N_A/N_A/h/h/h;
     }
-    double PhasePressure (double height, double Temperature, const Tensor<double,1>& ChemicalPotential) const override
+    double PhasePotential (double height, double Temperature, const Tensor<double,1>& ChemicalPotential) const override
     {
         assert(Temperature > 0);
-        double locPressure = 0.0;
+        double locPotential = 0.0;
         for (size_t comp = 0; comp < Ncomp; ++comp)
         {
             const double& M   = MolarMass[comp];
@@ -92,9 +92,9 @@ struct GrandPotentialPhaseDensity_IdealGas: GrandPotentialPhaseDensity          
             const double& h   = PhysicalConstants::h;
             const double& R   = PhysicalConstants::R;
             const double& N_A = PhysicalConstants::N_A;
-            locPressure += 2*sqrt(2.0*Pi*M*R*T)*Pi*exp((mu-M*g*height)/R/T)*M*R*R*T*T/N_A/N_A/N_A/N_A/h/h/h;
+            locPotential -= 2*sqrt(2.0*Pi*M*R*T)*Pi*exp((mu-M*g*height)/R/T)*M*R*R*T*T/N_A/N_A/N_A/N_A/h/h/h;
         }
-        return locPressure;
+        return locPotential;
     }
     double PhaseConcentration  (double height, double Temperature, double ChemicalPotential, size_t comp) const override
     {

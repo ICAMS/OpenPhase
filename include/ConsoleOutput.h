@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2013
- *   Main contributors :   Philipp Engels; Raphael Schiedung
+ *
+ *  File created :   2013
+ *  Main contributors :   Philipp Engels; Raphael Schiedung
  *
  */
 
@@ -40,7 +40,7 @@ namespace openphase
 
 class RunTimeControl;
 
-enum class OP_EXPORTS VerbosityLevels : int                                                ///< Console output verbosity levels
+enum class VerbosityLevels : int                                                ///< Console output verbosity levels
 {
     Silent  = 0,                                                                ///< No console output except for exits.
     Warning = 1,                                                                ///< No console output except for warnings and exits.
@@ -48,7 +48,7 @@ enum class OP_EXPORTS VerbosityLevels : int                                     
     Debug   = 3                                                                 ///< All outputs plus debug outputs
 };
 
-enum class OP_EXPORTS floatfield                                                ///< Console output format for floating point numbers
+enum class floatfield                                                           ///< Console output format for floating point numbers
 {
     Default,                                                                    ///< Use default floating-point notation for output
     Scientific,                                                                 ///< Use scientific floating-point notation for output
@@ -62,8 +62,8 @@ class OP_EXPORTS ConsoleOutput                                                  
 
     static constexpr auto   StandardNotation    = floatfield::Default;
     static constexpr int    StandardPrecision   = 6;
-    static constexpr size_t StandardColumnWidth = 40;
-    static constexpr size_t LineLength          = 80;
+    static constexpr size_t StandardColumnWidth = 60;
+    static constexpr size_t LineLength          = 100;
 
     inline static VerbosityLevels OutputVerbosity = VerbosityLevels::Normal;    ///< Sets the level of console output verbosity
 
@@ -173,15 +173,24 @@ class OP_EXPORTS ConsoleOutput                                                  
                 break;
             }
         }
-    };
+    }
 
     /// Returns string of left column of ColumnWidth
     static std::string StandardLHS(std::string Left, const size_t ColumnWidth)
     {
-        if (Left.size() < ColumnWidth) Left.resize(ColumnWidth, ' ');
+        Left.erase(0, Left.find_first_not_of(" \t\n\r\f\v")); // Remove leading whitespace
+        Left.erase(Left.find_last_not_of(" \t\n\r\f\v") + 1); // Remove trailing whitespace
+        std::replace(Left.begin(), Left.end(), '\t', ' ');    // Replace tabs with spaces
+        // Truncate if too long
+        if (Left.size() > ColumnWidth)
+        {
+            Left.resize(ColumnWidth);
+            if (ColumnWidth >= 3) Left.replace(ColumnWidth - 3, 3, "...");
+        }
+        Left.resize(ColumnWidth, ' '); // Pad with spaces to ColumnWidth 
         Left.append(": ");
         return Left;
-    };
+    }
 
     /// Returns string of matrix in standard output format
     template <typename T>
@@ -203,7 +212,7 @@ class OP_EXPORTS ConsoleOutput                                                  
         }
         ss << "\n";
         return ss.str();
-    };
+    }
 
     /// Returns string of vector in standard output format
     template <typename T>
@@ -221,7 +230,7 @@ class OP_EXPORTS ConsoleOutput                                                  
         }
         ss << ")\n";
         return ss.str();
-    };
+    }
 
     /// Returns string of floating point number in standard output format
     template <typename T>
@@ -233,7 +242,7 @@ class OP_EXPORTS ConsoleOutput                                                  
         SetFloationgPointOutputFormat(ss, precision, notation);
         ss << sgn(value) << value << "\n";
         return ss.str();
-    };
+    }
 
     /// Returns string of integral number in standard output format
     template <typename T>
@@ -244,7 +253,7 @@ class OP_EXPORTS ConsoleOutput                                                  
         std::stringstream ss;
         ss << sgn(value) << value << "\n";
         return ss.str();
-    };
+    }
 
     template <typename T>
     static std::string GetStandard(const std::string& Left, const T Right,
@@ -285,6 +294,7 @@ class OP_EXPORTS ConsoleOutput                                                  
     {
         return GetStandard(Left, Right, precision, notation, StandardColumnWidth/2);
     }
+
 
     /// Writes GetStandard result to std::cout if MPI-Rank 0
     template <typename T>

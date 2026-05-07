@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,10 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2014
- *   Main contributors :   Oleg Shchyglo; Dmitri Medvedev; Amol Subhedar;
- *                         Marvin Tegeler; Raphael Schiedung
+ *
+ *  File created :   2014
+ *  Main contributors :   Oleg Shchyglo; Dmitri Medvedev; Amol Subhedar;
+ *                        Marvin Tegeler; Raphael Schiedung
  *
  */
 
@@ -45,15 +45,26 @@ class Settings;
 class Temperature;
 class Velocities;
 
+enum class ObstacleStates
+{
+    Absent,
+    Present,
+    Appeared,
+    Vanished,
+    ChangedDensity
+};
+
 class OP_EXPORTS FlowSolverLBM : public OPObject                                ///< Calculation of fluid flow and advective solute transport
 {
 public:
     FlowSolverLBM(void){};                                                      ///< Empty constructor
-    FlowSolverLBM(Settings& locSettings, double in_dt,
+    FlowSolverLBM(Settings& locSettings,
                   const std::string InputFileName = DefaultInputFileName);      ///< Read Settings and InputFile with constructor
-    void Initialize(Settings& locSettings, std::stringstream& inp, double in_dt);                       ///< Allocates memory and initializes global settings
+    void Initialize(Settings& locSettings,
+                    std::string ObjectNameSuffix = "") override;                ///< Allocates memory and initializes global settings
     void ReadInput(const std::string InputFileName) override;                   ///< Reads input parameters from a file
     void ReadInput(std::stringstream& inp) override;                            ///< Reads input parameters from a stringstream
+
     void Remesh(int newNx, int newNy, int newNz,
                 const BoundaryConditions& BC) override;
 
@@ -71,10 +82,6 @@ public:
             const int ii, const int jj, const int kk, const size_t n,
             PhaseField& Phase, const BoundaryConditions& BC,
             double& lbDensityChange); 
-    double SecondOrderBounceBack(const int i, const int j, const int k,
-            const int ii, const int jj, const int kk, const size_t n,
-            PhaseField& Phase, const BoundaryConditions& BC,
-            double& lbDensityChange);                                            ///< BounceBack at Solid Interfaces
     double Pressure(const int i, const int j, const int k) const;               ///< Calculates the pressure at the point (i,j,k)
     //double PressureTensorXX(const double i0, const double j , const double k ) const; ///< Calculates the xx-component of the pressure tensor
 
@@ -111,7 +118,6 @@ public:
 
     void FixPopulations(void);                                                  ///< Ensures positive lbPopulations
     void Propagation(PhaseField& Phase, const BoundaryConditions& BC);          ///< Propagates Populations
-    void PropagationSecondOrderBB(PhaseField& Phase, const BoundaryConditions& BC);          ///< Propagates Populations
     bool Read(const Settings& locSettings, const BoundaryConditions& BC,
               const int tStep = -1) override;                                   ///< Read raw (binary) fields from file
     void SetBoundaryConditions(const BoundaryConditions& BC) override;          ///< Sets boundary conditions for the particle distribution functions and flow velocities
@@ -121,9 +127,6 @@ public:
             const BoundaryConditions& BC);                                      ///< Calculates one time step of the Navier-Stokes solver
     void Solve(PhaseField& Phase, const Composition& Cx, Velocities& Vel,
             const BoundaryConditions& BC);                                      ///< Calculates one time step of the Navier-Stokes solver
-    void SolveTC3D(PhaseField& Phase, Velocities& Vel,
-             Composition& Cx,  Temperature& Tx,
-            const BoundaryConditions& BC);
     bool Write(const Settings& locSettings, const int tStep) const override;    ///< Writes raw (binary) fields to file
     void WriteVTK(const Settings& locSettings, const PhaseField& Phase,
                   const int tStep, const int precision = 16) const;             ///< Writes physical fields values into file with VTK format
@@ -135,20 +138,12 @@ public:
              const PhaseField& Phase) const;                                    ///< Returns if solid fraction at (i,j,k)
     bool LocalObstacle(const int i, const int j, const int k,
             const PhaseField& Phase) const;                                     ///< Returns true if obstacle has been detected at (i,j,k)
-    void Update_dt(double _dt);                                                 ///< Calculates one time step of the Navier-Stokes solver
+    void SetTimeStep(double _dt);                                                 ///< Calculates one time step of the Navier-Stokes solver
     void SetInitialPopulationsTC(BoundaryConditions& BC , Velocities& Vel);     ///< Initializing the populations when thermal compressibility considered
     void CollisionTC(Velocities& Vel);
     void CalculateHydrodynamicPressureAndMomentum(Velocities& Vel);
     void CalculateDensityTC(Temperature& Tx, Composition& Cx, const BoundaryConditions& BC);   ///<  Calculates Density from ideal gas law
-    void SetOutFlow(int order);
-    void SetPressureOutlet(Velocities& Vel, const PhaseField& Phase, double KMaxv);
-    void SetDivUnearObstZero();
-    void SetDivVelBCNXZero();
-    void SetDivUnearBCsZeroXZPlane();
-    void SetVelocityInletUniform(const BoundaryConditions& BC, const PhaseField& Phase);
-    void SetCornerCorrection(const BoundaryConditions& BC, const PhaseField& Phase);
-    void Set1DNonReflectingPressureOutletatBCXN(Velocities& Vel, const PhaseField& Phase);
-    void CalculateDivergenceVelocity(Temperature& Tx, PhaseField& Phase,Velocities& Vel, BoundaryConditions& BC, double dt);
+
     void FinalizeInitialiation(const PhaseField& Phase, const Velocities& Vel,
             const BoundaryConditions& BC);                                      ///< Needs to be called after the microstructure has been initialized
     D3Q27 EquilibriumDistributionTC(dVector3 lbvel, double lbph, double lbnut,  double lbDivVel, 
@@ -167,10 +162,14 @@ public:
 
     Storage3D< D3Q27,    1 > lbPopulations;                                     ///< Populations (discretized particle distribution functions) PDF)
     Storage3D< D3Q27,    1 > lbPopulationsTMP;                                  ///< Temporary array for Populations PDF propagation
+
+    Storage3D< ObstacleStates, 0 > ObstacleState;                               ///< Stores solid obstacle states.
+
     Storage3D< int,      0 > Obstacle;                                          ///< 1 if Node is solid
     Storage3D< int,      0 > ObstacleAppeared;                                  ///< True if obstacle node appeared
     Storage3D< int,      0 > ObstacleChangedDensity;                            ///< True if nearby obstacle changed local density
     Storage3D< int,      0 > ObstacleVanished;                                  ///< True if obstacle node vanished
+
     Storage3D< dVector3, 1 > ForceDensity;                                      ///< Force density
     Storage3D< dVector3, 1 > MomentumDensity;                                   ///< Momentum density
     Storage3D< double,   1 > DensityWetting;                                    ///< Fluid density / Solid wetting parameter
@@ -229,7 +228,6 @@ public:
 
     GridParameters Grid;                                                        ///< Simulation grid parameters
 
-    int Bcells;                                                                 ///< Number of boundary cells
     int FluidRedistributionRange;                                               ///< Fluid distribution range in case of 2 phase flow
 
     double cs2;                                                                 ///< Speed of sound squared [m/s]

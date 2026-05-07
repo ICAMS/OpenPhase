@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
         {
             Phi.WriteVTK(OPSettings, RTC.tStep);
             MicrostructureAnalysis::WriteGrainsStatistics(Phi,RTC.tStep);
-            MicrostructureAnalysis::WriteEBSDVTK(Phi, CR, OPSettings, ZXZ, 3, RTC.tStep);
+            MicrostructureAnalysis::WriteEBSDVTK(Phi, CR, OPSettings, EulerConventions::ZXZ, 3, RTC.tStep);
         }
         /// Output raw data
         if (RTC.WriteRawData())

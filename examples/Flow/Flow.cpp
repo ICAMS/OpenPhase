@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
     DoubleObstacle                      DO(OPSettings);
     DrivingForce                        dG(OPSettings,InputFile);
     EquilibriumPartitionDiffusionBinary DF(OPSettings,InputFile);
-    FlowSolverLBM                       FL(OPSettings, RTC.dt, InputFile);
+    FlowSolverLBM                       FL(OPSettings, InputFile);
     Velocities                          Vel(OPSettings);
     AdvectionHR                         ADHR (OPSettings);
     TimeInfo                            Timer;
@@ -100,9 +100,9 @@ int main(int argc, char *argv[])
         // Adding the nucleus in the middle of the simulation domain
         size_t idx2 = Initializations::Sphere(Phi, 1, 5.0, x1, y1, z1, BC);
          // Orienting the nucleus as desired
-        //EulerAngles locAngle({Pi/2.0, 0.0*Pi/8.0, Pi/8.0}, XYZ);
-        EulerAngles locAngle({5.0*Pi/8.0, 3.0*Pi/8.0, Pi/8.0}, XYZ);
-        Phi.FieldsProperties[idx2].Orientation = locAngle.getQuaternion();
+        //EulerAngles locAngle({Pi/2.0, 0.0*Pi/8.0, Pi/8.0}, EulerConventions::XYZ);
+        EulerAngles locAngle({5.0*Pi/8.0, 3.0*Pi/8.0, Pi/8.0}, EulerConventions::XYZ);
+        Phi.FieldsProperties[idx2].Orientation = locAngle.get_quaternion();
         Phi.FieldsProperties[idx1].Mobile  = true;
         Phi.FieldsProperties[idx2].Mobile  = true;
 

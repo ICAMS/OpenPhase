@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2011
- *   Main contributors :   Oleg Shchyglo
+ *
+ *  File created :   2011
+ *  Main contributors :   Oleg Shchyglo
  *
  */
 
@@ -244,8 +244,14 @@ void UserDrivingForce::SetDrivingForce(PhaseField& Phase,
                     {
                         double locTeq = Teq(pIndexA,pIndexB)
                                       + Slope(pIndexA,pIndexB)*Cx.MoleFractions(i,j,k,{pIndexA,Component(pIndexA,pIndexB)});
-                        double dG_AB = LatentHeat(pIndexA,pIndexB)*
+
+                        double dG_AB = 0.0;
+
+                        if(locTeq > 0.0)
+                        {
+                            dG_AB = LatentHeat(pIndexA,pIndexB)*
                                        (Tx(i,j,k) - locTeq)/locTeq;
+                        }
 
                         dGab.Force(i,j,k).add_raw(alpha->index, beta->index, dG_AB);
                         break;

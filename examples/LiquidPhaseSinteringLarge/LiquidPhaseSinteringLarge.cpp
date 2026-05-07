@@ -52,8 +52,10 @@ class LocalLBM : public FlowSolverLBM                                           
 {
  public:
     LocalLBM(){};
-    LocalLBM(Settings& locSettings, double in_dt):
-        FlowSolverLBM(locSettings, in_dt){};
+    LocalLBM(Settings& locSettings, double in_dt): FlowSolverLBM(locSettings)
+    {
+        SetTimeStep(in_dt);
+    };
 
     void CalculateLiquidVolume(double& VolumeLiquid, double& VolumeVapor);
 
@@ -315,7 +317,7 @@ int main(int argc, char *argv[])
                  << KinEnergySolids           << "\n";
         }
 
-        Phase.ClearGrainsForcesAndAccelerations();
+        Phase.FieldsProperties.ClearGrainsForcesAndAccelerations();
         LB.Solve(Phase, Vel, BC);
 
         // Calculate Solid Motion

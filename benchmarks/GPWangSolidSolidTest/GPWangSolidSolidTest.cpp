@@ -168,7 +168,7 @@ int main(int argc, char **argv)
         {
             Timer.SetStart();
             dG.Clear();
-            Phase.ClearGrainsForcesAndAccelerations();
+            Phase.FieldsProperties.ClearGrainsForcesAndAccelerations();
             auto MassDensity = [&GPS,&Phase,&omega] (int i ,int j, int k){return GPS.MassDensity(i,j,k,Phase,omega);};
             ISS.Calculate(Phase, BC, MassDensity, RTC.dt);                      Timer.SetTimeStamp("Calculate solid-solid interactions");
             ISF.CalculateSolidVelocities(Phase, Vel, BC, RTC.dt);               Timer.SetTimeStamp("Calculate solid selocities");

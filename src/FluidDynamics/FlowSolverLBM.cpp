@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,10 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2014
- *   Main contributors :   Oleg Shchyglo; Dmitri Medvedev; Amol Subhedar;
- *                         Marvin Tegeler; Raphael Schiedung; Reza Namdar
+ *
+ *  File created :   2014
+ *  Main contributors :   Oleg Shchyglo; Dmitri Medvedev; Amol Subhedar;
+ *                        Marvin Tegeler; Raphael Schiedung; Reza Namdar
  *
  */
 
@@ -73,9 +73,8 @@ inline double Phi(
     else if (std::abs(dist[2]) > std::abs(dist[2]-Nz)) dist[2] -= Nz;
 };
 
-FlowSolverLBM::FlowSolverLBM(Settings& locSettings, double in_dt, const std::string InputFileName)
+FlowSolverLBM::FlowSolverLBM(Settings& locSettings, const std::string InputFileName)
 {
-    
     fstream inpF(InputFileName.c_str(), ios::in | ios_base::binary);
 
     if (!inpF)
@@ -86,47 +85,32 @@ FlowSolverLBM::FlowSolverLBM(Settings& locSettings, double in_dt, const std::str
     stringstream inp;
     inp << inpF.rdbuf();
 
-    Initialize(locSettings,inp,in_dt);
-    //ReadInput(InputFileName); // NOTE will be calles in Initialize
+    Initialize(locSettings);
+    ReadInput(InputFileName);
 }
 
-void FlowSolverLBM::Initialize(Settings& locSettings, std::stringstream& inp, double in_dt)
+void FlowSolverLBM::Initialize(Settings& locSettings, std::string ObjectNameSuffix)
 {
     thisclassname = "FlowSolverLBM";
 
     Grid = locSettings.Grid;
 
-    dt      = in_dt;
     Nphases = locSettings.Nphases;
     Ncomp   = (locSettings.Ncomp > 0) ? locSettings.Ncomp - 1 : 0;
+
+    dt = 0.0;
 
     Pth    = 1.0e05;
     PthOld = 1.0e05;
     Pth0   = 1.0e05;
     Poutlet = 1e-6;
 
-    cs2 = lbcs2*Grid.dx*Grid.dx/dt/dt;
+    InitialTotalMass = -1.0;
 
     ObstaclesChanged = false;
 
-    Bcells = Grid.Bcells;
     ElementNames = locSettings.ElementNames;
-    ReadInput(inp); // NOTE N_Fluid_Comp needs to be read
 
-    Obstacle.Allocate               (Grid, Bcells);
-    ObstacleAppeared.Allocate       (Grid, Bcells);
-    ObstacleChangedDensity.Allocate (Grid, Bcells);
-    ObstacleVanished.Allocate       (Grid, Bcells);
-    DensityWetting.Allocate         (Grid, {N_Fluid_Comp}, Bcells);
-    ForceDensity.Allocate           (Grid, {N_Fluid_Comp}, Bcells);
-    MomentumDensity.Allocate        (Grid, {N_Fluid_Comp}, Bcells);
-    lbPopulations.Allocate          (Grid, {N_Fluid_Comp}, Bcells);
-    lbPopulationsTMP.Allocate       (Grid, {N_Fluid_Comp}, Bcells);
-    nut.Allocate                    (Grid, {N_Fluid_Comp}, Bcells);
-    HydroPressure.Allocate          (Grid, {N_Fluid_Comp}, Bcells);
-    DivVel.Allocate                 (Grid, {N_Fluid_Comp}, Bcells);
-    GradRho.Allocate                (Grid, {N_Fluid_Comp}, Bcells);
-    
     switch(Grid.Active())
     {
         case 1:
@@ -164,29 +148,6 @@ void FlowSolverLBM::Initialize(Settings& locSettings, std::stringstream& inp, do
 
         }
     }
-
-    OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,DensityWetting,DensityWetting.Bcells(),)
-    {
-        Obstacle               (i,j,k) = false;
-        ObstacleAppeared       (i,j,k) = false;
-        ObstacleChangedDensity (i,j,k) = false;
-        ObstacleVanished       (i,j,k) = false;
-
-        for (size_t n = 0; n < N_Fluid_Comp; ++n)
-        {
-            DensityWetting   (i,j,k,{n}) = 0.0;
-            HydroPressure    (i,j,k,{n}) = 0.0;
-            DivVel           (i,j,k,{n}) = 0.0;
-            GradRho          (i,j,k,{n}).set_to_zero();
-            ForceDensity     (i,j,k,{n}).set_to_zero();
-            MomentumDensity  (i,j,k,{n}).set_to_zero();
-            lbPopulations    (i,j,k,{n}).set_to_zero();
-            lbPopulationsTMP (i,j,k,{n}).set_to_zero();
-        }
-    }
-    OMP_PARALLEL_STORAGE_LOOP_END
-
-    InitialTotalMass = -1.0;
 
     locSettings.AddForAdvection(*this);
     locSettings.AddForRemeshing(*this);
@@ -245,13 +206,13 @@ void FlowSolverLBM::ReadInput(std::stringstream& inp)
     Do_GuoForcing            = FileInterface::ReadParameterB(inp, moduleLocation, std::string("GUO_FORCING"), false,  Do_TwoPhase);
     Do_EDForcing             = FileInterface::ReadParameterB(inp, moduleLocation, std::string("ED_FORCING"),  false, !Do_TwoPhase);
     GradRho_Upwind    	     = FileInterface::ReadParameterB(inp, moduleLocation, std::string("GradRho_Upwind"), false, false); 
-	GradRho_Central          = FileInterface::ReadParameterB(inp, moduleLocation, std::string("GradRho_Central"), false, false); 
-	GradRho_VanLeer          = FileInterface::ReadParameterB(inp, moduleLocation, std::string("GradRho_VanLeer"), false, true);
+    GradRho_Central          = FileInterface::ReadParameterB(inp, moduleLocation, std::string("GradRho_Central"), false, false);
+    GradRho_VanLeer          = FileInterface::ReadParameterB(inp, moduleLocation, std::string("GradRho_VanLeer"), false, true);
 
-    if (Bcells < FluidRedistributionRange)
+    if (Grid.Bcells < FluidRedistributionRange)
     {
         std::stringstream message;
-            message << Bcells << " boundary cells are too few, at least "
+            message << Grid.Bcells << " boundary cells are too few, at least "
                     << FluidRedistributionRange << " boundary cells are needed!";
 
         ConsoleOutput::WriteExit(message.str(), thisclassname, "ReadInput");
@@ -261,12 +222,6 @@ void FlowSolverLBM::ReadInput(std::stringstream& inp)
     // Determine density discretization
     // NOTE that dRho is the equilibrium fluid density [Kg/m^2] if no liquid-vapor phase separation is considered!
     dRho = FileInterface::ReadParameterD(inp, moduleLocation, std::string("dRho"));
-    dM   = dRho*Grid.CellVolume(true);
-    dP   = dM/Grid.dx/dt/dt;
-    dm   = dM/Grid.dx/Grid.dx/dt;
-    df   = dM/Grid.dx/Grid.dx/dt/dt;
-    dnu  = Grid.dx*Grid.dx/dt;
-    dv   = Grid.dx/dt;
 
     if (Ncomp > 0)
     {
@@ -278,7 +233,7 @@ void FlowSolverLBM::ReadInput(std::stringstream& inp)
             dDensity_dc[n] = FileInterface::ReadParameterD(inp, moduleLocation, dDensity_dc_str.str(), Do_Gravity,0.0);
         }
     }
-
+    
     // GA Gravitational acceleration
     for (size_t i = 0; i < 3; i++)
     {
@@ -297,7 +252,6 @@ void FlowSolverLBM::ReadInput(std::stringstream& inp)
             std::stringstream Gbstr;
             Gbstr << "GB_" << n << "_" << m;
             Gb[n][m] = FileInterface::ReadParameterD(inp, moduleLocation, Gbstr.str(), Do_Benzi, (n==m) ? 1 : 0);
-
         }
     }
 
@@ -346,59 +300,12 @@ void FlowSolverLBM::ReadInput(std::stringstream& inp)
        lbCriticalTemperature[n] = FileInterface::ReadParameterD(inp, moduleLocation, TEMPCstr.str(), Do_Kupershtokh, 0.0);
     }
 
-    GasParameter.resize(N_Fluid_Comp);
     lbCriticalPressure.resize(N_Fluid_Comp);
     for (size_t n = 0; n < N_Fluid_Comp; ++n)
     {
         std::stringstream TEMPCstr;
         TEMPCstr << "CRITP_" << n;
         lbCriticalPressure[n] = FileInterface::ReadParameterD(inp, moduleLocation, TEMPCstr.str(), Do_Kupershtokh, 0.0);
-        GasParameter[n]       = lbCriticalPressure[n]/CriticalDensity[n]*dRho*(dt*dt)/(Grid.dx*Grid.dx);
-    }
-
-    LiquidDensity .resize(N_Fluid_Comp);
-    VaporDensity  .resize(N_Fluid_Comp);
-    SurfaceTension.resize(N_Fluid_Comp);
-    InterfaceWidth.resize(N_Fluid_Comp);
-    if (Do_Benzi)
-    for (size_t n = 0; n < N_Fluid_Comp; ++n)
-    {
-
-        const BenziGas::EquilibriumValues_t Equilibrium =
-            BenziGas::EquilibriumValues(Gb[n][n]/dRho);
-
-        LiquidDensity  [n] = Equilibrium.lbLiquidDensity*dRho;
-        VaporDensity   [n] = Equilibrium.lbVaporDensity*dRho;
-        SurfaceTension [n] = Equilibrium.lbSurfaceTension*dM/dt/dt;
-        InterfaceWidth [n] = 2.0; //TODO calculate
-
-        ConsoleOutput::Write("Vapor density   ["+std::to_string(n)+"]", VaporDensity   [n]);
-        ConsoleOutput::Write("Liquid density  ["+std::to_string(n)+"]", LiquidDensity  [n]);
-        ConsoleOutput::Write("Surface tension ["+std::to_string(n)+"]", SurfaceTension [n]);
-        ConsoleOutput::Write("Interface width ["+std::to_string(n)+"]", InterfaceWidth [n]);
-    }
-    else if (Do_Kupershtokh)
-    for (size_t n = 0; n < N_Fluid_Comp; ++n)
-    {
-        const VanDerWaalsGas::EquilibriumValues_t Equilibrium =
-            VanDerWaalsGas::EquilibriumValues(lbTemperature[n], lbCriticalTemperature[n]);
-
-        LiquidDensity  [n] = Equilibrium.LiquidDensity*dRho;
-        VaporDensity   [n] = Equilibrium.VaporDensity*dRho;
-        SurfaceTension [n] = 0.0*dM/dt/dt; //TODO
-        InterfaceWidth [n] = 0.402819*std::pow(GasParameter[n],-0.470509);
-
-        ConsoleOutput::Write("Vapor density   ["+std::to_string(n)+"]", VaporDensity   [n]);
-        ConsoleOutput::Write("Liquid density  ["+std::to_string(n)+"]", LiquidDensity  [n]);
-        ConsoleOutput::Write("Surface tension ["+std::to_string(n)+"]", SurfaceTension [n]);
-        ConsoleOutput::Write("Interface width ["+std::to_string(n)+"]", InterfaceWidth [n]);
-    }
-    else
-    for (size_t n = 0; n < N_Fluid_Comp; ++n)
-    {
-        LiquidDensity  [n] = dRho;
-        VaporDensity   [n] = dRho;
-        InterfaceWidth [n] = 1.0;
     }
 
     U0X  = FileInterface::ReadParameterD(inp, moduleLocation, std::string("U0X"), false, 0.0);
@@ -423,58 +330,147 @@ void FlowSolverLBM::ReadInput(std::stringstream& inp)
         }
     }
 
+    LiquidDensity .resize(N_Fluid_Comp);
+    VaporDensity  .resize(N_Fluid_Comp);
+    SurfaceTension.resize(N_Fluid_Comp);
+    InterfaceWidth.resize(N_Fluid_Comp);
+    GasParameter  .resize(N_Fluid_Comp);
+
     FluidMass.resize(N_Fluid_Comp, 0.0);
 
-    // NOTE: the minimum and maximum kinematic viscosity values are based
-    // on experience and may be adjusted.
-    const double nu_min = 0.05*Grid.dx*Grid.dx/dt;
-    const double nu_max = 1.00*Grid.dx*Grid.dx/dt;
-    const double nu_opt = 0.5/3.0*Grid.dx*Grid.dx/dt; // optimal value !
+    int Bcells = Grid.Bcells;
+    Obstacle.Allocate               (Grid, Bcells);
+    ObstacleAppeared.Allocate       (Grid, Bcells);
+    ObstacleChangedDensity.Allocate (Grid, Bcells);
+    ObstacleVanished.Allocate       (Grid, Bcells);
 
-    // Set relaxation parameter tau
-    lbtau.resize(N_Fluid_Comp);
-    for (size_t n = 0; n < N_Fluid_Comp; ++n)
+    DensityWetting.Allocate         (Grid, {N_Fluid_Comp}, Bcells);
+    ForceDensity.Allocate           (Grid, {N_Fluid_Comp}, Bcells);
+    MomentumDensity.Allocate        (Grid, {N_Fluid_Comp}, Bcells);
+    lbPopulations.Allocate          (Grid, {N_Fluid_Comp}, Bcells);
+    lbPopulationsTMP.Allocate       (Grid, {N_Fluid_Comp}, Bcells);
+    nut.Allocate                    (Grid, {N_Fluid_Comp}, Bcells);
+    HydroPressure.Allocate          (Grid, {N_Fluid_Comp}, Bcells);
+    DivVel.Allocate                 (Grid, {N_Fluid_Comp}, Bcells);
+    GradRho.Allocate                (Grid, {N_Fluid_Comp}, Bcells);
+
+    OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,DensityWetting,DensityWetting.Bcells(),)
     {
-        if ((nu[n] < nu_min) or (nu[n] > nu_max))
-        {
-            std::stringstream message;
-            message << "Bad kinematic viscosity"
-                    <<            "nu_lb = "<< std::scientific << nu[n]
-                    << "\n\t  (Min nu_lb = "<< std::scientific << nu_min
-                    <<      "; Opt nu_lb = "<< std::scientific << nu_opt
-                    <<      "; Max nu_lb = "<< std::scientific << nu_max
-                    <<")!\n\t  Simulation may be unstable! Adjust dx or dt.";
-            ConsoleOutput::WriteWarning(message.str(), thisclassname, "Initialize");
-        }
+        Obstacle               (i,j,k) = false;
+        ObstacleAppeared       (i,j,k) = false;
+        ObstacleChangedDensity (i,j,k) = false;
+        ObstacleVanished       (i,j,k) = false;
 
-        // Set relaxation parameter tau
-        lbtau [n] = 3*nu[n]/Grid.dx/Grid.dx*dt + 0.5;
-        ConsoleOutput::WriteStandard("lbtau["+std::to_string(n)+"]", lbtau[n]);
+        for (size_t n = 0; n < N_Fluid_Comp; ++n)
+        {
+            DensityWetting   (i,j,k,{n}) = 0.0;
+            HydroPressure    (i,j,k,{n}) = 0.0;
+            DivVel           (i,j,k,{n}) = 0.0;
+            GradRho          (i,j,k,{n}).set_to_zero();
+            ForceDensity     (i,j,k,{n}).set_to_zero();
+            MomentumDensity  (i,j,k,{n}).set_to_zero();
+            lbPopulations    (i,j,k,{n}).set_to_zero();
+            lbPopulationsTMP (i,j,k,{n}).set_to_zero();
+        }
     }
+    OMP_PARALLEL_STORAGE_LOOP_END
 
     ConsoleOutput::WriteLine();
     ConsoleOutput::WriteBlankLine();
 }
 
-void FlowSolverLBM::Update_dt(double _dt)
+void FlowSolverLBM::SetTimeStep(double new_dt)
 {
-    dt  = _dt;
-    dM  = dRho*Grid.CellVolume(true);
-    dP  = dM/Grid.dx/dt/dt;
-    dm  = dM/Grid.dx/Grid.dx/dt;
-    df  = dM/Grid.dx/Grid.dx/dt/dt;
-    dnu = Grid.dx*Grid.dx/dt;
-    // NOTE: the minimum and maximum kinematic viscosity values are based
-    // on experience and may be adjusted.
-    //const double nu_min = 0.05*dx*dx/dt;
-    //const double nu_max = 1.00*dx*dx/dt;
-    //const double nu_opt = 0.5/3.0*dx*dx/dt; // optimal value !
-
-    // Set relaxation parameter tau
-    lbtau.resize(N_Fluid_Comp);
-    for (size_t n = 0; n < N_Fluid_Comp; ++n)
+    if (new_dt != dt)
     {
-        lbtau[n] = 3*nu[n]/Grid.dx/Grid.dx*dt + 0.5;
+        dt  = new_dt;
+        dM  = dRho*Grid.CellVolume(true);
+        dP  = dM/Grid.dx/dt/dt;
+        dm  = dM/Grid.dx/Grid.dx/dt;
+        df  = dM/Grid.dx/Grid.dx/dt/dt;
+        dnu = Grid.dx*Grid.dx/dt;
+        dv  = Grid.dx/dt;
+
+        cs2 = lbcs2*Grid.dx*Grid.dx/dt/dt;
+        ConsoleOutput::WriteLine("Time step changed, updating dependent parameters:");
+        ConsoleOutput::WriteStandard("Speed of sound [m/s]", std::sqrt(cs2));
+        ConsoleOutput::WriteStandard("Speed of sound squared [m^2/s^2]", cs2);
+        ConsoleOutput::WriteStandard("Bulk Modulus [Pa]", cs2*dRho);
+        ConsoleOutput::WriteStandard("Kinematic viscosity [m^2/s]", nu[0]);
+        ConsoleOutput::Write("-");
+
+        if (Do_Benzi)
+        for (size_t n = 0; n < N_Fluid_Comp; ++n)
+        {
+            const BenziGas::EquilibriumValues_t Equilibrium =
+                  BenziGas::EquilibriumValues(Gb[n][n]/dRho);
+
+            LiquidDensity  [n] = Equilibrium.lbLiquidDensity*dRho;
+            VaporDensity   [n] = Equilibrium.lbVaporDensity*dRho;
+            SurfaceTension [n] = Equilibrium.lbSurfaceTension*dM/dt/dt;
+            InterfaceWidth [n] = 2.0; //TODO calculate
+
+            ConsoleOutput::Write("Vapor density   ["+std::to_string(n)+"]", VaporDensity   [n]);
+            ConsoleOutput::Write("Liquid density  ["+std::to_string(n)+"]", LiquidDensity  [n]);
+            ConsoleOutput::Write("Surface tension ["+std::to_string(n)+"]", SurfaceTension [n]);
+            ConsoleOutput::Write("Interface width ["+std::to_string(n)+"]", InterfaceWidth [n]);
+        }
+        else if (Do_Kupershtokh)
+        for (size_t n = 0; n < N_Fluid_Comp; ++n)
+        {
+            const VanDerWaalsGas::EquilibriumValues_t Equilibrium =
+                  VanDerWaalsGas::EquilibriumValues(lbTemperature[n], lbCriticalTemperature[n]);
+
+            LiquidDensity  [n] = Equilibrium.LiquidDensity*dRho;
+            VaporDensity   [n] = Equilibrium.VaporDensity*dRho;
+            SurfaceTension [n] = 0.0*dM/dt/dt; //TODO
+            GasParameter   [n] = lbCriticalPressure[n]/CriticalDensity[n]*dRho*(dt*dt)/(Grid.dx*Grid.dx);
+            InterfaceWidth [n] = 0.402819*std::pow(GasParameter[n],-0.470509);
+
+            ConsoleOutput::Write("Vapor density   ["+std::to_string(n)+"]", VaporDensity   [n]);
+            ConsoleOutput::Write("Liquid density  ["+std::to_string(n)+"]", LiquidDensity  [n]);
+            ConsoleOutput::Write("Surface tension ["+std::to_string(n)+"]", SurfaceTension [n]);
+            ConsoleOutput::Write("Interface width ["+std::to_string(n)+"]", InterfaceWidth [n]);
+        }
+        else
+        for (size_t n = 0; n < N_Fluid_Comp; ++n)
+        {
+            LiquidDensity  [n] = dRho;
+            VaporDensity   [n] = dRho;
+            InterfaceWidth [n] = 1.0;
+        }
+
+        // NOTE: the minimum and maximum kinematic viscosity values are based
+        // on experience and may be adjusted.
+        const double nu_min = 0.05*Grid.dx*Grid.dx/dt;
+        const double nu_max = 1.00*Grid.dx*Grid.dx/dt;
+        const double nu_opt = 0.5/3.0*Grid.dx*Grid.dx/dt; // optimal value !
+
+        // Set relaxation parameter tau
+        lbtau.resize(N_Fluid_Comp);
+        for (size_t n = 0; n < N_Fluid_Comp; ++n)
+        {
+            if ((nu[n] < nu_min) or (nu[n] > nu_max))
+            {
+                std::stringstream message;
+                message << "Bad kinematic viscosity"
+                        <<            "nu = "<< std::scientific << nu[n]
+                        << "\n\t  (Min nu = "<< std::scientific << nu_min
+                        <<      "; Opt nu = "<< std::scientific << nu_opt
+                        <<      "; Max nu = "<< std::scientific << nu_max
+                        <<")!\n\t  Simulation may be unstable! Adjust dx or dt.";
+#ifdef DEBUG
+                ConsoleOutput::WriteExit(message.str(), thisclassname, "Initialize");
+                OP_Exit(EXIT_FAILURE);
+#else   
+                ConsoleOutput::WriteWarning(message.str(), thisclassname, "Initialize");
+#endif
+            }
+
+            // Set relaxation parameter tau
+            lbtau [n] = 3*nu[n]/Grid.dx/Grid.dx*dt + 0.5;
+            ConsoleOutput::WriteStandard("lbtau["+std::to_string(n)+"]", lbtau[n]);
+        }
     }
 }
 
@@ -591,6 +587,7 @@ bool FlowSolverLBM::Read(const Settings& locSettings, const BoundaryConditions& 
 void FlowSolverLBM::SetUniformVelocity(const BoundaryConditions& BC,
         const dVector3 U0)
 {
+    assert(std::abs(dm) > std::numeric_limits<double>::epsilon() && "FlowSolverLBM::SetUniformVelocity(): dm is zero! Set time step first.");
     OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,DensityWetting,DensityWetting.Bcells(),)
     for (size_t n = 0; n < N_Fluid_Comp; ++n)
     {
@@ -868,7 +865,6 @@ void FlowSolverLBM::CalculateForceGravity(PhaseField& Phase)
 void FlowSolverLBM::CalculateForceGravity(PhaseField& Phase,
         const Composition& Cx)
 {
-
     // Calculate force correction arising form compositional dependent density.
     OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,ForceDensity,0,)
     for(auto it = Phase.Fields(i,j,k).cbegin(); it != Phase.Fields(i,j,k).cend(); it++)
@@ -932,8 +928,8 @@ void FlowSolverLBM::SetInitialPopulationsTC(BoundaryConditions& BC, Velocities& 
     for (size_t n = 0; n < N_Fluid_Comp; ++n)
     {
         dVector3 lbvel      = Vel.Phase(i,j,k,{n})/dv;
-    	dVector3 lbFb       = ForceDensity(i,j,k,{n})/df;
-    	dVector3 lbGradRho  = GradRho(i,j,k,{n})*Grid.dx;
+        dVector3 lbFb       = ForceDensity(i,j,k,{n})/df;
+        dVector3 lbGradRho  = GradRho(i,j,k,{n})*Grid.dx;
         double lbnu         = nut(i,j,k,{n})/dnu;
         double lbrho        = DensityWetting(i,j,k,{n})/dRho;
         double lbph         = HydroPressure(i,j,k,{n})/dP;
@@ -1055,7 +1051,7 @@ void FlowSolverLBM::CalculateHydrodynamicPressureAndMomentum(Velocities& Vel)
             MomentumDensity(i,j,k,{n})[2] += rr*kk;
         }
         
-        MomentumDensity(i,j,k,{n}) = MomentumDensity(i,j,k,{n})/cs2*pow(Grid.dx,3)/pow(dt,3) + ForceDensity(i,j,k,{n})*dt/2.0;
+        MomentumDensity(i,j,k,{n}) = MomentumDensity(i,j,k,{n})/cs2*pow(Grid.dx,3.0)/pow(dt,3.0) + ForceDensity(i,j,k,{n})*dt/2.0;
         dVector3 vel = MomentumDensity(i,j,k,{n}) /DensityWetting(i,j,k,{n});
         HydroPressure (i,j,k,{n}) +=  cs2*dt/2.0 * ( (vel[0]*GradRho(i,j,k,{n})[0] + vel[1]*GradRho(i,j,k,{n})[1] + vel[2]*GradRho(i,j,k,{n})[2]) + DensityWetting(i,j,k,{n}) * DivVel(i,j,k,{n}));
     }
@@ -1076,7 +1072,7 @@ void FlowSolverLBM::CollisionTC( Velocities& Vel)
         double lbrho        = DensityWetting(i,j,k,{n})/dRho;
         double lbph         = HydroPressure(i,j,k,{n})/dP;
         double lbDivVel     = DivVel(i,j,k,{n})*dt;
-        lbtau [n]            = lbnu/lbcs2 + 0.5; 
+        lbtau [n]           = lbnu/lbcs2 + 0.5;
         double factor       = (1.0-1.0/(2.0*lbtau[n]));
 
         for(int ii = -Grid.dNx; ii <= Grid.dNx; ii++)
@@ -1096,412 +1092,6 @@ void FlowSolverLBM::CollisionTC( Velocities& Vel)
         }
     }
     OMP_PARALLEL_STORAGE_LOOP_END
-}
-
-void FlowSolverLBM::SetVelocityInletUniform(const BoundaryConditions& BC, const PhaseField& Phase)
-{
-
-#ifdef MPI_PARALLEL
-
-    if(MPI_CART_RANK[0]==0)
-    {
-        OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,DensityWetting,DensityWetting.Bcells(),)
-        {
-            if(i==0)
-            {
-                if(!Obstacle(i,j,k-1) and !Obstacle(i,j,k+1))
-                {
-                    for (size_t n = 0; n < N_Fluid_Comp; ++n)
-                    {
-                        if(Do_ThermalComp)
-                        {
-                        	for(int ii = -Grid.dNx; ii <= Grid.dNx; ++ii)
-                            for(int jj = -Grid.dNy; jj <= Grid.dNy; ++jj)
-                            for(int kk = -Grid.dNz; kk <= Grid.dNz; ++kk)
-                            {
-                                double lbUx=U0X*dt/Grid.dx;
-                                if(ii==1)
-                                {
-                                    double cu = ii*lbUx;
-                                    lbPopulations(i-ii,j-jj,k-kk,{n})(ii,jj,kk)=lbPopulations(i+ii,j+jj,k+kk,{n})(-ii,-jj,-kk)
-                                                                +2.0*lbWeights[ii+1][jj+1][kk+1] * DensityWetting(i-ii,j,k,{n})/dRho * cu;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        OMP_PARALLEL_STORAGE_LOOP_END
-    }
-#endif
-}
-
-void FlowSolverLBM::SetCornerCorrection(const BoundaryConditions& BC, const PhaseField& Phase)
-{
-
-#ifdef MPI_PARALLEL
-    if(MPI_CART_RANK[0]==0)
-    {
-        OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,DensityWetting,DensityWetting.Bcells(),)
-        {
-            if(i==0)
-            {
-                if(!Obstacle(i,j,k) and Obstacle(i,j,k-1))   //left corners
-                {
-                    double lbUx=U0X*dt/Grid.dx;
-                    for (size_t n = 0; n < N_Fluid_Comp; ++n)
-                    {
-                        for(int ii = -Grid.dNx; ii <= Grid.dNx; ++ii)
-                        for(int jj = -Grid.dNy; jj <= Grid.dNy; ++jj)
-                        for(int kk = -Grid.dNz; kk <= Grid.dNz; ++kk)
-                        {
-
-                            if(ii==1 and kk==0)
-                            {
-                                double cu = ii*lbUx;
-                                lbPopulations(i-ii,j-jj,k-kk,{n})(ii,jj,kk)=lbPopulations(i+ii,j+jj,k+kk,{n})(-ii,-jj,-kk)
-                                                                    +2.0*lbWeights[ii+1][jj+1][kk+1] * DensityWetting(i-ii,j,k,{n})/dRho * cu;
-                            }
-                            if(ii==1 and kk==-1)
-                            {
-                                double cu = ii*lbUx;
-                                lbPopulations(i-ii,j-jj,k-kk,{n})(ii,jj,kk)=lbPopulations(i,j,k,{n})(-ii,-jj,-kk)
-                                        +2.0*lbWeights[ii+1][jj+1][kk+1] * DensityWetting(i-ii,j,k,{n})/dRho * cu;
-                            }
-                        }
-                    }
-                }
-                if(!Obstacle(i,j,k) and Obstacle(i,j,k+1))   //right corners
-                {
-                    double lbUx=U0X*dt/Grid.dx;
-                    for (size_t n = 0; n < N_Fluid_Comp; ++n)
-                    {
-                        for(int ii = -Grid.dNx; ii <= Grid.dNx; ++ii)
-                        for(int jj = -Grid.dNy; jj <= Grid.dNy; ++jj)
-                        for(int kk = -Grid.dNz; kk <= Grid.dNz; ++kk)
-                        {
-                            if(ii==1 and kk==0)
-                            {
-                                double cu = ii*lbUx;
-                                lbPopulations(i-ii,j-jj,k-kk,{n})(ii,jj,kk)=lbPopulations(i+ii,j+jj,k+kk,{n})(-ii,-jj,-kk)
-                                                                    +2.0*lbWeights[ii+1][jj+1][kk+1] * DensityWetting(i-ii,j,k,{n})/dRho * cu;
-                            }
-                            if(ii==1 and kk==1)
-                            {
-                                double cu = ii*lbUx;
-                                lbPopulations(i-ii,j-jj,k-kk,{n})(ii,jj,kk)=lbPopulations(i,j,k,{n})(-ii,-jj,-kk)
-                                        +2.0*lbWeights[ii+1][jj+1][kk+1] * DensityWetting(i-ii,j,k,{n})/dRho * cu;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        OMP_PARALLEL_STORAGE_LOOP_END
-    }
-#endif
-}
-
-void FlowSolverLBM::SetPressureOutlet(Velocities& Vel, const PhaseField& Phase, double KMaxv)
-{
-    if(Phase.Grid.OffsetX+Grid.Nx==Grid.TotalNx)
-    {
-        OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,DensityWetting,0,)
-        {
-            if(i==Grid.Nx-1)
-            {
-                if(!Obstacle(i,j,k))
-                for (size_t n = 0; n < N_Fluid_Comp; ++n)
-                {
-                    //===========================
-                    double Pbold   = HydroPressure(i,j,k,{n});
-                    double Pbmold  = HydroPressure(i-1,j,k,{n});
-                    double Pbmmold = HydroPressure(i-2,j,k,{n});
-
-                    double uxbold  = Vel.Phase(i,j,k,{n})[0];
-                    double uxbmold = Vel.Phase(i-1,j,k,{n})[0];
-                    double uxbmmold= Vel.Phase(i-2,j,k,{n})[0];
-
-                    double uybold  = Vel.Phase(i,j,k,{n})[1];
-                    double uybmold = Vel.Phase(i-1,j,k,{n})[1];
-                    double uybmmold= Vel.Phase(i-2,j,k,{n})[1];
-
-                    double uzbold  = Vel.Phase(i,j,k,{n})[2];
-                    double uzbmold = Vel.Phase(i-1,j,k,{n})[2];
-                    double uzbmmold= Vel.Phase(i-2,j,k,{n})[2];
-
-                    double rhob = DensityWetting(i,j,k,{n});
-                    double rhobm= DensityWetting(i-1,j,k,{n});
-
-                    double L1,L3,L4, L5; //charachteristics value
-                    double dx=Grid.dx;
-                    L1= KMaxv  * (Pbold - Poutlet);
-                    L3= uxbold * (uzbold-uzbmold)/dx;
-                    L4= uxbold * (uybold-uybmold)/dx;
-                    L5=(uxbold+sqrt(cs2)) * ((Pbold-Pbmold)/dx + rhob * sqrt(cs2) * (uxbold-uxbmold)/dx);
-
-                    double uxbn = uxbold - (L5-L1)*dt/(2.0* sqrt(cs2) * rhob );
-                    double uybn = uybold - L4 * dt;
-                    double uzbn = uzbold - L3 * dt;
-                    double pbn  = Pbold - (L5+L1)*dt/2.0;
-
-                    if(uxbmold<0)
-                    {
-                        L3   = uxbmold * (uzbmold-uzbmmold)/dx;
-                        L4   = uxbmold * (uybmold-uybmmold)/dx;
-                        L5   =(uxbmold+sqrt(cs2)) * ((Pbmold-Pbmmold)/dx + rhobm * sqrt(cs2) * (uxbmold-uxbmmold)/dx);
-                        pbn  = Pbmold -  (L5+L1)*dt/2.0;
-                        uxbn = uxbmold - (L5-L1)*dt/(2.0* sqrt(cs2) * rhobm );
-                        uzbn = uzbmold - L3 * dt;
-                        uybn = uybmold - L4 * dt;
-                    }
-                    dVector3 lbub  = {uxbn*dt/dx, uybn*dt/dx, uzbn*dt/dx};
-
-                    int im = i-1;
-                    double pm = 0.0;
-                    dVector3 Mvm = {0.0, 0.0, 0.0};
-                    for (int ii = -Grid.dNx; ii <= Grid.dNx; ++ii)
-                    for (int jj = -Grid.dNy; jj <= Grid.dNy; ++jj)
-                    for (int kk = -Grid.dNz; kk <= Grid.dNz; ++kk)
-                    {
-                        double rrm = lbPopulations(im,j,k,{n})(ii,jj,kk);
-                        pm  += rrm*dP;
-                        Mvm[0] += rrm*ii*dm;
-                        Mvm[1] += rrm*jj*dm;
-                        Mvm[2] += rrm*kk*dm;
-                    }
-                    dVector3 um = (Mvm * 3.0 + ForceDensity(im,j,k,{n})*dt/2.0)/rhobm;
-                    pm +=  cs2/2.0 *dt* (  (um[0]*  GradRho(im,j,k,{n})[0] )
-                                         +(um[1]*  GradRho(im,j,k,{n})[1] )
-                                         +(um[2]*  GradRho(im,j,k,{n})[2] ) + rhobm * DivVel(i-1,j,k,{n}) );
-
-                    dVector3 lbum = um *dt/Grid.dx;
-
-                    double lbu2b  = lbub[0]*lbub[0]+lbub[1]*lbub[1]+lbub[2]*lbub[2];
-                    double lbu2m  = lbum[0]*lbum[0]+lbum[1]*lbum[1]+lbum[2]*lbum[2];
-
-                    //double lbtaub  = nut(i ,j,k,{n})/dnu/lbcs2 + 0.5;
-                    //double lbtaum  = nut(im,j,k,{n})/dnu/lbcs2 + 0.5;
-                    int ii=-1;
-                    //for(int ii = -Grid.dNx; ii <= Grid.dNx; ++ii)
-                    {
-                    for(int jj = -Grid.dNy; jj <= Grid.dNy; ++jj)
-                    {
-                        for(int kk = -Grid.dNz; kk <= Grid.dNz; ++kk)
-                        {
-                            //if(!Obstacle(i-ii,j-jj,k-kk))
-                            {
-                            //dVector3 lbFbb       = ForceDensity(i,j,k,{n})/df;
-                            //dVector3 lbFbm       = ForceDensity(im,j,k,{n})/df;
-                            //dVector3 lbGradRhob  = GradRho(i,j,k,{n})*Grid.dx;
-                            //dVector3 lbGradRhom  = GradRho(im,j,k,{n})*Grid.dx;
-                            double lbrhob        = DensityWetting(i,j,k,{n})/dRho;
-                            double lbrhom        = DensityWetting(im,j,k,{n})/dRho;
-                            double lbphb         = pbn/dP;
-                            double lbphm         = pm /dP;
-                            //double lbDivVelb     = DivVel(i,j,k,{n})*dt;
-                            //double lbDivVelm     = DivVel(im,j,k,{n})*dt;
-                            //double factorb       = (1.0+1.0/(2.0*lbtaub));
-                            //double factorm       = (1.0+1.0/(2.0*lbtaum));
-                            //double CRb           = (ii-lbub[0])*lbGradRhob[0]+(jj-lbub[1])*lbGradRhob[1]+(kk-lbub[2])*lbGradRhob[2];
-                            //double CRm           = (ii-lbum[0])*lbGradRhom[0]+(jj-lbum[1])*lbGradRhom[1]+(kk-lbum[2])*lbGradRhom[2];
-                            //double CFb           = (ii-lbub[0])*lbFbb[0]+(jj-lbub[1])*lbFbb[1]+(kk-lbub[2])*lbFbb[2];
-                            //double CFm           = (ii-lbum[0])*lbFbm[0]+(jj-lbum[1])*lbFbm[1]+(kk-lbum[2])*lbFbm[2];
-                            double lbw           = lbWeights[ii+1][jj+1][kk+1];
-                            double lbcub         = ii*lbub[0] + jj*lbub[1] + kk*lbub[2];
-                            double lbcum         = ii*lbum[0] + jj*lbum[1] + kk*lbum[2];
-                            double Feqb          = lbrhob * lbw *(1.0 + lbcub/lbcs2- lbu2b/(2.0*lbcs2) + lbcub*lbcub/(2.0*lbcs2*lbcs2) );
-                            double Feqm          = lbrhom * lbw *(1.0 + lbcum/lbcs2- lbu2m/(2.0*lbcs2) + lbcum*lbcum/(2.0*lbcs2*lbcs2) );
-                            double geqb          = Feqb*lbcs2 + (lbphb - lbrhob * lbcs2 ) * lbw; 
-                            double geqm          = Feqm*lbcs2 + (lbphm - lbrhom * lbcs2 ) * lbw; 
-
-                            //double Ab            = 0.5 * (lbw*lbcs2*lbrhob*lbDivVelb+CRb*lbcs2*(Feqb/lbrhob-lbw)+ CFb*Feqb/lbrhob);
-                            //double Am            = 0.5 * (lbw*lbcs2*lbrhom*lbDivVelm+CRm*lbcs2*(Feqm/lbrhom-lbw)+ CFm*Feqm/lbrhom);
-
-                            double gbarm         = lbPopulations(im,j,k,{n})(ii,jj,kk);
-                            //double gm            = (gbarm+1/lbtaum/2.0*geqm+Am)/factorm;
-                            //double gb            = geqb + gm - geqm;
-                            //lbPopulations(i,j,k,{n})(ii,jj,kk) = gb - 1/2.0/lbtaub * (geqb-gb) - Ab;
-                            lbPopulations(i,j,k,{n})(ii,jj,kk) = geqb + gbarm - geqm;
-                            }
-                        }
-                    }
-                    }
-                }
-            }
-        }
-        OMP_PARALLEL_STORAGE_LOOP_END
-    }
-}
-
-void FlowSolverLBM::Set1DNonReflectingPressureOutletatBCXN(Velocities& Vel, const PhaseField& Phase)
-{
-#ifdef MPI_PARALLEL
-    if(MPI_CART_RANK[0] == MPI_CART_SIZE[0]-1)
-    {
-        OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,DensityWetting,0,)
-        {
-            if(i==Grid.Nx-1)
-            {
-                for (size_t n = 0; n < N_Fluid_Comp; ++n)
-                {
-                    //===========================
-                    double Pbold   = HydroPressure(i,j,k,{n});
-                    double Pbmold  = HydroPressure(i-1,j,k,{n});
-                    double Pbmmold = HydroPressure(i-2,j,k,{n});
-
-                    double uxbold  = Vel.Phase(i,j,k,{n})[0];
-                    double uxbmold = Vel.Phase(i-1,j,k,{n})[0];
-                    double uxbmmold= Vel.Phase(i-2,j,k,{n})[0];
-
-                    double uzbold  = Vel.Phase(i,j,k,{n})[2];
-                    double uzbmold = Vel.Phase(i-1,j,k,{n})[2];
-                    double uzbmmold= Vel.Phase(i-2,j,k,{n})[2];
-
-                    double rhob = DensityWetting(i,j,k,{n});
-                    double rhobm= DensityWetting(i-1,j,k,{n});
-
-                    double L1, L3, L5; //charachteristics value
-                    double KMaxv = 0.2;
-                    L1=KMaxv * (Pbold - Poutlet);
-                    L3= uxbold * (uzbold-uzbmold)/Grid.dx;
-                    L5=(uxbold+sqrt(cs2)) * ((Pbold-Pbmold)/Grid.dx + rhob * sqrt(cs2) * (uxbold-uxbmold)/Grid.dx);
-
-                    double uxbn = uxbold - (L5-L1)*dt/(2.0* sqrt(cs2) * rhob );
-                    double uzbn = uzbold - L3 * dt;
-                    double pb   = Pbold - (L5+L1)*dt/2.0;
-
-                    if(uxbmold<0)
-                    {
-                        L3= uxbmold * (uzbmold-uzbmmold)/Grid.dx ;
-                        L5=(uxbmold+sqrt(cs2)) * ((Pbmold-Pbmmold)/Grid.dx + rhobm * sqrt(cs2) * (uxbmold-uxbmmold)/Grid.dx);
-                        pb = Pbmold - (L5+L1)*dt/2.0;
-                        uxbn = uxbmold - (L5-L1)*dt/(2.0* sqrt(cs2) * rhobm );
-                        uzbn = uzbmold - L3 * dt;
-                    }
-                    dVector3 lbub  = {uxbn*dt/Grid.dx, 0.0, uzbn*dt/Grid.dx};
-
-                    int im = i-1;
-                    double pm = 0.0;
-                    dVector3 Mvm = {0.0, 0.0, 0.0};
-                    for (int ii = -Grid.dNx; ii <= Grid.dNx; ++ii)
-                    for (int jj = -Grid.dNy; jj <= Grid.dNy; ++jj)
-                    for (int kk = -Grid.dNz; kk <= Grid.dNz; ++kk)
-                    {
-                        double rrm = lbPopulations(im,j,k,{n})(ii,jj,kk);
-                        pm  += rrm*dP;
-                        Mvm[0] += rrm*ii*dm;
-                        Mvm[1] += rrm*jj*dm;
-                        Mvm[2] += rrm*kk*dm;
-                    }
-                    dVector3 um = (Mvm * 3.0 + ForceDensity(im,j,k,{n})*dt/2.0)/rhobm;
-                    pm =  cs2/2.0 *dt* (  (um[0]*  GradRho(im,j,k,{n})[0] )
-                                         +(um[1]*  GradRho(im,j,k,{n})[1] )
-                                         +(um[2]*  GradRho(im,j,k,{n})[2] ) + rhobm * DivVel(i-1,j,k,{n}) ) + pm;
-
-                    dVector3 lbum = um *dt/Grid.dx;
-
-                    double lbu2b  = lbub[0]*lbub[0]+lbub[1]*lbub[1]+lbub[2]*lbub[2];
-                    double lbu2m  = lbum[0]*lbum[0]+lbum[1]*lbum[1]+lbum[2]*lbum[2];
-
-                    double lbtaub  = nut(i,j,k,{n})/dnu/lbcs2 + 0.5;
-                    double lbtaum  = nut(im,j,k,{n})/dnu/lbcs2 + 0.5;
-                    int ii=-1;
-                    for(int jj = -Grid.dNy; jj <= Grid.dNy; ++jj)
-                    {
-                        for(int kk = -Grid.dNz; kk <= Grid.dNz; ++kk)
-                        {
-                            if(Obstacle(i,j,k-1) and kk==1)
-                            {
-                            }
-                            else if(Obstacle(i,j,k+1) and kk==-1)
-                            {
-
-                            }
-                            else
-                            {
-                                dVector3 lbFbb       = ForceDensity(i,j,k,{n})/df;
-                                dVector3 lbFbm       = ForceDensity(im,j,k,{n})/df;
-                                dVector3 lbGradRhob  = GradRho(i,j,k,{n})*Grid.dx;
-                                dVector3 lbGradRhom  = GradRho(im,j,k,{n})*Grid.dx;
-                                double lbrhob        = DensityWetting(i,j,k,{n})/dRho;
-                                double lbrhom        = DensityWetting(im,j,k,{n})/dRho;
-                                double lbphb         = pb/dP;
-                                double lbphm         = pm/dP;
-                                double lbDivVelb     = DivVel(i,j,k,{n})*dt;
-                                double lbDivVelm     = DivVel(im,j,k,{n})*dt;
-                                //double factorb       = (1.0+1.0/(2.0*lbtaub));
-                                double factorm       = (1.0+1.0/(2.0*lbtaum));
-                                double CRb           = (ii-lbub[0])*lbGradRhob[0]+(jj-lbub[1])*lbGradRhob[1]+(kk-lbub[2])*lbGradRhob[2];
-                                double CRm           = (ii-lbum[0])*lbGradRhom[0]+(jj-lbum[1])*lbGradRhom[1]+(kk-lbum[2])*lbGradRhom[2];
-                                double CFb           = (ii-lbub[0])*lbFbb[0]+(jj-lbub[1])*lbFbb[1]+(kk-lbub[2])*lbFbb[2];
-                                double CFm           = (ii-lbum[0])*lbFbm[0]+(jj-lbum[1])*lbFbm[1]+(kk-lbum[2])*lbFbm[2];
-                                double lbw           = lbWeights[ii+1][jj+1][kk+1];
-                                double lbcub         = ii*lbub[0] + jj*lbub[1] + kk*lbub[2];
-                                double lbcum         = ii*lbum[0] + jj*lbum[1] + kk*lbum[2];
-                                double Feqb          = lbrhob * lbw *(1.0 + lbcub/lbcs2- lbu2b/(2.0*lbcs2) + lbcub*lbcub/(2.0*lbcs2*lbcs2) );
-                                double Feqm          = lbrhom * lbw *(1.0 + lbcum/lbcs2- lbu2m/(2.0*lbcs2) + lbcum*lbcum/(2.0*lbcs2*lbcs2) );
-                                double geqb          = Feqb*lbcs2 + (lbphb - lbrhob * lbcs2 ) * lbw; 
-                                double geqm          = Feqm*lbcs2 + (lbphm - lbrhom * lbcs2 ) * lbw; 
-                                double Ab            = 0.5 * (lbw*lbcs2*lbrhob*lbDivVelb+CRb*lbcs2*(Feqb/lbrhob-lbw)+ CFb*Feqb/lbrhob);
-                                double Am            = 0.5 * (lbw*lbcs2*lbrhom*lbDivVelm+CRm*lbcs2*(Feqm/lbrhom-lbw)+ CFm*Feqm/lbrhom);
-                                double gbm           = lbPopulations(im,j,k,{n})(ii,jj,kk);
-                                double gm            = (gbm+1/lbtaum/2.0*geqm+Am)/factorm;
-                                double gb            = geqb + gm - geqm;
-                                lbPopulations(i,j,k,{n})(ii,jj,kk) = gb - 1/2.0/lbtaub * (geqb-gm) - Ab;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        OMP_PARALLEL_STORAGE_LOOP_END
-    }
-#endif
-}
-
-void FlowSolverLBM::SetOutFlow(int order)
-{
-    int i1 = Grid.Nx-1;
-    int i2 = Grid.Nx + Grid.Bcells; 
-    int j1 = -Grid.Bcells * Grid.dNy;
-    int j2 = Grid.Ny + Grid.Bcells * Grid.dNy; 
-    int k1 = -Grid.Bcells * Grid.dNz;
-    int k2 = Grid.Nz + Grid.Bcells * Grid.dNz; 
-
-    if(Grid.OffsetX+Grid.Nx==Grid.TotalNx)
-    for (int i = i1; i < i2; ++i)
-    {
-        for (int j = j1; j< j2 ; ++j)
-        {
-            for (int k = k1; k< k2 ; ++k)
-            {
-                int ii=-1;
-                for (size_t n = 0; n < N_Fluid_Comp; ++n)
-                {
-                    //for(int ii = -Grid.dNx; ii <= Grid.dNx; ++ii)
-                    {
-                        for(int jj = -Grid.dNy; jj <= Grid.dNy; ++jj)
-                        {
-                            for(int kk = -Grid.dNz; kk <= Grid.dNz; ++kk)
-                            {
-                                if(order == 0)
-                                {
-                                    lbPopulations(i,j,k,{n})(ii,jj,kk) = lbPopulations(i-1,j,k,{n})(ii,jj,kk);
-                                }
-                                else if (order == 1)
-                                {
-                                    lbPopulations(i,j,k,{n})(ii,jj,kk) = 2.0*lbPopulations(i-1,j,k,{n})(ii,jj,kk) 
-                                                            - lbPopulations(i-2,j,k,{n})(ii,jj,kk) ;
-                                }
-                            } 
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
 
 void FlowSolverLBM::CalculateForceDrag(const int i,const int j,const int k,
@@ -1708,128 +1298,6 @@ void FlowSolverLBM::Propagation(PhaseField& Phase, const BoundaryConditions& BC)
     }
     OMP_PARALLEL_STORAGE_LOOP_END
 
-   // if(dNx) BC.SetXVector(lbPopulations);
-   // if(dNy) BC.SetYVector(lbPopulations);
-   // if(dNz) BC.SetZVector(lbPopulations);
-}
-
-double FlowSolverLBM::SecondOrderBounceBack(const int i, const int j, const int k,
-        const int ii, const int jj, const int kk, const size_t n,
-        PhaseField& Phase, const BoundaryConditions& BC, double& lbDensityChange)
-{
-    double NewPopulation = 0.0;
-    size_t Gasidx = 0;
-    //size_t Solididx = 0;
-    //double ep=1e-9;
-    for(auto it = Phase.Fields(i,j,k).cbegin(); it != Phase.Fields(i,j,k).cend(); ++it)
-    if(Phase.FieldsProperties[it->index].State == AggregateStates::Gas)
-    {
-        Gasidx = it->index;
-    }
-    dVector3 Norm{0.0,0.0,0.0};
-    for (auto it = Phase.Fields(i-ii,j-jj,k-kk).cbegin(); it != Phase.Fields(i-ii,j-jj,k-kk).cend(); ++it)
-    {
-    	if(Phase.FieldsProperties[it->index].State == AggregateStates::Solid)
-    	{
-            //Solididx=it->index;
-            NodeAB<dVector3,dVector3> Normals = Phase.Normals(i, j, k);
-    		//dVector3 Norm = Normals.get_asym1(Solididx, Gasidx);
-    	}
-    }
-
-    double Phif   = Phase.Fractions(i,j,k,{Gasidx});
-    double DX     = fabs(Phase.Grid.iWidth/Pi * asin(1.0-2.0*Phif));
-    //double DX   = fabs(Phase.iWidth/Pi * acos(2.0*Phif-1));
-    dVector3 X    = Norm*DX;
-    dVector3 Xf   = {double(i), double(j), double(k)};
-    dVector3 Xs   = {double(i-ii), double(j-jj), double(k-kk)};
-    dVector3 Xsf;
-    CalculateDistancePeriodic(Xf, Xs, Xsf, Grid.Nx, Grid.Ny, Grid.Nz);
-    double l      = Xsf.length();
-    dVector3 esf  = Xsf.normalize();
-    double q      = X.abs() / (Norm * esf);
-    q=q/l;
-
-    if(q>1.0)
-    {
-        q=1.0;
-    }
-
-    if(q<0.5)
-    {
-        NewPopulation = 2.0*q*lbPopulations(i,j,k,{n})(-ii,-jj,-kk)
-                    +(1.0-2.0*q)*lbPopulations(i+ii,j+jj,k+kk,{n})(-ii,-jj,-kk);
-    }
-    else if(q>=0.5)
-    {
-        NewPopulation = 1.0/2.0/q*lbPopulations(i,j,k,{n})(-ii,-jj,-kk)
-                       +(2.0*q-1.0)/2.0/q*lbPopulations(i,j,k,{n})(ii,jj,kk);
-    }
-    
-    /*
-    if(q<0.5)
-    {
-        NewPopulation = q*(2.0*q+1.0)*lbPopulations(i,j,k,{n})(-ii,-jj,-kk)
-                        +(1.0-4.0*q*q)*lbPopulations(i+ii,j+jj,k+kk,{n})(-ii,-jj,-kk)
-                        -q*(1.0-2.0*q)*lbPopulations(i+2.0*ii,j+2.0*jj,k+2.0*kk,{n})(-ii,-jj,-kk);
-    }
-    else if(q>=0.5)
-    {
-        NewPopulation = 1.0/(q*(2.0*q+1))*lbPopulations(i,j,k,{n})(-ii,-jj,-kk)
-                        + (2.0*q-1.0)/q*lbPopulations(i,j,k,{n})(ii,jj,kk)
-                        + (1.0-2.0*q)/(1.0+2.0*q)*lbPopulations(i+ii,j+jj,k+kk,{n})(ii,jj,kk);
-    }
-    */
-
-    return NewPopulation;
-}
-
-void FlowSolverLBM::PropagationSecondOrderBB(PhaseField& Phase, const BoundaryConditions& BC)
-{
-    OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,lbPopulationsTMP,0,)
-    for (size_t n = 0; n < N_Fluid_Comp; ++n)
-    {
-        lbPopulationsTMP(i,j,k,{n}).set_to_zero();
-    }
-    OMP_PARALLEL_STORAGE_LOOP_END
-
-    OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,lbPopulations,0,)
-    for (size_t n = 0; n < N_Fluid_Comp; ++n)
-    {
-        double lbDensityChange = 0.0;
-        for(int ii = -Grid.dNx; ii <= Grid.dNx; ++ii)
-        for(int jj = -Grid.dNy; jj <= Grid.dNy; ++jj)
-        for(int kk = -Grid.dNz; kk <= Grid.dNz; ++kk)
-        {
-            if (Obstacle(i, j, k))
-            {
-                lbPopulationsTMP(i,j,k,{n})(ii,jj,kk) =
-                    lbPopulations(i,j,k,{n})(ii,jj,kk);
-            }
-            else if (Obstacle(i-ii, j-jj, k-kk))
-            {
-                lbPopulationsTMP(i,j,k,{n})(ii,jj,kk) =
-                    SecondOrderBounceBack(i, j, k, ii, jj, kk, n, Phase, BC, lbDensityChange);
-            }
-            else
-            {
-                lbPopulationsTMP(i,j,k,{n})(ii,jj,kk) =
-                    lbPopulations(i-ii, j-jj, k-kk,{n})(ii,jj,kk);
-            }
-        }
-    }
-    OMP_PARALLEL_STORAGE_LOOP_END
-
-    OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,lbPopulations,0,)
-    for (size_t n = 0; n < N_Fluid_Comp; ++n)
-    {
-        lbPopulations(i,j,k,{n}) = lbPopulationsTMP(i,j,k,{n});
-    }
-    OMP_PARALLEL_STORAGE_LOOP_END
-
-   // if(dNx) BC.SetXVector(lbPopulations);
-   // if(dNy) BC.SetYVector(lbPopulations);
-   // if(dNz) BC.SetZVector(lbPopulations);
 }
 
 void FlowSolverLBM::ApplyForces(PhaseField& Phase, const Velocities& Vel)
@@ -2297,7 +1765,8 @@ void FlowSolverLBM::SetFluidNodesNearObstacle()
         return false;
     };
 
-    OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,lbPopulations,lbPopulations.Bcells()-FluidRedistributionRange,)
+    assert(lbPopulationsTMP.Bcells() >= FluidRedistributionRange);
+    OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,lbPopulations,0,)
     {
         ObstacleChangedDensity(i,j,k) = false;
         for (size_t n = 0; n < N_Fluid_Comp; ++n)
@@ -2308,7 +1777,7 @@ void FlowSolverLBM::SetFluidNodesNearObstacle()
     }
     OMP_PARALLEL_STORAGE_LOOP_END
 
-    OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,lbPopulations,lbPopulations.Bcells()-FluidRedistributionRange,)
+    OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,lbPopulations,0,)
     if (ObstacleVanished(i,j,k))
     for (size_t n = 0; n < N_Fluid_Comp; ++n)
     {
@@ -2361,7 +1830,7 @@ void FlowSolverLBM::SetFluidNodesNearObstacle()
     }
     OMP_PARALLEL_STORAGE_LOOP_END
 
-    OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,lbPopulations,lbPopulations.Bcells()-FluidRedistributionRange,)
+    OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,lbPopulations,0,)
     if (ObstacleAppeared(i,j,k))
     for (size_t n = 0; n < N_Fluid_Comp; ++n)
     {
@@ -2509,136 +1978,20 @@ D3Q27 FlowSolverLBM::EquilibriumDistributionTC(dVector3 lbvel, double lbph, doub
    return locPopulations;
 }
 
-void FlowSolverLBM::SetDivUnearObstZero()
-{
-    OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,DensityWetting,0,)
-    if (Obstacle(i,j,k))
-    {
-        for (int ii = -Grid.dNx; ii <= Grid.dNx; ii++)
-        for (int jj = -Grid.dNy; jj <= Grid.dNy; jj++)
-        for (int kk = -Grid.dNz; kk <= Grid.dNz; kk++)
-        {
-            DivVel(i+ii,j+jj,k+kk,{0}) = 0.0;
-        }
-    }
-    OMP_PARALLEL_STORAGE_LOOP_END
-}
-
-void FlowSolverLBM::SetDivVelBCNXZero()
-{
-
-#ifdef MPI_PARALLEL
-{
-    if(MPI_CART_RANK[0]==MPI_CART_SIZE[0]-1)
-    {
-        for (int j=-DensityWetting.BcellsY(); j<Grid.Ny+DensityWetting.BcellsY(); j++)
-        {
-            for (int k=-DensityWetting.BcellsZ(); k<Grid.Nz+DensityWetting.BcellsZ(); k++)
-            {
-                DivVel(Grid.Nx-1,j,k,{0})=0.0;
-            }
-        }
-    }
-}
-#endif
-
-}
-
-void FlowSolverLBM::SetDivUnearBCsZeroXZPlane()
-{
-
-#ifdef MPI_PARALLEL
-{
-    if(MPI_CART_RANK[0]==0)
-    {
-        for (int j=-DensityWetting.BcellsY(); j<Grid.Ny+DensityWetting.BcellsY(); j++)
-        {
-            for (int k=-DensityWetting.BcellsZ(); k<Grid.Nz+DensityWetting.BcellsZ(); k++)
-            {
-                DivVel(0,j,k,{0})=0.0;
-            }
-        }
-    }
-
-    if(MPI_CART_RANK[0]==MPI_CART_SIZE[0]-1)
-    {
-        for (int j=-DensityWetting.BcellsY(); j<Grid.Ny+DensityWetting.BcellsY(); j++)
-        {
-            for (int k=-DensityWetting.BcellsZ(); k<Grid.Nz+DensityWetting.BcellsZ(); k++)
-            {
-                DivVel(Grid.Nx-1,j,k,{0})=0.0;
-            }
-        }
-    }
-
-    if(Grid.dNy!=0)
-    {
-        if(MPI_CART_RANK[1]==0)
-        {
-            for (int k=-DensityWetting.BcellsZ(); k<Grid.Nz+DensityWetting.BcellsZ(); k++)
-            {
-                for (int i=-DensityWetting.BcellsX(); i<Grid.Nx+DensityWetting.BcellsX(); i++)
-                {
-                    DivVel(i,0,k,{0})=0.0;
-                }
-            }
-        }
-        if(MPI_CART_RANK[1]==MPI_CART_SIZE[1]-1)
-        {
-            for (int k=-DensityWetting.BcellsZ(); k<Grid.Nz+DensityWetting.BcellsZ(); k++)
-            {
-                for (int i=-DensityWetting.BcellsX(); i<Grid.Nx+DensityWetting.BcellsX(); i++)
-                {
-                    DivVel(i,Grid.Ny-1,k,{0})=0.0;
-                }
-            }
-        }
-    }
-
-    if(MPI_CART_RANK[2]==0)
-    {
-        for (int j=-DensityWetting.BcellsY(); j<Grid.Ny+DensityWetting.BcellsY(); j++)
-        {
-            for (int i=-DensityWetting.BcellsX(); i<Grid.Nx+DensityWetting.BcellsX(); i++)
-            {
-                DivVel(i,j,0,{0})=0.0;
-            }
-        }
-    }
-
-    if(MPI_CART_RANK[2]==MPI_CART_SIZE[2]-1)
-    {
-        for (int j=-DensityWetting.BcellsY(); j<Grid.Ny+DensityWetting.BcellsY(); j++)
-        {
-            for (int i=-DensityWetting.BcellsX(); i<Grid.Nx+DensityWetting.BcellsX(); i++)
-            {
-                DivVel(i,j,Grid.Nz-1,{0})=0.0;
-            }
-        }
-    }
-}
-#endif
-
-}
-
 void FlowSolverLBM::Solve(PhaseField& Phase, Velocities& Vel,
         const BoundaryConditions& BC)
 {
     DetectObstacles(Phase);
     SetObstacleNodes(Phase, Vel);
-    if(ObstaclesChanged) CalculateDensityAndMomentum();
 
     Propagation(Phase,BC);
     CalculateDensityAndMomentum();
 
-    BC.SetX(DensityWetting);
-    BC.SetY(DensityWetting);
-    BC.SetZ(DensityWetting);
-
     ApplyForces(Phase, Vel);
     Collision();
-    CalculateDensityAndMomentum(); //Commented by Dmitry // Uncommented by Raphael
+
     SetBoundaryConditions(BC);
+    CalculateDensityAndMomentum(); //Commented by Dmitry // Uncommented by Raphael
 
     CalculateFluidVelocities(Vel, Phase, BC);
 
@@ -2664,19 +2017,15 @@ void FlowSolverLBM::Solve(PhaseField& Phase, const Composition& Cx,
 {
     DetectObstacles(Phase);
     SetObstacleNodes(Phase, Vel);
-    if(ObstaclesChanged) CalculateDensityAndMomentum();
 
     Propagation(Phase, BC);
     CalculateDensityAndMomentum();
 
-    BC.SetX(DensityWetting);
-    BC.SetY(DensityWetting);
-    BC.SetZ(DensityWetting);
-
     ApplyForces(Phase, Vel, Cx);
     Collision();
-    CalculateDensityAndMomentum(); //Commented by Dmitry // Uncommented by Raphael
+
     SetBoundaryConditions(BC);
+    CalculateDensityAndMomentum(); //Commented by Dmitry // Uncommented by Raphael
 
     CalculateFluidVelocities(Vel, Phase, BC);
 
@@ -3125,19 +2474,20 @@ double FlowSolverLBM::FluidDensity(const int i, const int j, const int k) const
 double FlowSolverLBM::Density(const PhaseField& Phase,
         const int i, const int j, const int k) const
 {
+    if (not Obstacle(i,j,k)) return FluidDensity(i,j,k);
 
     double SolidDensity = 0.0;
+    double SumWeights = 0.0;
     for (auto it = Phase.Fields(i,j,k).cbegin();
              it != Phase.Fields(i,j,k).cend(); it++)
     if (Phase.FieldsProperties[it->index].State == AggregateStates::Solid)
     {
         SolidDensity += it->value*Phase.FieldsProperties[it->index].Density;
+        SumWeights += it->value;
     }
-    double locSolidFraction = SolidFraction(i,j,k,Phase);
-    //double Density = FluidDensity(i,j,k)*(1.0-locSolidFraction) + SolidDensity*locSolidFraction; //TODO this should be uses
-    double Density = DensityWetting(i,j,k,{0})*(1.0-locSolidFraction) + SolidDensity*locSolidFraction;
+    if (SumWeights > DBL_EPSILON) SolidDensity /= SumWeights;
 
-    return Density;
+    return SolidDensity;
 }
 
 dVector3 FlowSolverLBM::FluidVelocity(const int i, const int j, const int k,

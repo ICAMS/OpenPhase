@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,19 +18,14 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2022
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev
- *                         Raphael Schiedung
+ *
+ *  File created :   2022
+ *  Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev Raphael Schiedung
  *
  */
 
 #ifndef GLOBALS_H
 #define GLOBALS_H
-
-#include <string>
-#include <complex>
-#include <iostream>
 
 #ifndef _OPENMP
     // overloading several OpenMP methods used in OpenPhase for serial operation
@@ -53,7 +48,6 @@
 #endif
 
 #ifdef _WIN32
-#    define NOMINMAX
 #    define and &&
 #    define or ||
 #    define not !
@@ -85,6 +79,10 @@
     extern bool MPI_3D_DECOMPOSITION;                                           ///< "true" if MPI should decompose in 3 dimensions
 #endif
 
+#include <string>
+#include <complex>
+#include <iostream>
+
 namespace openphase
 {
 
@@ -115,12 +113,6 @@ static constexpr int EXIT_NUCMODE_ERROR = 16;
 static constexpr int EXIT_CONTROLMODE_ERROR = 10;
 static constexpr int EXIT_LATENTHEATMODE_ERROR = 13;
 
-#ifdef M_PI
-#    undef M_PI
-#    undef M_PIl
-#    undef M_PIf
-#endif
-
 static constexpr double Pi = 3.14159265358979323846;                            ///< Pi constant value
 
 const std::complex< double > I(0.0, 1.0);                                       ///< sqrt(-1) declaration
@@ -129,14 +121,15 @@ const std::complex< double > I(0.0, 1.0);                                       
 enum class Resolutions : int                                                    ///< Possible simulation resolutions
 {
     Single,                                                                     ///< Single resolution for all fields
-    Dual                                                                        ///< Double resolution for phase fields
+    Dual                                                                        ///< Double resolution for phase fields, single for all other fields
 };
 
 enum class AdvectionSchemes : int                                               ///< Available advection schemes
 {
     Upwind,
     Minmod,
-//    VanLeer,
+    VanLeer,
+    Central,
     Superbee,
     //LaxWendroff,
     MonotonizedCentral
@@ -239,7 +232,7 @@ enum class BravaisLattices : int                                                
     FCC = CubicFaceCentered
 };
 
-enum class BravaisLattices2D : int
+enum class BravaisLattices2D : int                                              ///< Bravais lattices in two dimensions
 {
     Monoclinic,
     Orthorhombic,

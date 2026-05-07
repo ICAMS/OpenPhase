@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2022
- *   Main contributors :   Oleg Shchyglo; Hossein Jafarzadeh, Muhammad Adil Ali
+ *
+ *  File created :   2022
+ *  Main contributors :   Oleg Shchyglo; Hossein Jafarzadeh, Muhammad Adil Ali
  *
  */
 
@@ -40,11 +40,19 @@
 #include "VTK.h"
 #include "Velocities.h"
 #include "AdvectionHR.h"
-#include "RunTimeControl.h"
 
 namespace openphase
 {
 using namespace std;
+
+namespace
+{
+double ScaledProfileRelaxationMobility(double referenceMobility, double dx)
+{
+    constexpr double referenceDx = 1.0e-9;
+    return referenceMobility * dx / referenceDx;
+}
+}
 
 void FractureField::Initialize(Settings& locSettings, std::string ObjectNameSuffix)
 {
@@ -71,10 +79,10 @@ void FractureField::Initialize(Settings& locSettings, std::string ObjectNameSuff
     Fields_dot      .Allocate(Grid, Grid.Bcells);
     Laplacian       .Allocate(Grid, Grid.Bcells);
     Flag            .Allocate(Grid, Grid.Bcells);
-    DisplacementsOLD.Allocate(Grid, Grid.Bcells);
     SurfaceEnergy     .Allocate(Grid, Grid.Bcells);
-    TestOutput.Allocate(Grid, Grid.Bcells);
-    TestOutput2.Allocate(Grid, Grid.Bcells);
+    SurfaceTerm.Allocate(Grid, Grid.Bcells);
+    ElasticTerm.Allocate(Grid, Grid.Bcells);
+
 
     switch(Grid.Active())
     {
@@ -357,7 +365,7 @@ void FractureField::Advect(AdvectionHR& Adv, const Velocities& Vel, PhaseField& 
     Adv.AdvectField(Fields, Fields_dot, Vel, BC, dt);
 }
 
-void FractureField::CreatePF(PhaseField& Phase, size_t PhaseIndex, BoundaryConditions& BC)
+size_t FractureField::CreatePF(PhaseField& Phase, size_t PhaseIndex, BoundaryConditions& BC)
 {
     size_t index = Phase.AddGrainInfo(PhaseIndex);
     STORAGE_LOOP_BEGIN(i, j, k, Fields, Fields.Bcells())
@@ -407,6 +415,7 @@ void FractureField::CreatePF(PhaseField& Phase, size_t PhaseIndex, BoundaryCondi
     }
     STORAGE_LOOP_END
     Phase.FinalizeInitialization(BC);
+    return index;
 }
 
 void FractureField::CreateCrack(dVector3& CrackStart, dVector3& CrackEnd, Settings& OP, BoundaryConditions& BC)
@@ -450,7 +459,77 @@ void FractureField::CreateCrack(dVector3& CrackStart, dVector3& CrackEnd, Settin
     }
     STORAGE_LOOP_END
     Finalize(BC);
-    CorrectFractureProfile(BC, 1e-8, 1000);
+    CorrectFractureProfile(BC, ScaledProfileRelaxationMobility(1e-8, Grid.dx), 1000);
+}
+
+void FractureField::CreateCrackwithPlane(dVector3& CrackStart, dVector3& CrackEnd, Settings& OP, BoundaryConditions& BC)
+{
+    double CrackLine[3]  = {-CrackEnd[1] + CrackStart[1], ///< {a, b, c} if crack line equation is ax+by+c=0
+                             CrackEnd[0] - CrackStart[0],
+                            (CrackEnd[1] - CrackStart[1]) * CrackStart[0] -
+                            (CrackEnd[0] - CrackStart[0]) * CrackStart[1]};
+
+    double CrackLength =
+        sqrt((CrackEnd[1] - CrackStart[1]) * (CrackEnd[1] - CrackStart[1]) + ///< Crack length in xy plane
+             (CrackEnd[0] - CrackStart[0]) * (CrackEnd[0] - CrackStart[0]));
+
+    STORAGE_LOOP_BEGIN(i, j, k, Fields, Fields.Bcells())
+    {
+        Fields(i, j, k)      = 0;
+        Flag(i, j, k)        = 2;
+
+        double Y_Line        = (CrackStart[1] + CrackEnd[1]) / 2.0;
+        double distance_Line = j - Y_Line;
+
+        Fields(i, j, k) = 0.0; // default in the middle
+
+        // left end: j > Y_Line
+        if (distance_Line >= 0.0 && distance_Line < sWidth) {
+            Fields(i, j, k) = pow(1.0 - distance_Line / sWidth, 2);
+        }
+
+        // right end: j < Y_Line_End
+        // if (distance_Line_End >= 0.0 && distance_Line_End < sWidth) {
+        //     double val = pow(1.0 - distance_Line_End / sWidth, 2);
+        //     Fields(i, j, k) = std::max(Fields(i, j, k), val);
+        // }
+
+        double Distance = sqrt((CrackLine[0] * i + CrackLine[1] * j + CrackLine[2]) * ///< distance of the point (i, j, k) from line ax+by+c=0
+                               (CrackLine[0] * i + CrackLine[1] * j + CrackLine[2]) /
+                               (CrackLine[0] * CrackLine[0] + CrackLine[1] * CrackLine[1]));
+
+        if (Distance < (sWidth * 1))
+        {
+            double DistanceStart = (i - CrackStart[0]) * (i - CrackStart[0]) + (j - CrackStart[1]) * (j - CrackStart[1]);
+            double DistanceEnd   = (i - CrackEnd[0]) * (i - CrackEnd[0]) + (j - CrackEnd[1]) * (j - CrackEnd[1]);
+            double DistanceSq    = DistanceStart + DistanceEnd;
+
+            if (DistanceSq < 2 * Distance * Distance + CrackLength * CrackLength)
+            {
+                Fields(i, j, k) = pow((1 - Distance / (sWidth * 1)), 2);
+            }
+            else if (DistanceStart < DistanceEnd and sqrt(DistanceStart) < (sWidth * 1))
+            {
+                Fields(i, j, k) = pow((1 - sqrt(DistanceStart) / (sWidth * 1)), 2);
+            }
+            else if (DistanceStart > DistanceEnd and sqrt(DistanceEnd) < (sWidth * 1))
+            {
+                Fields(i, j, k) = pow((1 - sqrt(DistanceEnd) / (sWidth * 1)), 2);
+            }
+        }
+
+        if (j < Y_Line)
+        {
+            Fields(i, j, k) = 1;
+        }
+        //if (j > Y_Line_End)
+        //{
+        //    Fields(i, j, k) = 1;
+        //}
+    }
+    STORAGE_LOOP_END
+    Finalize(BC);
+    CorrectFractureProfile(BC, ScaledProfileRelaxationMobility(1e-8, Grid.dx), 1000);
 }
 
 void FractureField::CorrectFractureProfile( BoundaryConditions& BC, double locMobility, size_t nSteps)
@@ -507,12 +586,10 @@ void FractureField::SetSurfaceEnergy(Composition& Cx, Temperature& Tx)
     OMP_PARALLEL_STORAGE_LOOP_END
 }
 
-void FractureField::Solve(PhaseField& Phase,
-                          DoubleObstacle& DO,
-                          InterfaceProperties& IP,
-                          BoundaryConditions& BC,
-                          ElasticProperties& EP,
-                          double dt)
+void FractureField::CalculateIncrements(const PhaseField& Phase,
+                                        DoubleObstacle& DO,
+                                        InterfaceProperties& IP,
+                                        ElasticProperties& EP)
 {
     switch(FractureModel)
     {
@@ -531,6 +608,39 @@ void FractureField::Solve(PhaseField& Phase,
             break;
         }
     }
+
+    double locMaxFieldsDot  = 0.0;
+    double locMaxSurface    = 0.0;
+    double locMaxElastic    = 0.0;
+    OMP_PARALLEL_STORAGE_LOOP_BEGIN(i, j, k, Fields, 0, reduction(max:locMaxFieldsDot) reduction(max:locMaxSurface) reduction(max:locMaxElastic))
+    {
+        double fd = std::abs(Fields_dot(i, j, k));
+        if (fd > locMaxFieldsDot) locMaxFieldsDot = fd;
+        double st = std::abs(SurfaceTerm(i, j, k));
+        if (st > locMaxSurface)  locMaxSurface = st;
+        double et = std::abs(ElasticTerm(i, j, k));
+        if (et > locMaxElastic)  locMaxElastic = et;
+    }
+    OMP_PARALLEL_STORAGE_LOOP_END
+
+#ifdef MPI_PARALLEL
+    OP_MPI_Allreduce(OP_MPI_IN_PLACE, &locMaxFieldsDot, 1, OP_MPI_DOUBLE, OP_MPI_MAX, OP_MPI_COMM_WORLD);
+    OP_MPI_Allreduce(OP_MPI_IN_PLACE, &locMaxSurface,   1, OP_MPI_DOUBLE, OP_MPI_MAX, OP_MPI_COMM_WORLD);
+    OP_MPI_Allreduce(OP_MPI_IN_PLACE, &locMaxElastic,   1, OP_MPI_DOUBLE, OP_MPI_MAX, OP_MPI_COMM_WORLD);
+#endif
+    maxFieldsDotCached  = locMaxFieldsDot;
+    maxSurfaceTermCached = locMaxSurface;
+    maxElasticTermCached = locMaxElastic;
+}
+
+void FractureField::Solve(PhaseField& Phase,
+                          DoubleObstacle& DO,
+                          InterfaceProperties& IP,
+                          BoundaryConditions& BC,
+                          ElasticProperties& EP,
+                          double dt)
+{
+    CalculateIncrements(Phase, DO, IP, EP);
     MergeIncrements(BC, dt);
     //CorrectFractureProfile(BC, 1e-8, 1000);
     //SetFracturedElasticConstants(EP);
@@ -566,95 +676,13 @@ void FractureField::CalculateIncrementsObstacle(const PhaseField& Phase, Interfa
         if (Flag(i, j, k))
         {
             Fields_dot(i, j, k) = Mobility * (SurfaceEnergy(i, j, k) * (2 * epsilon * Laplacian(i, j, k) - K/epsilon));
-            TestOutput(i,j,k) = Fields_dot(i,j,k);
+            SurfaceTerm(i,j,k) = Fields_dot(i,j,k);
         }
 
         if (Flag(i, j, k) and Fields(i, j, k) != 1.0)
         {
             Fields_dot(i, j, k) += 2.0 * Mobility * EP.EnergyDensity(Phase,i, j, k) / (1.0 - Fields(i, j, k));
-            TestOutput2(i,j,k) =   2.0 * Mobility * EP.EnergyDensity(Phase,i, j, k) / (1.0 - Fields(i, j, k));
-        }
-    }
-    OMP_PARALLEL_STORAGE_LOOP_END
-}
-
-void FractureField::ApplyAdvection(Settings &locSettings, PhaseField& Phase, ElasticProperties& EP, Orientations& OR,
-                                   AdvectionHR &Adv, Velocities &Vel, BoundaryConditions& BC, RunTimeControl &RTC, double dt)
-{
-    //CalculateCrackTip();
-    SetDisplacementsIncrement(Vel, EP, dt);
-    locSettings.AdvectAll    (Adv, Vel, Phase, BC, dt, RTC.TimeStep);
-    SaveDisplacements        (EP);
-    FixAdvectionFractureProfile       (EP);
-    Finalize(BC);
-}
-
-void FractureField::SetDisplacementsIncrement(Velocities& Vel, ElasticProperties &EP, double dt)
-{
-    double maxDisplacement = 0.0;
-    OMP_PARALLEL_STORAGE_LOOP_BEGIN(i, j, k, EP.Displacements, EP.Displacements.Bcells(), reduction(max:maxDisplacement) )
-    {
-
-        EP.Displacements(i, j, k) = EP.Displacements(i, j, k) - DisplacementsOLD(i, j, k);
-        EP.Displacements(i, j, k) = EP.Displacements(i, j, k) / 10;
-        Vel.Average(i, j, k)      = EP.Displacements(i, j, k) * Grid.dx / dt;
-
-        // int NeibhourPoints = 3;
-        // if(CrackTip(i, j, k))
-        // for (int ii = -NeibhourPoints * Grid.dNx; ii <= NeibhourPoints * Grid.dNx; ++ii)
-        // for (int jj = -NeibhourPoints * Grid.dNy; jj <= NeibhourPoints * Grid.dNy; ++jj)
-        // for (int kk = -NeibhourPoints * Grid.dNz; kk <= NeibhourPoints * Grid.dNz; ++kk) 
-        // {
-        //     Vel.Average(i + ii, j + jj, k + kk).set_to_zero();
-        // }
-        maxDisplacement           = max(EP.Displacements(i, j, k).abs(), maxDisplacement);
-    }
-    OMP_PARALLEL_STORAGE_LOOP_END
-#ifdef MPI_PARALLEL
-    OP_MPI_Allreduce(OP_MPI_IN_PLACE, &maxDisplacement, 1, OP_MPI_DOUBLE, OP_MPI_MAX, OP_MPI_COMM_WORLD);
-#endif
-    if (maxDisplacement > 1.0)
-    {
-        ConsoleOutput::WriteLine("=");
-        string message = "Max displacement : " + to_string(maxDisplacement) +
-                         " > 1.0, which is too large for the CFL condition.";
-        ConsoleOutput::WriteStandard(thisclassname + "::SetDisplacementsIncrement()", message);
-        ConsoleOutput::WriteLine("=");
-    }
-}
-
-void FractureField::SaveDisplacements(ElasticProperties &EP)
-{
-    OMP_PARALLEL_STORAGE_LOOP_BEGIN(i, j, k, EP.Displacements, EP.Displacements.Bcells(), )
-    {
-        DisplacementsOLD(i, j, k) += EP.Displacements(i, j, k);
-    }
-    OMP_PARALLEL_STORAGE_LOOP_END
-}
-
-void FractureField::FixAdvectionFractureProfile(ElasticProperties &EP)
-{
-    auto maxDisplacement = [&](int i, int j, int k)
-    {
-        double Displacement = 0.0;
-        for (int ii = -Grid.dNx; ii <= +Grid.dNx; ii += 2)
-        for (int jj = -Grid.dNy; jj <= +Grid.dNy; jj += 2)
-        for (int kk = -Grid.dNz; kk <= +Grid.dNz; kk += 2)
-        {
-            Displacement = max(EP.Displacements(i + ii, j + jj, k + kk).abs(), Displacement);
-        }
-        return Displacement;
-    };
-    OMP_PARALLEL_STORAGE_LOOP_BEGIN(i, j, k, Fields, 0, )
-    {
-        if (Flag(i, j, k))
-        {
-            if (Fields(i, j, k) > 0.96)
-                Fields(i, j, k) = 1;
-            if (Fields(i, j, k) > 0.5)
-            {
-                Fields(i, j, k) += maxDisplacement(i, j, k);
-            }
+            ElasticTerm(i,j,k) =   2.0 * Mobility * EP.EnergyDensity(Phase,i, j, k) / (1.0 - Fields(i, j, k));
         }
     }
     OMP_PARALLEL_STORAGE_LOOP_END
@@ -897,6 +925,24 @@ void FractureField::PrintVolumeFractions(void)
     ConsoleOutput::WriteStandard("Fracture Volume Fraction [%]", VolumeFraction * 100.0);
 }
 
+void FractureField::PrintStatistics(const double dt)
+{
+    ConsoleOutput::WriteLine("=");
+    ConsoleOutput::WriteLineInsert("Fracture Statistics");
+    ConsoleOutput::WriteLine();
+    double dt_max_allowed = 0.02 / std::max(maxFieldsDotCached, 1e-12);
+    double dt_current     = dt;
+    ConsoleOutput::WriteStandard("dt -- (current)", std::to_string(dt_current));
+    ConsoleOutput::WriteStandard("dt -- (max allowed)", std::to_string(dt_max_allowed));
+    ConsoleOutput::WriteLine();
+    ConsoleOutput::WriteStandard("Max Fields_dot",              std::to_string(maxFieldsDotCached));
+    ConsoleOutput::WriteStandard("Max Fields_dot * dt",         std::to_string(maxFieldsDotCached * dt));
+    ConsoleOutput::WriteStandard("Max SurfaceTerm",             std::to_string(maxSurfaceTermCached));
+    ConsoleOutput::WriteStandard("Max ElasticTerm",             std::to_string(maxElasticTermCached));
+    ConsoleOutput::WriteStandard("Max Displacement Incr (CFL)", std::to_string(maxDisplacementIncrement));
+    ConsoleOutput::WriteLine("=");
+}
+
 void FractureField::SetBoundaryConditions(const BoundaryConditions& BC)
 {
     BC.SetX(Fields);
@@ -1122,8 +1168,8 @@ void FractureField::WriteVTK(const Settings& locSettings, const int tStep, const
     ListOfFields.push_back((VTK::Field_t){"FractureField", [this](int i, int j, int k) { return Fields     (i, j, k);}});
     ListOfFields.push_back((VTK::Field_t){"Laplacian",     [this](int i, int j, int k) { return Laplacian  (i, j, k);}});
     ListOfFields.push_back((VTK::Field_t){"SurfaceEnergy", [this](int i, int j, int k) { return SurfaceEnergy(i, j, k);}});
-    ListOfFields.push_back((VTK::Field_t){"TestOutPut",    [this](int i, int j, int k) { return TestOutput(i, j, k);}});
-    ListOfFields.push_back((VTK::Field_t){"TestOutPut2",    [this](int i, int j, int k) { return TestOutput2(i, j, k);}});
+    ListOfFields.push_back((VTK::Field_t){"SurfaceTerm",  [this](int i, int j, int k) { return SurfaceTerm(i, j, k);}});
+    ListOfFields.push_back((VTK::Field_t){"ElasticTerm",  [this](int i, int j, int k) { return ElasticTerm(i, j, k);}});
     VTK::Write(Filename, locSettings, ListOfFields, precision);
 }
 

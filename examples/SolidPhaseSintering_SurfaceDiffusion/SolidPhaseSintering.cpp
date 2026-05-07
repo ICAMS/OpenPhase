@@ -105,7 +105,7 @@ int main()
 
         IP.Set(Phase, BC);
         ID.CalculatePhaseFieldIncrements(Phase, IP);
-        Phase.MergeIncrements(BC, RTC.dt, false);
+        Phase.MergeIncrements(BC, RTC.dt);
 
     }
     return 0;

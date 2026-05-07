@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2023
- *   Main contributors :   Oleg Shchyglo;
+ *
+ *  File created :   2023
+ *  Main contributors :   Oleg Shchyglo;
  *
  */
 
@@ -458,12 +458,12 @@ void InterfaceRegularization::MergePhaseFieldIncrementsSR(PhaseField& Phase,
 void InterfaceRegularization::MergePhaseFieldIncrementsDR(PhaseField& Phase,
                                                      InterfaceProperties& IP)
 {
+    const double Prefactor = Pi/Phase.Grid.Eta;
+
     OMP_PARALLEL_STORAGE_LOOP_BEGIN(i, j, k, Curvature, 0, )
     {
         if (Phase.FieldsDR(i,j,k).interface())
         {
-            double Prefactor = Pi/Phase.Grid.Eta;
-
             for(auto it  = Curvature(i,j,k).begin();
                      it != Curvature(i,j,k).end(); ++it)
             {
@@ -583,7 +583,7 @@ NodeDF InterfaceRegularization::at(const double x, const double y, const double 
        z < -Curvature.BcellsZ())
     {
         std::stringstream message;
-        message << "ERROR: InterfaceCurvature::Curvature_at()\n"
+        message << "ERROR: InterfaceCurvature::at()\n"
                 << "Access beyond storage range -> ("
                 << x << "," << y << "," << z << ")" << " is outside of storage bounds ["
                 << -Curvature.BcellsX() << ", " << -Curvature.BcellsY() << ", " << -Curvature.BcellsZ() << "] and ("
@@ -604,50 +604,61 @@ NodeDF InterfaceRegularization::at(const double x, const double y, const double 
 
     NodeDF locCurvature;
     double weight = 0.0;
+
     if(Curvature(x0, y0, z0).size())
     {
-        locCurvature += (Curvature(x0, y0, z0)*((1.0 - dx)*(1.0 - dy)*(1.0 - dz)));
-        weight += ((1.0 - dx)*(1.0 - dy)*(1.0 - dz));
+        double loc_weight = ((1.0 - dx)*(1.0 - dy)*(1.0 - dz));
+        locCurvature += Curvature(x0, y0, z0)*loc_weight;
+        weight += loc_weight;
     }
-    if(Curvature(x0+Grid.dNx, y0, z0).size())
+    if(Grid.dNx and Curvature(x0+Grid.dNx, y0, z0).size())
     {
-        locCurvature += (Curvature(x0+Grid.dNx, y0, z0)*(dx*(1.0 - dy)*(1.0 - dz)));
-        weight += (dx*(1.0 - dy)*(1.0 - dz));
+        double loc_weight = (dx*(1.0 - dy)*(1.0 - dz));
+        locCurvature += Curvature(x0+1, y0, z0)*loc_weight;
+        weight += loc_weight;
     }
-    if(Curvature(x0, y0+Grid.dNy, z0).size())
+    if(Grid.dNy and Curvature(x0, y0+Grid.dNy, z0).size())
     {
-        locCurvature += (Curvature(x0, y0+Grid.dNy, z0)*((1.0 - dx)*dy*(1.0 - dz)));
-        weight += ((1.0 - dx)*dy*(1.0 - dz));
+        double loc_weight = ((1.0 - dx)*dy*(1.0 - dz));
+        locCurvature += Curvature(x0, y0+1, z0)*loc_weight;
+        weight += loc_weight;
     }
-    if(Curvature(x0, y0, z0+Grid.dNz).size())
+    if(Grid.dNz and Curvature(x0, y0, z0+Grid.dNz).size())
     {
-        locCurvature += (Curvature(x0, y0, z0+Grid.dNz)*((1.0 - dx)*(1.0 - dy)*dz));
-        weight += ((1.0 - dx)*(1.0 - dy)*dz);
+        double loc_weight = ((1.0 - dx)*(1.0 - dy)*dz);
+        locCurvature += Curvature(x0, y0, z0+1)*loc_weight;
+        weight += loc_weight;
     }
-    if(Curvature(x0+Grid.dNx, y0+Grid.dNy, z0).size())
+    if(Grid.dNx and Grid.dNy and Curvature(x0+Grid.dNx, y0+Grid.dNy, z0).size())
     {
-        locCurvature += (Curvature(x0+Grid.dNx, y0+Grid.dNy, z0)*(dx*dy*(1.0 - dz)));
-        weight += (dx*dy*(1.0 - dz));
+        double loc_weight = (dx*dy*(1.0 - dz));
+        locCurvature += Curvature(x0+1, y0+1, z0)*loc_weight;
+        weight += loc_weight;
     }
-    if(Curvature(x0+Grid.dNx, y0, z0+Grid.dNz).size())
+    if(Grid.dNx and Grid.dNz and Curvature(x0+Grid.dNx, y0, z0+Grid.dNz).size())
     {
-        locCurvature += (Curvature(x0+Grid.dNx, y0, z0+Grid.dNz)*(dx*(1.0 - dy)*dz));
-        weight += (dx*(1.0 - dy)*dz);
+        double loc_weight = (dx*(1.0 - dy)*dz);
+        locCurvature += Curvature(x0+1, y0, z0+1)*loc_weight;
+        weight += loc_weight;
     }
-    if(Curvature(x0, y0+Grid.dNy, z0+Grid.dNz).size())
+    if(Grid.dNy and Grid.dNz and Curvature(x0, y0+Grid.dNy, z0+Grid.dNz).size())
     {
-        locCurvature += (Curvature(x0, y0+Grid.dNy, z0+Grid.dNz)*((1.0 - dx)*dy*dz));
-        weight += ((1.0 - dx)*dy*dz);
+        double loc_weight = ((1.0 - dx)*dy*dz);
+        locCurvature += Curvature(x0, y0+1, z0+1)*loc_weight;
+        weight += loc_weight;
     }
-    if(Curvature(x0+Grid.dNx, y0+Grid.dNy, z0+Grid.dNz).size())
+    if(Grid.dNx and Grid.dNy and Grid.dNz and Curvature(x0+Grid.dNx, y0+Grid.dNy, z0+Grid.dNz).size())
     {
-        locCurvature += (Curvature(x0+Grid.dNx, y0+Grid.dNy, z0+Grid.dNz)*(dx*dy*dz));
-        weight += (dx*dy*dz);
+        double loc_weight = (dx*dy*dz);
+        locCurvature += Curvature(x0+1, y0+1, z0+1)*loc_weight;
+        weight += loc_weight;
     }
+
     if(weight >= DBL_EPSILON)
     {
         locCurvature *= 1.0/weight;
     }
+
     return locCurvature;
 }
 

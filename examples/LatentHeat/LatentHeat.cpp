@@ -36,10 +36,10 @@ int main(int argc, char *argv[])
 
     int matrixIdx = Initializations::Single(Phi, 0, BC);
     int sphereIdx = Initializations::Sphere(Phi, 1, 10, x1, y1, z1, BC);
-    EulerAngles ph1({0,0,0},XYZ);
+    EulerAngles ph1({0,0,0}, EulerConventions::XYZ);
 
-    Phi.FieldsProperties[matrixIdx].Orientation = ph1.getQuaternion();
-    Phi.FieldsProperties[sphereIdx].Orientation = ph1.getQuaternion();
+    Phi.FieldsProperties[matrixIdx].Orientation = ph1.get_quaternion();
+    Phi.FieldsProperties[sphereIdx].Orientation = ph1.get_quaternion();
     Tx.SetInitial(BC);
 
     cout << "Entering the Time Loop!!!" << endl;

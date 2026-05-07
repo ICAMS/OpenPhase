@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,6 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2009
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich;
- *                         Reza Darvishi Kamachali; Dmitry Medvedev
  *
  */
 
@@ -35,7 +31,7 @@
 
 namespace openphase
 {
-/********************************* Declaration *******************************/
+/********************************* Declaration ********************************/
 
 struct PhaseFieldEntry                                                          ///< Structure for storing individual phase-fields. Used in the NodePF class as a storage unit.
 {
@@ -69,6 +65,8 @@ struct PhaseFieldEntry                                                          
         return *this;
     }
 };
+
+/******************************************************************************/
 
 class NodePF                                                                    ///< Stores the phase-fields and their derivatives at a grid point. Provides access and manipulation methods for the phase-field entries.
 {
@@ -108,6 +106,7 @@ class NodePF                                                                    
     NodePF& operator+=(const NodePF& n);                                        ///< Plus-equal operator. Takes as input another NodePF type entry.
     NodePF& operator-=(const NodePF& n);                                        ///< Minus-equal operator. Takes as input another NodePF type entry.
     NodePF& operator*=(const double n);                                         ///< Multiply all fields by a number.
+    NodePF& operator/=(const double n);                                         ///< Divides all fields by a number.
 
     bool    present(const size_t idx) const;                                    ///< Returns true if the phase-field with a given index is present in the node, false otherwise.
 
@@ -148,6 +147,7 @@ class NodePF                                                                    
 
     PhaseFieldEntry get_max(void) const;                                        ///< Returns FieldEntry with max value
 
+    bool    narrow_interface(void) const;                                       ///< Returns true if flag == 3
     bool    interface(void) const;                                              ///< Returns true if flag == 2
     bool    interface_halo(void) const;                                         ///< Returns true if flag == 1
     bool    wide_interface(void) const;                                         ///< Returns true if flag != 0
@@ -167,10 +167,10 @@ class NodePF                                                                    
     PhaseFieldEntry& front(void) {return Fields.front();};                      ///< Reference to the first FieldEntry.
     const PhaseFieldEntry& front(void) const {return Fields.front();};          ///< Constant reference to the first FieldEntry.
 
-    void pack(std::vector<double>& buffer);
-    void unpack(std::vector<double>& buffer, size_t& it);
+    void pack(std::vector<double>& buffer);                                     ///< Writes NodePF into the buffer (used for MPI mode communication)
+    void unpack(std::vector<double>& buffer, size_t& it);                       ///< Read NodePF from the buffer (used for MPI mode communication)
     void read(std::istream& inp);                                               ///< Reads NodePF content from the input stream.
-    void write(std::ostream& outp) const;                                       ///< Writes NodePF content to the output stream.
+    void write(std::ostream& outp) const;                                       ///< Writes NodePF content into the output stream.
 
     int flag;                                                                   ///< Interface flag: 1 if node is near the interface, 2 if it is in the interface and 0 if it is in the bulk.
  protected:
@@ -179,7 +179,8 @@ class NodePF                                                                    
     std::vector<PhaseFieldEntry> tmpFields;                                     ///< Stores temporary phase fields.
 };
 
-/******************************* Implementation ******************************/
+/******************************* Implementation *******************************/
+
 inline void NodePF::set_temporary(void)
 {
     tmpFields = Fields;
@@ -519,6 +520,17 @@ inline NodePF& NodePF::operator*=(const double n)
     return *this;
 }
 
+inline NodePF& NodePF::operator/=(const double n)
+{
+    for(auto i = Fields.begin(); i < Fields.end(); ++i)
+    {
+        i->value      /= n;
+        i->laplacian  /= n;
+        i->gradient   /= n;
+    }
+    return *this;
+}
+
 inline NodePF& NodePF::operator=(const NodePF& n)
 {
     Fields = n.Fields;
@@ -663,7 +675,7 @@ inline void NodePF::add_gradients(const NodePF& n)
 
 inline void NodePF::add_existing_values(const NodePF& n)
 {
-    for (auto i = begin(); i < end(); )
+    for (auto i = begin(); i != end(); )
     {
         double locVal = n.get_value(i->index);
         if(locVal != 0.0 and i->value != 0.0)
@@ -673,7 +685,7 @@ inline void NodePF::add_existing_values(const NodePF& n)
         }
         else
         {
-            erase(i);
+            i = erase(i);
         }
     }
     flag = std::max(flag, n.flag);
@@ -681,7 +693,7 @@ inline void NodePF::add_existing_values(const NodePF& n)
 
 inline void NodePF::add_existing_all(const NodePF& n)
 {
-    for (auto i = begin(); i < end(); )
+    for (auto i = begin(); i != end(); )
     {
         double locValue = 0;
         double locLaplacian = 0;
@@ -696,7 +708,7 @@ inline void NodePF::add_existing_all(const NodePF& n)
         }
         else
         {
-            erase(i);
+            i = erase(i);
         }
     }
     flag = std::max(flag, n.flag);
@@ -774,9 +786,14 @@ inline void NodePF::write(std::ostream& outp) const
     }
 }
 
+inline bool NodePF::narrow_interface(void) const
+{
+    return flag == 3;
+}
+
 inline bool NodePF::interface(void) const
 {
-    return flag == 2;
+    return flag >= 2;
 }
 
 inline bool NodePF::interface_halo(void) const

@@ -28,9 +28,9 @@ int main(int argc, char *argv[])
     int z1 = OPSettings.Grid.Nz/2;
 	
     int matrixIdx = Initializations::Single(Phi, 0, BC);
-    EulerAngles ph1({0,0,0},XYZ);
+    EulerAngles ph1({0,0,0}, EulerConventions::XYZ);
 
-    Phi.FieldsProperties[matrixIdx].Orientation = ph1.getQuaternion();
+    Phi.FieldsProperties[matrixIdx].Orientation = ph1.get_quaternion();
     Tx.SetInitial(BC);
     Tx(x1,y1,z1) += 100.0;
     cout << "Entering the Time Loop!!!" << endl;

@@ -78,8 +78,8 @@ int main(int argc, char *argv[])
         //int idx1 = Initializations::Sphere(Phi, 1, OPSettings.iWidth, OPSettings.Dimensions.Nx/2, OPSettings.Dimensions.Ny/2, OPSettings.Dimensions.Nz/2, BC);
         int idx1 = Phi.PlantGrainNucleus(1, OPSettings.Grid.Nx/2, OPSettings.Grid.Ny/2, OPSettings.Grid.Nz/2);
         // Orienting the nucleus as desired
-        EulerAngles locAngle({0.0, Pi/6.0, 0.0}, XYZ);
-        Phi.FieldsProperties[idx1].Orientation = locAngle.getQuaternion();
+        EulerAngles locAngle({0.0, Pi/6.0, 0.0}, EulerConventions::XYZ);
+        Phi.FieldsProperties[idx1].Orientation = locAngle.get_quaternion();
         Cx.SetInitialMoleFractions(Phi);
         Tx.SetInitial(BC);
     }

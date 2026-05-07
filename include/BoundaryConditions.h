@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,10 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2014
- *   Main contributors :   Oleg Shchyglo; Raphael Schiedung;
- *                         Reza Namdar; Marvin Tegeler
+ *
+ *  File created :   2014
+ *  Main contributors :   Oleg Shchyglo; Raphael Schiedung;
+ *                        Reza Namdar; Marvin Tegeler
  *
  */
 
@@ -33,13 +33,13 @@
 namespace openphase
 {
 class Settings;
-/// Types of boundary conditions:
 
 enum class BoundaryConditionTypes
 {
     Periodic,                                                                   ///< Periodic boundary condition
     NoFlux,                                                                     ///< Adiabatic boundary condition, results in zero first order derivative at the boundary
     Free,                                                                       ///< Boundary condition resembling free surface, results in continuous gradient across the boundary
+    FreeGradient,                                                               ///< Dirichlet boundary condition with fixed value bit allowing for non-zero gradient at the boundary
     Fixed,                                                                      ///< Fixed (Dirichlet or Neumann) boundary condition
     Mirror,                                                                     ///< Similar to NoFlux but places the domain boundary at the edge grid point
     MPIcomm,                                                                    ///< Adjacent boundaries communication between neighboring blocks in MPI parallel mode
@@ -50,78 +50,55 @@ class OP_EXPORTS BoundaryConditions : public OPObject
  public:
 
     BoundaryConditions(){};
-    BoundaryConditions(Settings& locSettings, const std::string InputFileName = DefaultInputFileName)
+    BoundaryConditions(Settings& locSettings,
+                       const std::string InputFileName = DefaultInputFileName)
     {
         Initialize(locSettings);
         ReadInput(InputFileName);
     }
-    template< class T, size_t Num >
-    void Set(Storage3D<T, Num>& loc3Dstorage, int dir) const;                   ///< Set boundary conditions for standard values storage along dir boundaries
+
+    void Initialize(Settings& Settings,
+                    std::string ObjectNameSuffix = "") override;                ///< Initializes the class's variables
+    void ReadInput(std::string InputFileName) override;                         ///< Reads boundary conditions from the input file
+    void ReadInput(std::stringstream& inp) override;                            ///< Reads boundary conditions from the stringstream
+    void ReadJSON(const std::string InputFileName);                             ///< Reads boundary conditions from the JSON file
 
     template< class T, size_t Num >
-    void SetX(Storage3D<T, Num>& loc3Dstorage) const;                           /// Set boundary conditions for standard values storage along X boundaries
-    template< class T, size_t Num >
-    void SetY(Storage3D<T, Num>& loc3Dstorage) const;                           /// Set boundary conditions for standard values storage along Y boundaries
-    template< class T, size_t Num >
-    void SetZ(Storage3D<T, Num>& loc3Dstorage) const;                           /// Set boundary conditions for standard values storage along Z boundaries
-
-    template< class T>
-    void SetXVector(Storage3D<T, 0>& loc3Dstorage) const;                       /// Set boundary conditions for vector values storage along X boundaries
-    template< class T>
-    void SetYVector(Storage3D<T, 0>& loc3Dstorage) const;                       /// Set boundary conditions for vector values storage along Y boundaries
-    template< class T>
-    void SetZVector(Storage3D<T, 0>& loc3Dstorage) const;                       /// Set boundary conditions for vector values storage along Z boundaries
-
-/*    template< class T>
-    void SetXVectorNoFlux(Storage3D<T, 0>& loc3Dstorage) const;                 /// Set boundary conditions for vector values storage along X boundaries
-    template< class T>
-    void SetYVectorNoFlux(Storage3D<T, 0>& loc3Dstorage) const;                 /// Set boundary conditions for vector values storage along Y boundaries
-    template< class T>
-    void SetZVectorNoFlux(Storage3D<T, 0>& loc3Dstorage) const;                 /// Set boundary conditions for vector values storage along Z boundaries
-
-    template< class T>
-    void SetLBXVector(Storage3D<T, 0>& loc3Dstorage) const;                     /// Set boundary conditions for LB vector values storage along X boundaries
-    template< class T>
-    void SetLBYVector(Storage3D<T, 0>& loc3Dstorage) const;                     /// Set boundary conditions for LB vector values storage along Y boundaries
-    template< class T>
-    void SetLBZVector(Storage3D<T, 0>& loc3Dstorage) const;                     /// Set boundary conditions for LB vector values storage along Z boundaries
-*/
-    template< class T>
-    void SetXVector(Storage3D<T, 1>& loc3Dstorage) const;                       /// Set boundary conditions for vector values storage along X boundaries
-    template< class T>
-    void SetYVector(Storage3D<T, 1>& loc3Dstorage) const;                       /// Set boundary conditions for vector values storage along Y boundaries
-    template< class T>
-    void SetZVector(Storage3D<T, 1>& loc3Dstorage) const;                       /// Set boundary conditions for vector values storage along Z boundaries
-
-    template< class T>
-    void SetXVector(Storage3D<T, 2>& loc3Dstorage) const;                       /// Set boundary conditions for vector values storage along X boundaries
-    template< class T>
-    void SetYVector(Storage3D<T, 2>& loc3Dstorage) const;                       /// Set boundary conditions for vector values storage along Y boundaries
-    template< class T>
-    void SetZVector(Storage3D<T, 2>& loc3Dstorage) const;                       /// Set boundary conditions for vector values storage along Z boundaries
-
-    template< class T>
-    void SetXVector(Storage3D<T, 3>& loc3Dstorage) const;                       /// Set boundary conditions for vector values storage along X boundaries
-    template< class T>
-    void SetYVector(Storage3D<T, 3>& loc3Dstorage) const;                       /// Set boundary conditions for vector values storage along Y boundaries
-    template< class T>
-    void SetZVector(Storage3D<T, 3>& loc3Dstorage) const;                       /// Set boundary conditions for vector values storage along Z boundaries
+    void Set(Storage3D<T, Num>& loc3Dstorage, int dir) const;                   ///< Sets boundary conditions for standard values storage along dir boundaries
 
     template< class T, size_t Num >
-    void SetXFlags(Storage3D<T, Num>& loc3Dstorage) const;                      /// Set boundary conditions for storage of flags along X boundaries
+    void SetX(Storage3D<T, Num>& loc3Dstorage) const;                           ///< Sets boundary conditions for standard values storage along X boundaries
     template< class T, size_t Num >
-    void SetYFlags(Storage3D<T, Num>& loc3Dstorage) const;                      /// Set boundary conditions for storage of flags along Y boundaries
+    void SetY(Storage3D<T, Num>& loc3Dstorage) const;                           ///< Sets boundary conditions for standard values storage along Y boundaries
     template< class T, size_t Num >
-    void SetZFlags(Storage3D<T, Num>& loc3Dstorage) const;                      /// Set boundary conditions for storage of flags along Z boundaries
-    void Initialize(Settings& Settings, std::string ObjectNameSuffix = "") override;/// Initializes the class's variables
-    void ReadInput(std::string InputFileName) override;                         /// Read boundary conditions
-    void ReadInput(std::stringstream& inp) override;
-	void ReadJSON(const std::string InputFileName);
+    void SetZ(Storage3D<T, Num>& loc3Dstorage) const;                           ///< Sets boundary conditions for standard values storage along Z boundaries
+
+    template< class T>
+    void SetXVector(Storage3D<T, 0>& loc3Dstorage) const;                       ///< Sets boundary conditions for vector values storage along X boundaries
+    template< class T>
+    void SetYVector(Storage3D<T, 0>& loc3Dstorage) const;                       ///< Sets boundary conditions for vector values storage along Y boundaries
+    template< class T>
+    void SetZVector(Storage3D<T, 0>& loc3Dstorage) const;                       ///< Sets boundary conditions for vector values storage along Z boundaries
+
+    template< class T, size_t Num>
+    void SetXVector(Storage3D<T, Num>& loc3Dstorage) const;                     ///< Sets boundary conditions for vector values storage along X boundaries
+    template< class T, size_t Num>
+    void SetYVector(Storage3D<T, Num>& loc3Dstorage) const;                     ///< Sets boundary conditions for vector values storage along Y boundaries
+    template< class T, size_t Num>
+    void SetZVector(Storage3D<T, Num>& loc3Dstorage) const;                     ///< Sets boundary conditions for vector values storage along Z boundaries
+
+    template< class T, size_t Num >
+    void SetXFlags(Storage3D<T, Num>& loc3Dstorage) const;                      ///< Sets boundary conditions for storage of flags along X boundaries
+    template< class T, size_t Num >
+    void SetYFlags(Storage3D<T, Num>& loc3Dstorage) const;                      ///< Sets boundary conditions for storage of flags along Y boundaries
+    template< class T, size_t Num >
+    void SetZFlags(Storage3D<T, Num>& loc3Dstorage) const;                      ///< Sets boundary conditions for storage of flags along Z boundaries
+
     long int Index(const long int x, const long int y, const long int z,
                    const long int Nx, const long int Ny, const long int Nz,
                    const long int BcellsX,
                    const long int BcellsY,
-                   const long int BcellsZ) const;                               /// Index of the (x, y, z) position using the boundary conditions.
+                   const long int BcellsZ) const;                               ///< Index of the (x, y, z) position using the boundary conditions.
 
     BoundaryConditionTypes BC0X;
     BoundaryConditionTypes BCNX;
@@ -131,19 +108,19 @@ class OP_EXPORTS BoundaryConditions : public OPObject
     BoundaryConditionTypes BCNZ;
 
 #ifdef MPI_PARALLEL
-    bool Setup_MPI();                                                           /// Setting up 1D MPI domain decomposition along a single X dimension
-    bool Setup_MPIX();                                                          /// Setting up 3D MPI domain decomposition along X dimension
-    bool Setup_MPIY();                                                          /// Setting up 3D MPI domain decomposition along Y dimension
-    bool Setup_MPIZ();                                                          /// Setting up 3D MPI domain decomposition along Z dimension
+    bool Setup_MPI();                                                           ///< Sets up 1D MPI domain decomposition along a single X dimension
+    bool Setup_MPIX();                                                          ///< Sets up 3D MPI domain decomposition along X dimension
+    bool Setup_MPIY();                                                          ///< Sets up 3D MPI domain decomposition along Y dimension
+    bool Setup_MPIZ();                                                          ///< Sets up 3D MPI domain decomposition along Z dimension
 
     bool MPIperiodicX;
     bool MPIperiodicY;
     bool MPIperiodicZ;
 
-    template<typename A> void Communicate(A& storage) const;
-    template<typename A> void CommunicateX(A& storage) const;
-    template<typename A> void CommunicateY(A& storage) const;
-    template<typename A> void CommunicateZ(A& storage) const;
+    template<typename A> void Communicate(A& storage) const;                    ///< Performs MPI communication along X direction for 1D MPI domain decomposition
+    template<typename A> void CommunicateX(A& storage) const;                   ///< Performs MPI communication along X direction for 3D MPI domain decomposition
+    template<typename A> void CommunicateY(A& storage) const;                   ///< Performs MPI communication along Y direction for 3D MPI domain decomposition
+    template<typename A> void CommunicateZ(A& storage) const;                   ///< Performs MPI communication along Z direction for 3D MPI domain decomposition
 #endif
 
     BoundaryConditionTypes TranslateBoundaryConditions(std::string Key);        ///< Translates input string into the valid boundary condition designation
@@ -184,6 +161,7 @@ inline long int BoundaryConditions::Index(const long int x, const long int y, co
                 break;
             }
             case BoundaryConditionTypes::Free: [[fallthrough]];
+            case BoundaryConditionTypes::FreeGradient: [[fallthrough]];
             default:
             {
                 xx = std::max(xx,-BcellsX);
@@ -216,6 +194,7 @@ inline long int BoundaryConditions::Index(const long int x, const long int y, co
                 break;
             }
             case BoundaryConditionTypes::Free: [[fallthrough]];
+            case BoundaryConditionTypes::FreeGradient: [[fallthrough]];
             default:
             {
                 xx = std::min(xx,Nx+BcellsX-1);
@@ -249,6 +228,7 @@ inline long int BoundaryConditions::Index(const long int x, const long int y, co
                 break;
             }
             case BoundaryConditionTypes::Free: [[fallthrough]];
+            case BoundaryConditionTypes::FreeGradient: [[fallthrough]];
             default:
             {
                 yy = std::max(yy,-BcellsY);
@@ -281,6 +261,7 @@ inline long int BoundaryConditions::Index(const long int x, const long int y, co
                 break;
             }
             case BoundaryConditionTypes::Free: [[fallthrough]];
+            case BoundaryConditionTypes::FreeGradient: [[fallthrough]];
             default:
             {
                 yy = std::min(yy,Ny+BcellsY-1);
@@ -314,6 +295,7 @@ inline long int BoundaryConditions::Index(const long int x, const long int y, co
                 break;
             }
             case BoundaryConditionTypes::Free: [[fallthrough]];
+            case BoundaryConditionTypes::FreeGradient: [[fallthrough]];
             default:
             {
                 zz = std::max(zz,-BcellsZ);
@@ -346,6 +328,7 @@ inline long int BoundaryConditions::Index(const long int x, const long int y, co
                 break;
             }
             case BoundaryConditionTypes::Free: [[fallthrough]];
+            case BoundaryConditionTypes::FreeGradient: [[fallthrough]];
             default:
             {
                 zz = std::min(zz,Nz+BcellsZ-1);
@@ -416,6 +399,7 @@ void BoundaryConditions::SetXFlags(Storage3D<T, Num> &Field) const
                 break;
             }
             case BoundaryConditionTypes::Free:  [[fallthrough]];
+            case BoundaryConditionTypes::FreeGradient: [[fallthrough]];
             case BoundaryConditionTypes::Fixed: [[fallthrough]];
             default:
             {
@@ -452,6 +436,7 @@ void BoundaryConditions::SetXFlags(Storage3D<T, Num> &Field) const
                 break;
             }
             case BoundaryConditionTypes::Free:  [[fallthrough]];
+            case BoundaryConditionTypes::FreeGradient: [[fallthrough]];
             case BoundaryConditionTypes::Fixed: [[fallthrough]];
             default:
             {
@@ -529,6 +514,7 @@ void BoundaryConditions::SetYFlags(Storage3D<T, Num> &Field) const
                 break;
             }
             case BoundaryConditionTypes::Free:  [[fallthrough]];
+            case BoundaryConditionTypes::FreeGradient: [[fallthrough]];
             case BoundaryConditionTypes::Fixed: [[fallthrough]];
             default:
             {
@@ -565,6 +551,7 @@ void BoundaryConditions::SetYFlags(Storage3D<T, Num> &Field) const
                 break;
             }
             case BoundaryConditionTypes::Free:  [[fallthrough]];
+            case BoundaryConditionTypes::FreeGradient: [[fallthrough]];
             case BoundaryConditionTypes::Fixed: [[fallthrough]];
             default:
             {
@@ -638,6 +625,7 @@ void BoundaryConditions::SetZFlags(Storage3D<T, Num> &Field) const
                 break;
             }
             case BoundaryConditionTypes::Free:  [[fallthrough]];
+            case BoundaryConditionTypes::FreeGradient: [[fallthrough]];
             case BoundaryConditionTypes::Fixed: [[fallthrough]];
             default:
             {
@@ -674,6 +662,7 @@ void BoundaryConditions::SetZFlags(Storage3D<T, Num> &Field) const
                 break;
             }
             case BoundaryConditionTypes::Free:  [[fallthrough]];
+            case BoundaryConditionTypes::FreeGradient: [[fallthrough]];
             case BoundaryConditionTypes::Fixed: [[fallthrough]];
             default:
             {
@@ -711,6 +700,7 @@ void BoundaryConditions::SetX(Storage3D<T, Num> &Field) const
             return;
         }
 
+        long int imax = 0;
         switch (BC0X)
         {
             case BoundaryConditionTypes::NoFlux:
@@ -739,12 +729,17 @@ void BoundaryConditions::SetX(Storage3D<T, Num> &Field) const
                 }
                 break;
             }
+            case BoundaryConditionTypes::FreeGradient:
+            {
+                imax = 1;
+                [[fallthrough]];
+            }
             case BoundaryConditionTypes::Free:
             {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
 #endif
-                for(long int i = -Field.BcellsX(); i < 0; i++)
+                for(long int i = -Field.BcellsX(); i < imax; i++)
                 for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
                 for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
                 {
@@ -760,6 +755,7 @@ void BoundaryConditions::SetX(Storage3D<T, Num> &Field) const
             }
         }
 
+        imax = 0;
         switch (BCNX)
         {
             case BoundaryConditionTypes::NoFlux:
@@ -788,12 +784,17 @@ void BoundaryConditions::SetX(Storage3D<T, Num> &Field) const
                 }
                 break;
             }
+            case BoundaryConditionTypes::FreeGradient:
+            {
+                imax = -1;
+                [[fallthrough]];
+            }
             case BoundaryConditionTypes::Free:
             {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
 #endif
-                for(long int i = -Field.BcellsX(); i < 0; i++)
+                for(long int i = -Field.BcellsX(); i < imax; i++)
                 for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
                 for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
                 {
@@ -842,6 +843,7 @@ void BoundaryConditions::SetY(Storage3D<T, Num> &Field) const
             return;
         }
 
+        int long jmax = 0;
         switch (BC0Y)
         {
             case BoundaryConditionTypes::NoFlux:
@@ -870,13 +872,18 @@ void BoundaryConditions::SetY(Storage3D<T, Num> &Field) const
                 }
                 break;
             }
+            case BoundaryConditionTypes::FreeGradient:
+            {
+                jmax = 1;
+                [[fallthrough]];
+            }
             case BoundaryConditionTypes::Free:
             {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
 #endif
                 for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < 0; j++)
+                for(long int j = -Field.BcellsY(); j < jmax; j++)
                 for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
                 {
                     Field(i, j, k) = Field(i, 0, k)
@@ -891,6 +898,7 @@ void BoundaryConditions::SetY(Storage3D<T, Num> &Field) const
             }
         }
 
+        jmax = 0;
         switch (BCNY)
         {
             case BoundaryConditionTypes::NoFlux:
@@ -919,13 +927,18 @@ void BoundaryConditions::SetY(Storage3D<T, Num> &Field) const
                 }
                 break;
             }
+            case BoundaryConditionTypes::FreeGradient:
+            {
+                jmax = -1;
+                [[fallthrough]];
+            }
             case BoundaryConditionTypes::Free:
             {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
 #endif
                 for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < 0; j++)
+                for(long int j = -Field.BcellsY(); j < jmax; j++)
                 for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
                 {
                     const long int j0 = Field.sizeY() - 1;
@@ -969,6 +982,7 @@ void BoundaryConditions::SetZ(Storage3D<T, Num> &Field) const
             return;
         }
 
+        long int kmax = 0;
         switch (BC0Z)
         {
             case BoundaryConditionTypes::NoFlux:
@@ -997,6 +1011,11 @@ void BoundaryConditions::SetZ(Storage3D<T, Num> &Field) const
                 }
                 break;
             }
+            case BoundaryConditionTypes::FreeGradient:
+            {
+                kmax = 1;
+                [[fallthrough]];
+            }
             case BoundaryConditionTypes::Free:
             {
 #ifdef _OPENMP
@@ -1004,7 +1023,7 @@ void BoundaryConditions::SetZ(Storage3D<T, Num> &Field) const
 #endif
                 for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
                 for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < 0; k++)
+                for(long int k = -Field.BcellsZ(); k < kmax; k++)
                 {
                     Field(i, j, k) = Field(i, j, 0)
                         + (Field(i, j, 1%Field.sizeZ()) - Field(i, j, 0)) * k;
@@ -1018,6 +1037,7 @@ void BoundaryConditions::SetZ(Storage3D<T, Num> &Field) const
             }
         }
 
+        kmax = 0;
         switch (BCNZ)
         {
             case BoundaryConditionTypes::NoFlux:
@@ -1046,6 +1066,11 @@ void BoundaryConditions::SetZ(Storage3D<T, Num> &Field) const
                 }
                 break;
             }
+            case BoundaryConditionTypes::FreeGradient:
+            {
+                kmax = -1;
+                [[fallthrough]];
+            }
             case BoundaryConditionTypes::Free:
             {
 #ifdef _OPENMP
@@ -1053,7 +1078,7 @@ void BoundaryConditions::SetZ(Storage3D<T, Num> &Field) const
 #endif
                 for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
                 for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < 0; k++)
+                for(long int k = -Field.BcellsZ(); k < kmax; k++)
                 {
                     const long int k0 = Field.sizeZ() - 1;
                     Field(i, j, k0 - k) = Field(i, j, k0)
@@ -1126,6 +1151,7 @@ void BoundaryConditions::SetXVector(Storage3D<T, 0> &Field) const
             return;
         }
 
+        long int imax = 0;
         switch (BC0X)
         {
             case BoundaryConditionTypes::NoFlux:
@@ -1154,12 +1180,17 @@ void BoundaryConditions::SetXVector(Storage3D<T, 0> &Field) const
                 }
                 break;
             }
+            case BoundaryConditionTypes::FreeGradient:
+            {
+                imax = 1;
+                [[fallthrough]];
+            }
             case BoundaryConditionTypes::Free:
             {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
 #endif
-                for(long int i = -Field.BcellsX(); i < 0; i++)
+                for(long int i = -Field.BcellsX(); i < imax; i++)
                 for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
                 for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
                 {
@@ -1174,6 +1205,7 @@ void BoundaryConditions::SetXVector(Storage3D<T, 0> &Field) const
             }
         }
 
+        imax = 0;
         switch (BCNX)
         {
             case BoundaryConditionTypes::NoFlux:
@@ -1202,12 +1234,17 @@ void BoundaryConditions::SetXVector(Storage3D<T, 0> &Field) const
                 }
                 break;
             }
+            case BoundaryConditionTypes::FreeGradient:
+            {
+                imax = -1;
+                [[fallthrough]];
+            }
             case BoundaryConditionTypes::Free:
             {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
 #endif
-                for(long int i = -Field.BcellsX(); i < 0; i++)
+                for(long int i = -Field.BcellsX(); i < imax; i++)
                 for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
                 for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
                 {
@@ -1234,12 +1271,12 @@ void BoundaryConditions::SetXVector(Storage3D<T, 0> &Field) const
     }
 }
 
-template< class T>
-void BoundaryConditions::SetXVector(Storage3D<T, 1> &Field) const
+template< class T, size_t Num>
+void BoundaryConditions::SetXVector(Storage3D<T, Num> &Field) const
 {
     if(Field.BcellsX())
     {
-
+        long int imax = 0;
         if(BC0X == BoundaryConditionTypes::Periodic or
            BCNX == BoundaryConditionTypes::Periodic)
         {
@@ -1249,10 +1286,10 @@ void BoundaryConditions::SetXVector(Storage3D<T, 1> &Field) const
             for(long int i = -Field.BcellsX(); i < 0; i++)
             for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
             for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-            for(size_t n = 0; n < Field(0, j, k).size(0); n++)
+            for(size_t n = 0; n < Field.tensor_size(); n++)
             {
-                Field(i, j, k)({n}) = Field((Field.sizeX() + i)%Field.sizeX(), j, k)({n});
-                Field(Field.sizeX() - i - 1, j, k)({n}) = Field((-i - 1)%Field.sizeX(), j, k)({n});
+                Field(i, j, k)[n] = Field((Field.sizeX() + i)%Field.sizeX(), j, k)[n];
+                Field(Field.sizeX() - i - 1, j, k)[n] = Field((-i - 1)%Field.sizeX(), j, k)[n];
             }
             return;
         }
@@ -1267,9 +1304,9 @@ void BoundaryConditions::SetXVector(Storage3D<T, 1> &Field) const
                 for(long int i = -Field.BcellsX(); i < 0; i++)
                 for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
                 for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n = 0; n < Field(0, j, k).size(0); n++)
+                for(size_t n = 0; n < Field.tensor_size(); n++)
                 {
-                    Field(i, j, k)({n}) = Field((-i - 1)%Field.sizeX(), j, k)({n}).Xreflected();
+                    Field(i, j, k)[n] = Field((-i - 1)%Field.sizeX(), j, k)[n].Xreflected();
                 }
                 break;
             }
@@ -1281,24 +1318,28 @@ void BoundaryConditions::SetXVector(Storage3D<T, 1> &Field) const
                 for(long int i = -Field.BcellsX(); i < 0; i++)
                 for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
                 for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n = 0; n < Field(0, j, k).size(0); n++)
+                for(size_t n = 0; n < Field.tensor_size(); n++)
                 {
-                    Field(i, j, k)({n}) = Field((-i)%Field.sizeX(), j, k)({n}).Xreflected();
+                    Field(i, j, k)[n] = Field((-i)%Field.sizeX(), j, k)[n].Xreflected();
                 }
                 break;
             }
-
+            case BoundaryConditionTypes::FreeGradient:
+            {
+                imax = 1;
+                [[fallthrough]];
+            }
             case BoundaryConditionTypes::Free:
             {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
 #endif
-                for(long int i = -Field.BcellsX(); i < 0; i++)
+                for(long int i = -Field.BcellsX(); i < imax; i++)
                 for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
                 for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n = 0; n < Field(0, j, k).size(0); n++)
+                for(size_t n = 0; n < Field.tensor_size(); n++)
                 {
-                    Field(i, j, k)({n}) = Field((-i - 1)%Field.sizeX(), j, k)({n});
+                    Field(i, j, k)[n] = Field((-i - 1)%Field.sizeX(), j, k)[n];
                 }
                 break;
             }
@@ -1309,6 +1350,7 @@ void BoundaryConditions::SetXVector(Storage3D<T, 1> &Field) const
             }
         }
 
+        imax = 0;
         switch (BCNX)
         {
             case BoundaryConditionTypes::NoFlux:
@@ -1319,9 +1361,9 @@ void BoundaryConditions::SetXVector(Storage3D<T, 1> &Field) const
                 for(long int i = -Field.BcellsX(); i < 0; i++)
                 for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
                 for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n = 0; n < Field(Field.sizeX() - 1, j, k).size(0); n++)
+                for(size_t n = 0; n < Field.tensor_size(); n++)
                 {
-                    Field(Field.sizeX() - i - 1, j, k)({n}) = Field((Field.sizeX() + i)%Field.sizeX(), j, k)({n}).Xreflected();
+                    Field(Field.sizeX() - i - 1, j, k)[n] = Field((Field.sizeX() + i)%Field.sizeX(), j, k)[n].Xreflected();
                 }
                 break;
             }
@@ -1333,23 +1375,28 @@ void BoundaryConditions::SetXVector(Storage3D<T, 1> &Field) const
                 for(long int i = -Field.BcellsX(); i < 0; i++)
                 for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
                 for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n = 0; n < Field(Field.sizeX() - 1, j, k).size(0); n++)
+                for(size_t n = 0; n < Field.tensor_size(); n++)
                 {
-                    Field(Field.sizeX() - i - 1, j, k)({n}) = Field((Field.sizeX() + i - 1)%Field.sizeX(), j, k)({n}).Xreflected();
+                    Field(Field.sizeX() - i - 1, j, k)[n] = Field((Field.sizeX() + i - 1)%Field.sizeX(), j, k)[n].Xreflected();
                 }
                 break;
+            }
+            case BoundaryConditionTypes::FreeGradient:
+            {
+                imax = -1;
+                [[fallthrough]];
             }
             case BoundaryConditionTypes::Free:
             {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
 #endif
-                for(long int i = -Field.BcellsX(); i < 0; i++)
+                for(long int i = -Field.BcellsX(); i < imax; i++)
                 for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
                 for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n = 0; n < Field(Field.sizeX() - 1, j, k).size(0); n++)
+                for(size_t n = 0; n < Field.tensor_size(); n++)
                 {
-                    Field(Field.sizeX() - i - 1, j, k)({n}) = Field((Field.sizeX() + i)%Field.sizeX(), j, k)({n});
+                    Field(Field.sizeX() - i - 1, j, k)[n] = Field((Field.sizeX() + i)%Field.sizeX(), j, k)[n];
                 }
                 break;
             }
@@ -1371,297 +1418,7 @@ void BoundaryConditions::SetXVector(Storage3D<T, 1> &Field) const
 #endif
     }
 }
-template< class T>
-void BoundaryConditions::SetXVector(Storage3D<T, 2> &Field) const
-{
-    if(Field.BcellsX())
-    {
-        if(BC0X == BoundaryConditionTypes::Periodic or
-           BCNX == BoundaryConditionTypes::Periodic)
-        {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-            for(long int i = -Field.BcellsX(); i < 0; i++)
-            for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-            for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-            for(size_t n1 = 0; n1 < Field(0, j, k).size(0); n1++)
-            for(size_t n2 = 0; n2 < Field(0, j, k).size(1); n2++)
-            {
-                Field(i, j, k)({n1, n2}) = Field((Field.sizeX() + i)%Field.sizeX(), j, k)({n1, n2});
-                Field(Field.sizeX() - i - 1, j, k)({n1, n2}) = Field((-i - 1)%Field.sizeX(), j, k)({n1, n2});
-            }
-            return;
-        }
 
-        switch (BC0X)
-        {
-            case BoundaryConditionTypes::NoFlux:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < 0; i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(0, j, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(0, j, k).size(1); n2++)
-                {
-                    Field(i, j, k)({n1, n2}) = Field((-i - 1)%Field.sizeX(), j, k)({n1, n2}).Xreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Mirror:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < 0; i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(0, j, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(0, j, k).size(1); n2++)
-                {
-                    Field(i, j, k)({n1, n2}) = Field((-i)%Field.sizeX(), j, k)({n1, n2}).Xreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Free:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < 0; i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(0, j, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(0, j, k).size(1); n2++)
-                {
-                    Field(i, j, k)({n1, n2}) = Field((-i - 1)%Field.sizeX(), j, k)({n1, n2});
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Fixed: [[fallthrough]];
-            default:
-            {
-                break;
-            }
-        }
-
-        switch (BCNX)
-        {
-            case BoundaryConditionTypes::NoFlux:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < 0; i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(Field.sizeX() - 1, j, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(Field.sizeX() - 1, j, k).size(1); n2++)
-                {
-                    Field(Field.sizeX() - i - 1, j, k)({n1, n2}) = Field((Field.sizeX() + i)%Field.sizeX(), j, k)({n1, n2}).Xreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Mirror:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < 0; i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(Field.sizeX() - 1, j, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(Field.sizeX() - 1, j, k).size(1); n2++)
-                {
-                    Field(Field.sizeX() - i - 1, j, k)({n1, n2}) = Field((Field.sizeX() + i - 1)%Field.sizeX(), j, k)({n1, n2}).Xreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Free:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < 0; i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(Field.sizeX() - 1, j, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(Field.sizeX() - 1, j, k).size(1); n2++)
-                {
-                    Field(Field.sizeX() - i - 1, j, k)({n1, n2}) = Field((Field.sizeX() + i)%Field.sizeX(), j, k)({n1, n2});
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Fixed: [[fallthrough]];
-            default:
-            {
-                break;
-            }
-        }
-#ifdef MPI_PARALLEL
-        if(MPI_3D_DECOMPOSITION)
-        {
-            CommunicateX(Field);
-        }
-        else
-        {
-            Communicate(Field);
-        }
-#endif
-    }
-}
-template< class T>
-void BoundaryConditions::SetXVector(Storage3D<T, 3> &Field) const
-{
-    if(Field.BcellsX())
-    {
-        if(BC0X == BoundaryConditionTypes::Periodic or
-           BCNX == BoundaryConditionTypes::Periodic)
-        {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-            for(long int i = -Field.BcellsX(); i < 0; i++)
-            for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-            for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-            for(size_t n1 = 0; n1 < Field(0, j, k).size(0); n1++)
-            for(size_t n2 = 0; n2 < Field(0, j, k).size(1); n2++)
-            for(size_t n3 = 0; n3 < Field(0, j, k).size(2); n3++)
-            {
-                Field(i, j, k)({n1, n2, n3}) = Field((Field.sizeX() + i)%Field.sizeX(), j, k)({n1, n2, n3});
-                Field(Field.sizeX() - i - 1, j, k)({n1, n2, n3}) = Field((-i - 1)%Field.sizeX(), j, k)({n1, n2, n3});
-            }
-            return;
-        }
-
-        switch (BC0X)
-        {
-            case BoundaryConditionTypes::NoFlux:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < 0; i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(0, j, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(0, j, k).size(1); n2++)
-                for(size_t n3 = 0; n3 < Field(0, j, k).size(2); n3++)
-                {
-                    Field(i, j, k)({n1, n2, n3}) = Field((-i - 1)%Field.sizeX(), j, k)({n1, n2, n3}).Xreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Mirror:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < 0; i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(0, j, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(0, j, k).size(1); n2++)
-                for(size_t n3 = 0; n3 < Field(0, j, k).size(2); n3++)
-                {
-                    Field(i, j, k)({n1, n2, n3}) = Field((-i)%Field.sizeX(), j, k)({n1, n2, n3}).Xreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Free:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < 0; i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(0, j, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(0, j, k).size(1); n2++)
-                for(size_t n3 = 0; n3 < Field(0, j, k).size(2); n3++)
-                {
-                    Field(i, j, k)({n1, n2, n3}) = Field((-i - 1)%Field.sizeX(), j, k)({n1, n2, n3});
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Fixed: [[fallthrough]];
-            default:
-            {
-                break;
-            }
-        }
-
-        switch (BCNX)
-        {
-            case BoundaryConditionTypes::NoFlux:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < 0; i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(Field.sizeX() - 1, j, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(Field.sizeX() - 1, j, k).size(1); n2++)
-                for(size_t n3 = 0; n3 < Field(Field.sizeX() - 1, j, k).size(2); n3++)
-                {
-                    Field(Field.sizeX() - i - 1, j, k)({n1, n2, n3}) = Field((Field.sizeX() + i)%Field.sizeX(), j, k)({n1, n2, n3}).Xreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Mirror:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < 0; i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(Field.sizeX() - 1, j, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(Field.sizeX() - 1, j, k).size(1); n2++)
-                for(size_t n3 = 0; n3 < Field(Field.sizeX() - 1, j, k).size(2); n3++)
-                {
-                    Field(Field.sizeX() - i - 1, j, k)({n1, n2, n3}) = Field((Field.sizeX() + i - 1)%Field.sizeX(), j, k)({n1, n2, n3}).Xreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Free:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < 0; i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(Field.sizeX() - 1, j, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(Field.sizeX() - 1, j, k).size(1); n2++)
-                for(size_t n3 = 0; n3 < Field(Field.sizeX() - 1, j, k).size(2); n3++)
-                {
-                    Field(Field.sizeX() - i - 1, j, k)({n1, n2, n3}) = Field((Field.sizeX() + i)%Field.sizeX(), j, k)({n1, n2, n3});
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Fixed: [[fallthrough]];
-            default:
-            {
-                break;
-            }
-        }
-#ifdef MPI_PARALLEL
-        if(MPI_3D_DECOMPOSITION)
-        {
-            CommunicateX(Field);
-        }
-        else
-        {
-            Communicate(Field);
-        }
-#endif
-    }
-}
 template< class T>
 void BoundaryConditions::SetYVector(Storage3D<T, 0> &Field) const
 {
@@ -1683,6 +1440,7 @@ void BoundaryConditions::SetYVector(Storage3D<T, 0> &Field) const
             return;
         }
 
+        long int jmax = 0;
         switch (BC0Y)
         {
             case BoundaryConditionTypes::NoFlux:
@@ -1711,13 +1469,18 @@ void BoundaryConditions::SetYVector(Storage3D<T, 0> &Field) const
                 }
                 break;
             }
+            case BoundaryConditionTypes::FreeGradient:
+            {
+                jmax = 1;
+                [[fallthrough]];
+            }
             case BoundaryConditionTypes::Free:
             {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
 #endif
                 for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < 0; j++)
+                for(long int j = -Field.BcellsY(); j < jmax; j++)
                 for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
                 {
                     Field(i, j, k) = Field(i, (-j - 1)%Field.sizeY(), k);
@@ -1731,6 +1494,7 @@ void BoundaryConditions::SetYVector(Storage3D<T, 0> &Field) const
             }
         }
 
+        jmax = 0;
         switch (BCNY)
         {
             case BoundaryConditionTypes::NoFlux:
@@ -1759,13 +1523,18 @@ void BoundaryConditions::SetYVector(Storage3D<T, 0> &Field) const
                 }
                 break;
             }
+            case BoundaryConditionTypes::FreeGradient:
+            {
+                jmax = -1;
+                [[fallthrough]];
+            }
             case BoundaryConditionTypes::Free:
             {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
 #endif
                 for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < 0; j++)
+                for(long int j = -Field.BcellsY(); j < jmax; j++)
                 for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
                 {
                     Field(i, Field.sizeY() - j - 1, k) = Field(i, (Field.sizeY() + j)%Field.sizeY(), k);
@@ -1787,8 +1556,8 @@ void BoundaryConditions::SetYVector(Storage3D<T, 0> &Field) const
     }
 }
 
-template< class T>
-void BoundaryConditions::SetYVector(Storage3D<T, 1> &Field) const
+template< class T, size_t Num>
+void BoundaryConditions::SetYVector(Storage3D<T, Num> &Field) const
 {
     if(Field.BcellsY())
     {
@@ -1801,14 +1570,15 @@ void BoundaryConditions::SetYVector(Storage3D<T, 1> &Field) const
             for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
             for(long int j = -Field.BcellsY(); j < 0; j++)
             for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-            for(size_t n = 0; n < Field(i, 0, k).size(0); n++)
+            for(size_t n = 0; n < Field.tensor_size(); n++)
             {
-                Field(i, j, k)({n}) = Field(i, (Field.sizeY() + j)%Field.sizeY(), k)({n});
-                Field(i, Field.sizeY() - j - 1, k)({n}) = Field(i, (-j - 1)%Field.sizeY(), k)({n});
+                Field(i, j, k)[n] = Field(i, (Field.sizeY() + j)%Field.sizeY(), k)[n];
+                Field(i, Field.sizeY() - j - 1, k)[n] = Field(i, (-j - 1)%Field.sizeY(), k)[n];
             }
             return;
         }
 
+        long int jmax = 0;
         switch (BC0Y)
         {
             case BoundaryConditionTypes::NoFlux:
@@ -1819,9 +1589,9 @@ void BoundaryConditions::SetYVector(Storage3D<T, 1> &Field) const
                 for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
                 for(long int j = -Field.BcellsY(); j < 0; j++)
                 for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n = 0; n < Field(i, 0, k).size(0); n++)
+                for(size_t n = 0; n < Field.tensor_size(); n++)
                 {
-                    Field(i, j, k)({n}) = Field(i, (-j - 1)%Field.sizeY(), k)({n}).Yreflected();
+                    Field(i, j, k)[n] = Field(i, (-j - 1)%Field.sizeY(), k)[n].Yreflected();
                 }
                 break;
             }
@@ -1833,11 +1603,16 @@ void BoundaryConditions::SetYVector(Storage3D<T, 1> &Field) const
                 for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
                 for(long int j = -Field.BcellsY(); j < 0; j++)
                 for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n = 0; n < Field(i, 0, k).size(0); n++)
+                for(size_t n = 0; n < Field.tensor_size(); n++)
                 {
-                    Field(i, j, k)({n}) = Field(i, (-j)%Field.sizeY(), k)({n}).Yreflected();
+                    Field(i, j, k)[n] = Field(i, (-j)%Field.sizeY(), k)[n].Yreflected();
                 }
                 break;
+            }
+            case BoundaryConditionTypes::FreeGradient:
+            {
+                jmax = 1;
+                [[fallthrough]];
             }
             case BoundaryConditionTypes::Free:
             {
@@ -1845,11 +1620,11 @@ void BoundaryConditions::SetYVector(Storage3D<T, 1> &Field) const
 #pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
 #endif
                 for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < 0; j++)
+                for(long int j = -Field.BcellsY(); j < jmax; j++)
                 for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n = 0; n < Field(i, 0, k).size(0); n++)
+                for(size_t n = 0; n < Field.tensor_size(); n++)
                 {
-                    Field(i, j, k)({n}) = Field(i, (-j - 1)%Field.sizeY(), k)({n});
+                    Field(i, j, k)[n] = Field(i, (-j - 1)%Field.sizeY(), k)[n];
                 }
                 break;
             }
@@ -1860,6 +1635,7 @@ void BoundaryConditions::SetYVector(Storage3D<T, 1> &Field) const
             }
         }
 
+        jmax = 0;
         switch (BCNY)
         {
             case BoundaryConditionTypes::NoFlux:
@@ -1870,9 +1646,9 @@ void BoundaryConditions::SetYVector(Storage3D<T, 1> &Field) const
                 for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
                 for(long int j = -Field.BcellsY(); j < 0; j++)
                 for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n = 0; n < Field(i, Field.sizeY() - 1, k).size(0); n++)
+                for(size_t n = 0; n < Field.tensor_size(); n++)
                 {
-                    Field(i, Field.sizeY() - j - 1, k)({n}) = Field(i, (Field.sizeY() + j)%Field.sizeY(), k)({n}).Yreflected();
+                    Field(i, Field.sizeY() - j - 1, k)[n] = Field(i, (Field.sizeY() + j)%Field.sizeY(), k)[n].Yreflected();
                 }
                 break;
             }
@@ -1884,11 +1660,16 @@ void BoundaryConditions::SetYVector(Storage3D<T, 1> &Field) const
                 for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
                 for(long int j = -Field.BcellsY(); j < 0; j++)
                 for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n = 0; n < Field(i, Field.sizeY() - 1, k).size(0); n++)
+                for(size_t n = 0; n < Field.tensor_size(); n++)
                 {
-                    Field(i, Field.sizeY() - j - 1, k)({n}) = Field(i, (Field.sizeY() + j - 1)%Field.sizeY(), k)({n}).Yreflected();
+                    Field(i, Field.sizeY() - j - 1, k)[n] = Field(i, (Field.sizeY() + j - 1)%Field.sizeY(), k)[n].Yreflected();
                 }
                 break;
+            }
+            case BoundaryConditionTypes::FreeGradient:
+            {
+                jmax = -1;
+                [[fallthrough]];
             }
             case BoundaryConditionTypes::Free:
             {
@@ -1896,11 +1677,11 @@ void BoundaryConditions::SetYVector(Storage3D<T, 1> &Field) const
 #pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
 #endif
                 for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < 0; j++)
+                for(long int j = -Field.BcellsY(); j < jmax; j++)
                 for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n = 0; n < Field(i, Field.sizeY() - 1, k).size(0); n++)
+                for(size_t n = 0; n < Field.tensor_size(); n++)
                 {
-                    Field(i, Field.sizeY() - j - 1, k)({n}) = Field(i, (Field.sizeY() + j)%Field.sizeY(), k)({n});
+                    Field(i, Field.sizeY() - j - 1, k)[n] = Field(i, (Field.sizeY() + j)%Field.sizeY(), k)[n];
                 }
                 break;
             }
@@ -1918,289 +1699,7 @@ void BoundaryConditions::SetYVector(Storage3D<T, 1> &Field) const
 #endif
     }
 }
-template< class T>
-void BoundaryConditions::SetYVector(Storage3D<T, 2> &Field) const
-{
-    if(Field.BcellsY())
-    {
-        if(BC0Y == BoundaryConditionTypes::Periodic or
-           BCNY == BoundaryConditionTypes::Periodic)
-        {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-            for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-            for(long int j = -Field.BcellsY(); j < 0; j++)
-            for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-            for(size_t n1 = 0; n1 < Field(i, 0, k).size(0); n1++)
-            for(size_t n2 = 0; n2 < Field(i, 0, k).size(1); n2++)
-            {
-                Field(i, j, k)({n1, n2}) = Field(i, Field.sizeY() + j, k)({n1, n2});
-                Field(i, Field.sizeY() - j - 1, k)({n1, n2}) = Field(i, (-j - 1)%Field.sizeY(), k)({n1, n2});
-            }
-            return;
-        }
 
-        switch (BC0Y)
-        {
-            case BoundaryConditionTypes::NoFlux:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < 0; j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(i, 0, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, 0, k).size(1); n2++)
-                {
-                    Field(i, j, k)({n1, n2}) = Field(i, (-j - 1)%Field.sizeY(), k)({n1, n2}).Yreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Mirror:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < 0; j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(i, 0, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, 0, k).size(1); n2++)
-                {
-                    Field(i, j, k)({n1, n2}) = Field(i, (-j)%Field.sizeY(), k)({n1, n2}).Yreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Free:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < 0; j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(i, 0, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, 0, k).size(1); n2++)
-                {
-                    Field(i, j, k)({n1, n2}) = Field(i, (-j - 1)%Field.sizeY(), k)({n1, n2});
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Fixed: [[fallthrough]];
-            default:
-            {
-                break;
-            }
-        }
-
-        switch (BCNY)
-        {
-            case BoundaryConditionTypes::NoFlux:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < 0; j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(i, Field.sizeY() - 1, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, Field.sizeY() - 1, k).size(1); n2++)
-                {
-                    Field(i, Field.sizeY() - j - 1, k)({n1, n2}) = Field(i, (Field.sizeY() + j)%Field.sizeY(), k)({n1, n2}).Yreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Mirror:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < 0; j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(i, Field.sizeY() - 1, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, Field.sizeY() - 1, k).size(1); n2++)
-                {
-                    Field(i, Field.sizeY() - j - 1, k)({n1, n2}) = Field(i, (Field.sizeY() + j - 1)%Field.sizeY(), k)({n1, n2}).Yreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Free:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < 0; j++)
-                for(long int k = -Field.Bcellsz(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(i, Field.sizeY() - 1, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, Field.sizeY() - 1, k).size(1); n2++)
-                {
-                    Field(i, Field.sizeY() - j - 1, k)({n1, n2}) = Field(i, (Field.sizeY() + j)%Field.sizeY(), k)({n1, n2});
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Fixed: [[fallthrough]];
-            default:
-            {
-                break;
-            }
-        }
-#ifdef MPI_PARALLEL
-        if(MPI_3D_DECOMPOSITION)
-        {
-            CommunicateY(Field);
-        }
-#endif
-    }
-}
-template< class T>
-void BoundaryConditions::SetYVector(Storage3D<T, 3> &Field) const
-{
-    if(Field.BcellsY())
-    {
-        if(BC0Y == BoundaryConditionTypes::Periodic or
-           BCNY == BoundaryConditionTypes::Periodic)
-        {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-            for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-            for(long int j = -Field.BcellsY(); j < 0; j++)
-            for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-            for(size_t n1 = 0; n1 < Field(i, 0, k).size(0); n1++)
-            for(size_t n2 = 0; n2 < Field(i, 0, k).size(1); n2++)
-            for(size_t n3 = 0; n3 < Field(i, 0, k).size(2); n3++)
-            {
-                Field(i, j, k)({n1, n2, n3}) = Field(i, (Field.sizeY() + j)%Field.sizeY(), k)({n1, n2, n3});
-                Field(i, Field.sizeY() - j - 1, k)({n1, n2, n3}) = Field(i, (-j - 1)%Field.sizeY(), k)({n1, n2, n3});
-            }
-            return;
-        }
-
-        switch (BC0Y)
-        {
-            case BoundaryConditionTypes::NoFlux:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < 0; j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(i, 0, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, 0, k).size(1); n2++)
-                for(size_t n3 = 0; n3 < Field(i, 0, k).size(2); n3++)
-                {
-                    Field(i, j, k)({n1, n2, n3}) = Field(i, (-j - 1)%Field.sizeY(), k)({n1, n2, n3}).Yreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Mirror:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < 0; j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(i, 0, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, 0, k).size(1); n2++)
-                for(size_t n3 = 0; n3 < Field(i, 0, k).size(2); n3++)
-                {
-                    Field(i, j, k)({n1, n2, n3}) = Field(i, (-j)%Field.sizeY(), k)({n1, n2, n3}).Yreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Free:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < 0; j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(i, 0, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, 0, k).size(1); n2++)
-                for(size_t n3 = 0; n3 < Field(i, 0, k).size(2); n3++)
-                {
-                    Field(i, j, k)({n1, n2, n3}) = Field(i, (-j - 1)%Field.sizeY(), k)({n1, n2, n3});
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Fixed: [[fallthrough]];
-            default:
-            {
-                break;
-            }
-        }
-
-        switch (BCNY)
-        {
-            case BoundaryConditionTypes::NoFlux:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < 0; j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(i, Field.sizeY() - 1, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, Field.sizeY() - 1, k).size(1); n2++)
-                for(size_t n3 = 0; n3 < Field(i, Field.sizeY() - 1, k).size(2); n3++)
-                {
-                    Field(i, Field.sizeY() - j - 1, k)({n1, n2, n3}) = Field(i, (Field.sizeY() + j)%Field.sizeY(), k)({n1, n2, n3}).Yreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Mirror:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < 0; j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(i, Field.sizeY() - 1, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, Field.sizeY() - 1, k).size(1); n2++)
-                for(size_t n3 = 0; n3 < Field(i, Field.sizeY() - 1, k).size(2); n3++)
-                {
-                    Field(i, Field.sizeY() - j - 1, k)({n1, n2, n3}) = Field(i, (Field.sizeY() + j - 1)%Field.sizeY(), k)({n1, n2, n3}).Yreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Free:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < 0; j++)
-                for(long int k = -Field.BcellsZ(); k < Field.sizeZ() + Field.BcellsZ(); k++)
-                for(size_t n1 = 0; n1 < Field(i, Field.sizeY() - 1, k).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, Field.sizeY() - 1, k).size(1); n2++)
-                for(size_t n3 = 0; n3 < Field(i, Field.sizeY() - 1, k).size(2); n3++)
-                {
-                    Field(i, Field.sizeY() - j - 1, k)({n1, n2, n3}) = Field(i, (Field.sizeY() + j)%Field.sizeY(), k)({n1, n2, n3});
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Fixed: [[fallthrough]];
-            default:
-            {
-                break;
-            }
-        }
-#ifdef MPI_PARALLEL
-        if(MPI_3D_DECOMPOSITION)
-        {
-            CommunicateY(Field);
-        }
-#endif
-    }
-}
 template< class T >
 void BoundaryConditions::SetZVector(Storage3D<T, 0> &Field) const
 {
@@ -2222,6 +1721,7 @@ void BoundaryConditions::SetZVector(Storage3D<T, 0> &Field) const
             return;
         }
 
+        long int kmax = 0;
         switch (BC0Z)
         {
             case BoundaryConditionTypes::NoFlux:
@@ -2250,6 +1750,11 @@ void BoundaryConditions::SetZVector(Storage3D<T, 0> &Field) const
                 }
                 break;
             }
+            case BoundaryConditionTypes::FreeGradient:
+            {
+                kmax = 1;
+                [[fallthrough]];
+            }
             case BoundaryConditionTypes::Free:
             {
 #ifdef _OPENMP
@@ -2257,7 +1762,7 @@ void BoundaryConditions::SetZVector(Storage3D<T, 0> &Field) const
 #endif
                 for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
                 for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < 0; k++)
+                for(long int k = -Field.BcellsZ(); k < kmax; k++)
                 {
                     Field(i, j, k) = Field(i, j, (-k - 1)%Field.sizeZ());
                 }
@@ -2270,6 +1775,7 @@ void BoundaryConditions::SetZVector(Storage3D<T, 0> &Field) const
             }
         }
 
+        kmax = 0;
         switch (BCNZ)
         {
             case BoundaryConditionTypes::NoFlux:
@@ -2298,6 +1804,11 @@ void BoundaryConditions::SetZVector(Storage3D<T, 0> &Field) const
                 }
                 break;
             }
+            case BoundaryConditionTypes::FreeGradient:
+            {
+                kmax = -1;
+                [[fallthrough]];
+            }
             case BoundaryConditionTypes::Free:
             {
 #ifdef _OPENMP
@@ -2305,7 +1816,7 @@ void BoundaryConditions::SetZVector(Storage3D<T, 0> &Field) const
 #endif
                 for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
                 for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < 0; k++)
+                for(long int k = -Field.BcellsZ(); k < kmax; k++)
                 {
                     Field(i, j, Field.sizeZ() - k - 1) = Field(i, j, (Field.sizeZ() + k)%Field.sizeZ());
                 }
@@ -2326,8 +1837,8 @@ void BoundaryConditions::SetZVector(Storage3D<T, 0> &Field) const
     }
 }
 
-template< class T >
-void BoundaryConditions::SetZVector(Storage3D<T, 1> &Field) const
+template< class T, size_t Num>
+void BoundaryConditions::SetZVector(Storage3D<T, Num> &Field) const
 {
     if(Field.BcellsZ())
     {
@@ -2340,14 +1851,15 @@ void BoundaryConditions::SetZVector(Storage3D<T, 1> &Field) const
             for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
             for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
             for(long int k = -Field.BcellsZ(); k < 0; k++)
-            for(size_t n = 0; n < Field(i, j, 0).size(0); n++)
+            for(size_t n = 0; n < Field.tensor_size(); n++)
             {
-                Field(i, j, k)({n}) = Field(i, j, (Field.sizeZ() + k)%Field.sizeZ())({n});
-                Field(i, j, Field.sizeZ() - k - 1)({n}) = Field(i, j, (-k - 1)%Field.sizeZ())({n});
+                Field(i, j, k)[n] = Field(i, j, (Field.sizeZ() + k)%Field.sizeZ())[n];
+                Field(i, j, Field.sizeZ() - k - 1)[n] = Field(i, j, (-k - 1)%Field.sizeZ())[n];
             }
             return;
         }
 
+        long int kmax = 0;
         switch (BC0Z)
         {
             case BoundaryConditionTypes::NoFlux:
@@ -2358,9 +1870,9 @@ void BoundaryConditions::SetZVector(Storage3D<T, 1> &Field) const
                 for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
                 for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
                 for(long int k = -Field.BcellsZ(); k < 0; k++)
-                for(size_t n = 0; n < Field(i, j, 0).size(0); n++)
+                for(size_t n = 0; n < Field.tensor_size(); n++)
                 {
-                    Field(i, j, k)({n}) = Field(i, j, (-k - 1)%Field.sizeZ())({n}).Zreflected();
+                    Field(i, j, k)[n] = Field(i, j, (-k - 1)%Field.sizeZ())[n].Zreflected();
                 }
                 break;
             }
@@ -2372,11 +1884,16 @@ void BoundaryConditions::SetZVector(Storage3D<T, 1> &Field) const
                 for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
                 for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
                 for(long int k = -Field.BcellsZ(); k < 0; k++)
-                for(size_t n = 0; n < Field(i, j, 0).size(0); n++)
+                for(size_t n = 0; n < Field.tensor_size(); n++)
                 {
-                    Field(i, j, k)({n}) = Field(i, j, (-k)%Field.sizeZ())({n}).Zreflected();
+                    Field(i, j, k)[n] = Field(i, j, (-k)%Field.sizeZ())[n].Zreflected();
                 }
                 break;
+            }
+            case BoundaryConditionTypes::FreeGradient:
+            {
+                kmax = 1;
+                [[fallthrough]];
             }
             case BoundaryConditionTypes::Free:
             {
@@ -2385,10 +1902,10 @@ void BoundaryConditions::SetZVector(Storage3D<T, 1> &Field) const
 #endif
                 for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
                 for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < 0; k++)
-                for(size_t n = 0; n < Field(i, j, 0).size(0); n++)
+                for(long int k = -Field.BcellsZ(); k < kmax; k++)
+                for(size_t n = 0; n < Field.tensor_size(); n++)
                 {
-                    Field(i, j, k)({n}) = Field(i, j, (-k - 1)%Field.sizeZ())({n});
+                    Field(i, j, k)[n] = Field(i, j, (-k - 1)%Field.sizeZ())[n];
                 }
                 break;
             }
@@ -2399,6 +1916,7 @@ void BoundaryConditions::SetZVector(Storage3D<T, 1> &Field) const
             }
         }
 
+        kmax = 0;
         switch (BCNZ)
         {
             case BoundaryConditionTypes::NoFlux:
@@ -2409,9 +1927,9 @@ void BoundaryConditions::SetZVector(Storage3D<T, 1> &Field) const
                 for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
                 for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
                 for(long int k = -Field.BcellsZ(); k < 0; k++)
-                for(size_t n = 0; n < Field(i, j, Field.sizeZ() - 1).size(0); n++)
+                for(size_t n = 0; n < Field.tensor_size(); n++)
                 {
-                    Field(i, j, Field.sizeZ() - k - 1)({n}) = Field(i, j, (Field.sizeZ() + k)%Field.sizeZ())({n}).Zreflected();
+                    Field(i, j, Field.sizeZ() - k - 1)[n] = Field(i, j, (Field.sizeZ() + k)%Field.sizeZ())[n].Zreflected();
                 }
                 break;
             }
@@ -2423,11 +1941,16 @@ void BoundaryConditions::SetZVector(Storage3D<T, 1> &Field) const
                 for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
                 for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
                 for(long int k = -Field.BcellsZ(); k < 0; k++)
-                for(size_t n = 0; n < Field(i, j, Field.sizeZ() - 1).size(0); n++)
+                for(size_t n = 0; n < Field.tensor_size(); n++)
                 {
-                    Field(i, j, Field.sizeZ() - k - 1)({n}) = Field(i, j, (Field.sizeZ() + k - 1)%Field.sizeZ())({n}).Zreflected();
+                    Field(i, j, Field.sizeZ() - k - 1)[n] = Field(i, j, (Field.sizeZ() + k - 1)%Field.sizeZ())[n].Zreflected();
                 }
                 break;
+            }
+            case BoundaryConditionTypes::FreeGradient:
+            {
+                kmax = -1;
+                [[fallthrough]];
             }
             case BoundaryConditionTypes::Free:
             {
@@ -2436,295 +1959,10 @@ void BoundaryConditions::SetZVector(Storage3D<T, 1> &Field) const
 #endif
                 for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
                 for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < 0; k++)
-                for(size_t n = 0; n < Field(i, j, 0).size(0); n++)
+                for(long int k = -Field.BcellsZ(); k < kmax; k++)
+                for(size_t n = 0; n < Field.tensor_size(); n++)
                 {
-                    Field(i, j, Field.sizeZ() - k - 1)({n}) = Field(i, j, (Field.sizeZ() + k)%Field.sizeZ())({n});
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Fixed: [[fallthrough]];
-            default:
-            {
-                break;
-            }
-        }
-#ifdef MPI_PARALLEL
-        if(MPI_3D_DECOMPOSITION)
-        {
-            CommunicateZ(Field);
-        }
-#endif
-    }
-}
-
-template< class T >
-void BoundaryConditions::SetZVector(Storage3D<T, 2> &Field) const
-{
-    if(Field.BcellsZ())
-    {
-        if(BC0Z == BoundaryConditionTypes::Periodic or
-           BCNZ == BoundaryConditionTypes::Periodic)
-        {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-            for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-            for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-            for(long int k = -Field.BcellsZ(); k < 0; k++)
-            for(size_t n1 = 0; n1 < Field(i, j, 0).size(0); n1++)
-            for(size_t n2 = 0; n2 < Field(i, j, 0).size(1); n2++)
-            {
-                Field(i, j, k)({n1, n2}) = Field(i, j, (Field.sizeZ() + k)%Field.sizeZ())({n1, n2});
-                Field(i, j, Field.sizeZ() - k - 1)({n1, n2}) = Field(i, j, (-k - 1)%Field.sizeZ())({n1, n2});
-            }
-            return;
-        }
-
-        switch (BC0Z)
-        {
-            case BoundaryConditionTypes::NoFlux:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < 0; k++)
-                for(size_t n1 = 0; n1 < Field(i, j, 0).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, j, 0).size(1); n2++)
-                {
-                    Field(i, j, k)({n1, n2}) = Field(i, j, (-k - 1)%Field.sizeZ())({n1, n2}).Zreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Mirror:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < 0; k++)
-                for(size_t n1 = 0; n1 < Field(i, j, 0).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, j, 0).size(1); n2++)
-                {
-                    Field(i, j, k)({n1, n2}) = Field(i, j, (-k)%Field.sizeZ())({n1, n2}).Zreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Free:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < 0; k++)
-                for(size_t n1 = 0; n1 < Field(i, j, 0).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, j, 0).size(1); n2++)
-                {
-                    Field(i, j, k)({n1, n2}) = Field(i, j, (-k - 1)%Field.sizeZ())({n1, n2});
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Fixed: [[fallthrough]];
-            default:
-            {
-                break;
-            }
-        }
-
-        switch (BCNZ)
-        {
-            case BoundaryConditionTypes::NoFlux:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < 0; k++)
-                for(size_t n1 = 0; n1 < Field(i, j, Field.sizeZ() - 1).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, j, Field.sizeZ() - 1).size(1); n2++)
-                {
-                    Field(i, j, Field.sizeZ() - k - 1)({n1, n2}) = Field(i, j, (Field.sizeZ() + k)%Field.sizeZ())({n1, n2}).Zreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Mirror:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < 0; k++)
-                for(size_t n1 = 0; n1 < Field(i, j, Field.sizeZ() - 1).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, j, Field.sizeZ() - 1).size(1); n2++)
-                {
-                    Field(i, j, Field.sizeZ() - k - 1)({n1, n2}) = Field(i, j, (Field.sizeZ() + k - 1)%Field.sizeZ())({n1, n2}).Zreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Free:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < 0; k++)
-                for(size_t n1 = 0; n1 < Field(i, j, Field.sizeZ() - 1).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, j, Field.sizeZ() - 1).size(1); n2++)
-                {
-                    Field(i, j, Field.sizeZ() - k - 1)({n1, n2}) = Field(i, j, (Field.sizeZ() + k)%Field.sizeZ())({n1, n2});
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Fixed: [[fallthrough]];
-            default:
-            {
-                break;
-            }
-        }
-#ifdef MPI_PARALLEL
-        if(MPI_3D_DECOMPOSITION)
-        {
-            CommunicateZ(Field);
-        }
-#endif
-    }
-}
-
-template< class T >
-void BoundaryConditions::SetZVector(Storage3D<T, 3> &Field) const
-{
-    if(Field.BcellsZ())
-    {
-        if(BC0Z == BoundaryConditionTypes::Periodic or
-           BCNZ == BoundaryConditionTypes::Periodic)
-        {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-            for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-            for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-            for(long int k = -Field.BcellsZ(); k < 0; k++)
-            for(size_t n1 = 0; n1 < Field(i, j, 0).size(0); n1++)
-            for(size_t n2 = 0; n2 < Field(i, j, 0).size(1); n2++)
-            for(size_t n3 = 0; n3 < Field(i, j, 0).size(2); n3++)
-            {
-                Field(i, j, k)({n1, n2, n3}) = Field(i, j, (Field.sizeZ() + k)%Field.sizeZ())({n1, n2, n3});
-                Field(i, j, Field.sizeZ() - k - 1)({n1, n2, n3}) = Field(i, j, (-k - 1)%Field.sizeZ())({n1, n2, n3});
-            }
-            return;
-        }
-
-        switch (BC0Z)
-        {
-            case BoundaryConditionTypes::NoFlux:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < 0; k++)
-                for(size_t n1 = 0; n1 < Field(i, j, 0).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, j, 0).size(1); n2++)
-                for(size_t n3 = 0; n3 < Field(i, j, 0).size(2); n3++)
-                {
-                    Field(i, j, k)({n1, n2, n3}) = Field(i, j, (-k - 1)%Field.sizeZ())({n1, n2, n3}).Zreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Mirror:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < 0; k++)
-                for(size_t n1 = 0; n1 < Field(i, j, 0).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, j, 0).size(1); n2++)
-                for(size_t n3 = 0; n3 < Field(i, j, 0).size(2); n3++)
-                {
-                    Field(i, j, k)({n1, n2, n3}) = Field(i, j, (-k)%Field.sizeZ())({n1, n2, n3}).Zreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Free:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < 0; k++)
-                for(size_t n1 = 0; n1 < Field(i, j, 0).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, j, 0).size(1); n2++)
-                for(size_t n3 = 0; n3 < Field(i, j, 0).size(2); n3++)
-                {
-                    Field(i, j, k)({n1, n2, n3}) = Field(i, j, (-k - 1)%Field.sizeZ())({n1, n2, n3});
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Fixed: [[fallthrough]];
-            default:
-            {
-                break;
-            }
-        }
-
-        switch (BCNZ)
-        {
-            case BoundaryConditionTypes::NoFlux:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < 0; k++)
-                for(size_t n1 = 0; n1 < Field(i, j, Field.sizeZ() - 1).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, j, Field.sizeZ() - 1).size(1); n2++)
-                for(size_t n3 = 0; n3 < Field(i, j, Field.sizeZ() - 1).size(2); n3++)
-                {
-                    Field(i, j, Field.sizeZ() - k - 1)({n1, n2, n3}) = Field(i, j, (Field.sizeZ() + k)%Field.sizeZ())({n1, n2, n3}).Zreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Mirror:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < 0; k++)
-                for(size_t n1 = 0; n1 < Field(i, j, Field.sizeZ() - 1).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, j, Field.sizeZ() - 1).size(1); n2++)
-                for(size_t n3 = 0; n3 < Field(i, j, Field.sizeZ() - 1).size(2); n3++)
-                {
-                    Field(i, j, Field.sizeZ() - k - 1)({n1, n2, n3}) = Field(i, j, (Field.sizeZ() + k - 1)%Field.sizeZ())({n1, n2, n3}).Zreflected();
-                }
-                break;
-            }
-            case BoundaryConditionTypes::Free:
-            {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(OMP_SCHEDULING_TYPE,OMP_CHUNKSIZE)
-#endif
-                for(long int i = -Field.BcellsX(); i < Field.sizeX() + Field.BcellsX(); i++)
-                for(long int j = -Field.BcellsY(); j < Field.sizeY() + Field.BcellsY(); j++)
-                for(long int k = -Field.BcellsZ(); k < 0; k++)
-                for(size_t n1 = 0; n1 < Field(i, j, Field.sizeZ() - 1).size(0); n1++)
-                for(size_t n2 = 0; n2 < Field(i, j, Field.sizeZ() - 1).size(1); n2++)
-                for(size_t n3 = 0; n3 < Field(i, j, Field.sizeZ() - 1).size(2); n3++)
-                {
-                    Field(i, j, Field.sizeZ() - k -1)({n1, n2, n3}) = Field(i, j, (Field.sizeZ() + k)%Field.sizeZ())({n1, n2, n3});
+                    Field(i, j, Field.sizeZ() - k - 1)[n] = Field(i, j, (Field.sizeZ() + k)%Field.sizeZ())[n];
                 }
                 break;
             }
@@ -3215,6 +2453,7 @@ inline void BoundaryConditions::CommunicateZ([[maybe_unused]] A& storage) const
 }
 
 #endif
+
 
 }// namespace openphase
 #endif

@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2014
- *   Main contributors :   Matthias Stratmann; Johannes Goerler
+ *
+ *  File created :   2014
+ *  Main contributors :   Matthias Stratmann; Johannes Goerler
  *
  */
 
@@ -31,37 +31,31 @@
 
 namespace openphase
 {
-class BoundaryConditions;
-class ElasticProperties;
-class GrainsProperties;
-class InterfaceField;
-class PhaseField;
-class Settings;
-class Temperature;
-class Composition;
-class Nucleation;
-class DrivingForce;
-class Orientations;
 
-class TextOutput //: public OPObject                                                               ///< Output of tabulated simulation data
+class TextOutput                                                                ///< Output of simulation data in ASCI format
 {
  public:
-    static void WriteValue(double Value,std::string filename, double time);                        ///< Write double value in column
-    static void WriteMultipleValues(std::vector<std::string> Names, std::vector<double> value, 
-            std::string filename, double time);                                                    ///< Write vector values and names of value in columns
-    static void WritedVectorNValues(std::vector<std::string> Names, dVectorN value, 
-            std::string filename, double time);                                                    ///< Write dVectorN values and names of values in columns
-    static void LineConcentration(Composition& Cx, PhaseField& Phi,
-                                  std::string filename, double timestep,
-                                  std::string type, std::string axis, int x, int y,int z);         ///< Write total composition over a straight line in separate files
-    static void AveragePlasticStrain(ElasticProperties &EP, std::string filename, 
-                                     double timeOrStrain, size_t precision = 5);                   ///< Write average Plastic strain over time
-    static void maxElasticRotation(ElasticProperties& EP,
-           PhaseField& Phase,Orientations& OR, int tStep, std::string Filename);                   ///< Write max elastic rotations over time
-    static NodeAB<double,double> IntegrateDG(PhaseField& Phase, DrivingForce& dG, std::string filename, double RealTime);
-    static NodeAB<double,double> IntegrateDG(PhaseField& Phase, DrivingForce& dG, std::string filename, NodeAB<double,double> dgold, double RealTime);
+    static void SetSeparator(std::string new_separator);                        ///< Sets new text separator (has global effect)
+    static void ResetSeparator(void);                                           ///< Resets text separator to its default value (has global effect)
+
+    static void WriteValue(std::string filename,
+                           double time,
+                           double value,
+                           std::ios_base::fmtflags format =
+                           std::ios_base::scientific);                          ///< Writes double value in a column over time
+    static void WriteNamedValues(std::string file_name,
+                                 std::vector<std::string> names,
+                                 std::vector<double> values,
+                                 std::ios_base::fmtflags format =
+                                 std::ios_base::scientific);                    ///< Writes vector of values in the named columns using specified format
+    static void WritedVectorNValues(std::string filename,
+                                    std::vector<std::string> names,
+                                    double time,
+                                    dVectorN values,
+                                    std::ios_base::fmtflags format =
+                                    std::ios_base::scientific);                 ///< Write dVectorN values and names of values in columns over time
  private:
-    static constexpr auto separator = ' ';
+    static std::string separator;                                               ///< Text separator (default ", ")
 };
 
 } // namespace openphase

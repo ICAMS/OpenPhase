@@ -45,7 +45,10 @@ class LocalLBM : public FlowSolverLBM
 public:
     LocalLBM(){};
     LocalLBM(Settings& locSettings, double in_dt):
-        FlowSolverLBM(locSettings, in_dt){};
+        FlowSolverLBM(locSettings)
+    {
+        SetTimeStep(in_dt);
+    };
 
     double CalculateContactAngle(const double sigmaSL, const double sigmaSV, const double sigmaLV) const;
     double CalculateMass(void) const;                                          ///< Calculates the total mass

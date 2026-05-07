@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2012
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Johannes Goerler
+ *
+ *  File created :   2012
+ *  Main contributors :   Oleg Shchyglo; Efim Borukhovich; Johannes Goerler
  *
  */
 
@@ -38,12 +38,13 @@ class AdvectionHR;
 class BoundaryConditions;
 class Composition;
 class DrivingForce;
-class EquilibriumPartitionDiffusionBinary;
 class InterfaceProperties;
 class PhaseField;
 class Settings;
 class Temperature;
 class Velocities;
+class EquilibriumPartitionDiffusionBinary;
+class ThermodynamicPropertiesEQP;
 
 enum class ElasticityModels : int                                               ///< Elasticity homogenization and materials models
 {
@@ -57,12 +58,32 @@ enum class ElasticityModels : int                                               
 
 enum class StrainModels : int                                                   ///< Models of mechanical strain
 {
-    Small                                                                       ///< Small strain model
+    Small,                                                                      ///< Small strain model
+    GreenLagrange,                                                              ///< Finite Green-Lagrange strain model
+    Hencky,                                                                     ///< Hencky strain model
+    Bazant                                                                      ///< Bazant strain approximation with exponent n=2
 };
 
 inline vStrain StrainSmall(const dMatrix3x3& locDefGrad)                        ///< Small strain model
 {
     return VoigtStrain((locDefGrad.transposed() + locDefGrad)*0.5 - dMatrix3x3::UnitTensor());
+};
+
+inline vStrain StrainGreenLagrange(const dMatrix3x3& locDefGrad)                ///< Green-Lagrange strain model
+{
+    dMatrix3x3 locCauchyStrain = locDefGrad.transposed()*locDefGrad;
+    return VoigtStrain((locCauchyStrain - dMatrix3x3::UnitTensor())*0.5);
+};
+
+inline vStrain StrainHencky(const dMatrix3x3& locDefGrad)                       ///< Hencky strain model
+{
+    dMatrix3x3 locCauchyStrain = locDefGrad.transposed()*locDefGrad;
+    return VoigtStrain(logM3x3(locCauchyStrain)*0.5);
+};
+inline vStrain StrainBazant(const dMatrix3x3& locDefGrad)                       ///< Bazant (n=2) strain model
+{
+    dMatrix3x3 locCauchyStrain = locDefGrad.transposed()*locDefGrad;
+    return VoigtStrain((locCauchyStrain - locCauchyStrain.inverted())*0.25);
 };
 
 class OP_EXPORTS ElasticProperties : public OPObject                            ///< Module which stores and handles elastic properties
@@ -86,11 +107,15 @@ class OP_EXPORTS ElasticProperties : public OPObject                            
     void SetEffectiveProperties(const PhaseField& Phase, const Temperature& Tx);///< Sets effective elastic properties considering thermo-mechanical coupling
     void SetEffectiveProperties(const PhaseField& Phase, const Composition& Cx,
                                                          const Temperature& Tx);///< Sets effective elastic properties  considering chemo- and thermo-mechanical coupling
+
     void SetEffectiveProperties(const PhaseField& Phase, const InterfaceProperties& IP);///< Sets effective elastic properties considering interface stress contribution
 
     void CalculateDrivingForce(const PhaseField& Phase, DrivingForce& dGab);    ///< Calculates elastic driving force
 
     void CalculateInterfaceEnergyContribution(PhaseField& Phase, InterfaceProperties& IP) const;///< Calculates interface energy contribution
+
+    void CalculateChemicalPotentialContribution(const PhaseField& Phase,
+                                                ThermodynamicPropertiesEQP& TP);///< Calculates chemical potential contribution
     void CalculateChemicalPotentialContribution(const PhaseField& Phase,
                                                 EquilibriumPartitionDiffusionBinary& DF);///< Calculates chemical potential contribution
     
@@ -108,6 +133,8 @@ class OP_EXPORTS ElasticProperties : public OPObject                            
     bool Write(const Settings& locSettings, const int tSep) const override;     ///< Writes restart output in binary format
 
     // VTK output
+    void WriteCauchyStressesVTK(Settings& locSettings, const int tStep,
+            const int precision=16) const;                                      ///< Writes Cauchy stresses in distorted configuration in VTK format
     void WriteEffectiveElasticConstantsVTK(Settings& locSettings, const int tStep,
             const int precision=16) const;                                      ///< Writes effective elastic constants in VTK format
     void WriteEigenStrainsVTK(Settings& locSettings, const int tStep,
@@ -173,9 +200,12 @@ class OP_EXPORTS ElasticProperties : public OPObject                            
     Storage<dMatrix3x3> GrainTransformationStretches;                           ///< Reference transformation stretches for each phase field
     Storage<dMatrix6x6> GrainElasticConstants;                                  ///< Reference elastic constants for each phase field
 
+    Storage<dMatrix3x3> PhaseTransformationRotations;                           ///< Transformation rotations of each phase, grain orientation is not considered
     Storage<dMatrix3x3> PhaseTransformationStretches;                           ///< Reference transformation stretches gradients of each phase (relative to Cref), grain orientation not considered
-    Storage<dMatrix6x6> PhaseElasticConstants;                                  ///< Reference elastic constants of each phase (relative to Cref), grain orientation not considered
-    Storage<double>     PoissonRatio;                                           ///< Poisson Ratio of each phase
+
+    Storage<dMatrix3x3> PhaseOrientationRelationships;                          ///< Orientation relationships of all phases, grain orientation is not considered
+    Storage<dMatrix6x6> PhaseElasticConstants;                                  ///< Reference elastic constants of each phase (relative to Cref), grain orientation is not considered
+    Storage<double>     PoissonRatio;                                           ///< Poisson ratio of each phase
 
     Storage3D<dMatrix3x3,0> VelocityGradientsTotal;                             ///< Storage for deformation gradient rates
     Storage3D<dMatrix3x3,0> DeformationGradientsTotal;                          ///< Storage for total deformation gradients
@@ -229,6 +259,7 @@ class OP_EXPORTS ElasticProperties : public OPObject                            
     vStrain StressFreeStrains(int i, int j, int k) const;                       ///< Returns strain considering strain operation mode (small, finite)
     vStrain ElasticStrains(int i, int j, int k) const;                          ///< Returns strain considering strain operation mode (small, finite)
     vStress ShearStresses(int i, int j, int k) const;                           ///< Returns shear stress
+    vStress CauchyStress(int i, int j, int k) const;                            ///< Returns Cauchy stress
     vStress Stress2PK(int i, int j, int k, const dMatrix3x3& locDefGrad) const; ///< Returns second P-K stress for a given total deformation gradient in the intermediate configuration
     dMatrix3x3 Stress2PKpullBack(int i, int j, int k) const;                    ///< Returns second P-K stress in the reference configuration
     dMatrix3x3 Stress1PK(int i, int j, int k) const;                            ///< Returns first P-K stress in a given point
@@ -243,6 +274,8 @@ class OP_EXPORTS ElasticProperties : public OPObject                            
 
  protected:
  private:
+
+    Table<bool> EnableDrivingForce;                                             ///< Switches phase pairs driving force contribution on/off
 
     bool ThermoMechanicalCoupling;                                              ///< Thermo-mechanical coupling flag
     Storage<dMatrix3x3> GrainAlpha;                                             ///< Linear thermal expansion coefficients for each phase field
@@ -276,6 +309,7 @@ class OP_EXPORTS ElasticProperties : public OPObject                            
     void SetBaseElasticConstants(const PhaseField& Phase);                      ///< Sets base elastic constants for each grain
     void AddThermalSoftening(const PhaseField& Phase, const Temperature& Tx);   ///< Calculates thermal softening contribution to the elastic constants
     void AddChemicalSoftening(const PhaseField& Phase, const Composition& Cx);  ///< Calculates chemical softening contribution to the elastic constants
+
     void SetEffectiveElasticConstants(const PhaseField& Phase);                 ///< Sets effective elastic constants
 
     void ApplyLocalRotationsToDeformationGradientsEigen(void);                  ///< Applies local rotations to transformation stretches base values

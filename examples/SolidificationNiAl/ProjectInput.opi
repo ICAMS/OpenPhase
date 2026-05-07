@@ -5,13 +5,13 @@
 
 $SimTtl   Simulation Title                          : Ni-Al Solidification (Additive Manufacturing)
 $nSteps   Number of Time Steps                      : 1000000000
-$FTime    Output to Disk every (tSteps)             : 1000
+$FTime    Output to Disk every (tSteps)             : 100
 $STime    Output to Screen every (tSteps)           : 100
 $LUnits   Units of Length                           : m
 $TUnits   Units of Time                             : s
 $MUnits   Units of Mass                             : kg
 $EUnits   Energy units                              : J
-$dt       Initial Time Step                         : 1e-7
+$dt       Initial Time Step                         : 1e-8
 $nOMP     Number of OpenMP Threads                  : 1
 $Restrt   Restart switch (Yes/No)                   : No
 $tStart   Restart at time step                      : 10000
@@ -23,7 +23,8 @@ $Nx       System Size in X Direction                : 60
 $Ny       System Size in Y Direction                : 60
 $Nz       System Size in Z Direction                : 120
 $dx       Grid Spacing                              : 1.0e-7
-$IWidth   Interface Width (in grid points)          : 4.5
+$Resolution                                         : Single
+$IWidth   Interface Width (in grid points)          : 5.0
 
 @Settings
 
@@ -37,9 +38,9 @@ $Phase_2  Name of Phase 2                           : L12
 @DrivingForce
 
 $Average        Driving force averaging             : Yes
-$CutOff_0_1     Driving force cutoff 0 1            : 1.95
-$CutOff_0_2     Driving force cutoff 0 2            : 1.95
-$CutOff_1_2     Driving force cutoff 1 2            : 1.95
+$Limit_0_1      Driving force cutoff limit 0 1      : 0.95
+$Limit_0_2      Driving force cutoff limit 0 2      : 0.95
+$Limit_1_2      Driving force cutoff limit 1 2      : 0.95
 
 @InterfaceProperties
 
@@ -71,16 +72,16 @@ $MobilityModel_0_2  Interface mobility model : Iso
 $Mu_0_2             Interface mobility       : 1.0e-8
 
 $MobilityModel_1_2  Interface mobility model : Iso
-$Mu_1_2             Interface mobility       : 1.0e-10
+$Mu_1_2             Interface mobility       : 1.0e-11
 
 $MobilityModel_0_0  Interface mobility model : Iso
 $Mu_0_0             Interface mobility       : 1.0e-8
 
 $MobilityModel_1_1  Interface mobility model : Iso
-$Mu_1_1             Interface mobility       : 1.0e-10
+$Mu_1_1             Interface mobility       : 1.0e-11
 
 $$MobilityModel_2_2 Interface mobility model : Iso
-$Mu_2_2             Interface mobility       : 1.0e-10
+$Mu_2_2             Interface mobility       : 1.0e-11
 
 
 @Nucleation
@@ -182,7 +183,8 @@ $DT_DRX X component of the temp. gradient   : 0
 $DT_DRY Y component of the temp. gradient   : 0
 $DT_DRZ Z component of the temp. gradient   : 10000
 
-$DT_Dt  Cooling(-) or heating(+) rate       : -100.0
+$ControlMode_0                              : LINEAR
+$LinearRate_0  Cooling(-) or heating(+) rate: -100.0
 
 @BoundaryConditions
 

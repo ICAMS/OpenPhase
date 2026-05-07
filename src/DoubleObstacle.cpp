@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,10 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2011
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev;
- *                         Johannes Goerler; Raphael Schiedung; Stephan Hubig
+ *
+ *  File created :   2011
+ *  Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev;
+ *                        Johannes Goerler; Raphael Schiedung; Stephan Hubig
  *
  */
 
@@ -36,6 +36,22 @@
 namespace openphase
 {
 using namespace std;
+
+class PotentialCorrections
+{
+ public:
+    double alpha;
+    double beta;
+    double scal_prod;
+    double phi_tl;
+    double phi_tu;
+
+    double stencil_weight;
+
+    int d_x;
+    int d_y;
+    int d_z;
+};
 
 void DoubleObstacle::Initialize(Settings& locSettings, std::string ObjectNameSuffix)
 {
@@ -389,7 +405,7 @@ void DoubleObstacle::CalculateCurvatureDrivingForce(PhaseField& Phase,
                                                     DrivingForce& dG)
 {
     const double Prefactor = Pi*Pi/(Phase.Grid.Eta*Phase.Grid.Eta);
-    const double Prefactor2 = Phase.Grid.Eta/(2.0*Pi);
+    const double Prefactor2 = Phase.Grid.Eta/Pi;
 
     OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,Phase.Fields,0,)
     {
@@ -590,7 +606,7 @@ void DoubleObstacle::CalculatePhaseFieldIncrementsDR(PhaseField& Phase,
                 double scale = sqrt(Phase.FieldsProperties[alpha->index].VolumeRatio *
                                     Phase.FieldsProperties[ beta->index].VolumeRatio);
 
-                double dPhi_dt = 0.5*(1.0 + scale)*IP.PropertiesDR(i,j,k).get_energy(alpha->index,beta->index)
+                double dPhi_dt = IP.PropertiesDR(i,j,k).get_energy(alpha->index,beta->index)
                                  *((alpha->laplacian + Prefactor*alpha->value) -
                                    ( beta->laplacian + Prefactor* beta->value));
 
@@ -599,7 +615,7 @@ void DoubleObstacle::CalculatePhaseFieldIncrementsDR(PhaseField& Phase,
                          gamma != locPF.cend(); ++gamma)
                 if((gamma != alpha) && (gamma != beta))
                 {
-                    dPhi_dt += 0.5*(1.0 + scale)*(IP.PropertiesDR(i,j,k).get_energy( beta->index, gamma->index) -
+                    dPhi_dt += (IP.PropertiesDR(i,j,k).get_energy( beta->index, gamma->index) -
                                 IP.PropertiesDR(i,j,k).get_energy(alpha->index, gamma->index))
                               *(gamma->laplacian + Prefactor*gamma->value);
 
@@ -792,7 +808,7 @@ void DoubleObstacle::CalculatePhaseFieldIncrementsDR(PhaseField& Phase,
                 double scale = sqrt(Phase.FieldsProperties[alpha->index].VolumeRatio *
                                     Phase.FieldsProperties[ beta->index].VolumeRatio);
 
-                double loc_increment = 0.5*(1.0 + scale)*IP.PropertiesDR(i,j,k).get_energy(alpha->index,beta->index)
+                double loc_increment = IP.PropertiesDR(i,j,k).get_energy(alpha->index,beta->index)
                                  *((alpha->laplacian + Prefactor*alpha->value) -
                                    ( beta->laplacian + Prefactor* beta->value));
 
@@ -801,7 +817,7 @@ void DoubleObstacle::CalculatePhaseFieldIncrementsDR(PhaseField& Phase,
                          gamma != locPF.cend(); ++gamma)
                 if((gamma != alpha) && (gamma != beta))
                 {
-                    loc_increment += 0.5*(1.0 + scale)*(IP.PropertiesDR(i,j,k).get_energy( beta->index, gamma->index) -
+                    loc_increment += (IP.PropertiesDR(i,j,k).get_energy( beta->index, gamma->index) -
                                       IP.PropertiesDR(i,j,k).get_energy(alpha->index, gamma->index))
                                     *(gamma->laplacian  + Prefactor*gamma->value);
 

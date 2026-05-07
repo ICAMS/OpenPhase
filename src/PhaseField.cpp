@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,11 +18,11 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2009
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev;
- *                         Reza Darvishi Kamachali; Raphael Schiedung;
- *                         Johannes Goerler; Marvin Tegeler
+ *
+ *  File created :   2009
+ *  Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev;
+ *                        Reza Darvishi Kamachali; Raphael Schiedung;
+ *                        Johannes Goerler; Marvin Tegeler
  *
  */
 
@@ -35,10 +35,12 @@
 #include "Velocities.h"
 #include "AdvectionHR.h"
 #include "H5Interface.h"
+#include <filesystem>
 
 namespace openphase
 {
 using namespace std;
+namespace fs = std::filesystem;
 using json = nlohmann::json;
 
 void PhaseField::Initialize(Settings& locSettings, std::string ObjectNameSuffix)
@@ -46,7 +48,6 @@ void PhaseField::Initialize(Settings& locSettings, std::string ObjectNameSuffix)
     thisclassname = "PhaseField";
     thisobjectname = thisclassname + ObjectNameSuffix;
 
-    NucleationPresent = false;
     InterfaceNormalModel = InterfaceNormalModels::AverageGradient;
 
     Grid = locSettings.Grid;
@@ -59,6 +60,8 @@ void PhaseField::Initialize(Settings& locSettings, std::string ObjectNameSuffix)
     NucleusVolumeFactor = 1.0;
 
     ConsiderNucleusVolume = true;
+    ApplyConstraints = true;
+
     Combine.resize(Nphases, false);
 
     PhaseFieldLaplacianStencil = LaplacianStencils::Isotropic;
@@ -109,8 +112,9 @@ void PhaseField::ReadInput(stringstream& inp)
 {
     int moduleLocation = FileInterface::FindModuleLocation(inp, thisclassname);
 
-    ConsiderNucleusVolume = FileInterface::ReadParameterB(inp, moduleLocation, string("ConsiderNucleusVolume"), false, true);
-    NucleusVolumeFactor   = FileInterface::ReadParameterD(inp, moduleLocation, string("NucleusVolumeFactor"), false, 1.0);
+    ApplyConstraints      = FileInterface::ReadParameterB(inp, moduleLocation, string("ApplyConstraints"), false, ApplyConstraints);
+    ConsiderNucleusVolume = FileInterface::ReadParameterB(inp, moduleLocation, string("ConsiderNucleusVolume"), false, ConsiderNucleusVolume);
+    NucleusVolumeFactor   = FileInterface::ReadParameterD(inp, moduleLocation, string("NucleusVolumeFactor"), false, NucleusVolumeFactor);
 
     // Reading combine phase fields conditions for all phases
     for(size_t pIndex = 0; pIndex < Nphases; pIndex++)
@@ -184,7 +188,8 @@ void PhaseField::ReadJSON(const string InputFileName)
     if (data.contains(thisclassname))
     {
         json phasefield = data[thisclassname];
-        ConsiderNucleusVolume = FileInterface::ReadParameter<bool>(phasefield, {"ConsiderNucleusVolume"}, false);
+        ApplyConstraints      = FileInterface::ReadParameter<bool>(phasefield, {"ApplyConstraints"}, true);
+        ConsiderNucleusVolume = FileInterface::ReadParameter<bool>(phasefield, {"ConsiderNucleusVolume"}, true);
         NucleusVolumeFactor   = FileInterface::ReadParameter<double>(phasefield, {"NucleusVolumeFactor"}, 1.0);
 
         string tmp1 = FileInterface::ReadParameter<std::string>(phasefield, {"InterfaceNormalModel"}, "AVERAGEGRADIENT");
@@ -664,52 +669,6 @@ void PhaseField::CalculateDerivativesDR(void)
     }
     OMP_PARALLEL_STORAGE_LOOP_END
 }
-/*
-NodePF PhaseField::FieldsGradients(const int i, const int j, const int k) const
-{
-    NodePF locPF = Fields(i,j,k);
-
-    for (auto gs = GStencil.cbegin(); gs != GStencil.cend(); ++gs)
-    {
-        int ii = gs->di;
-        int jj = gs->dj;
-        int kk = gs->dk;
-
-        for (auto it  = Fields(i + ii, j + jj, k + kk).cbegin();
-                  it != Fields(i + ii, j + jj, k + kk).cend(); ++it)
-        if (it->value != 0.0)
-        {
-            double value_x = gs->weightX * it->value;
-            double value_y = gs->weightY * it->value;
-            double value_z = gs->weightZ * it->value;
-            locPF.add_gradient(it->index, (dVector3){value_x,value_y,value_z});
-        }
-    }
-    return locPF;
-}*/
-/*
-NodePF PhaseField::FieldsGradientsDR(const int i, const int j, const int k) const
-{
-    NodePF locPF = FieldsDR(i,j,k);
-
-    for (auto gs = GStencil.cbegin(); gs != GStencil.cend(); ++gs)
-    {
-        int ii = gs->di;
-        int jj = gs->dj;
-        int kk = gs->dk;
-
-        for (auto it  = FieldsDR(i + ii, j + jj, k + kk).cbegin();
-                  it != FieldsDR(i + ii, j + jj, k + kk).cend(); ++it)
-        if (it->value != 0.0)
-        {
-            double value_x = 2.0*gs->weightX * it->value;
-            double value_y = 2.0*gs->weightY * it->value;
-            double value_z = 2.0*gs->weightZ * it->value;
-            locPF.add_gradient(it->index, (dVector3){value_x,value_y,value_z});
-        }
-    }
-    return locPF;
-}*/
 
 dVector3 PhaseField::Normal(NodePF::citerator alpha, NodePF::citerator beta) const
 {
@@ -737,6 +696,7 @@ NodeAB<dVector3,dVector3> PhaseField::Normals(const int i, const int j, const in
 {
     NodeAB<dVector3,dVector3> locNormals;
 
+    if(Fields(i,j,k).interface())
     for (auto alpha  = Fields(i,j,k).cbegin();
               alpha != Fields(i,j,k).cend(); ++alpha)
     for (auto  beta  = alpha + 1;
@@ -902,7 +862,7 @@ void PhaseField::CalculateGrainsVolume(void)
     }
 
     // Update statistics based on actual grains volume
-    int NumberOfNuclei = 0;
+    //int NumberOfNuclei = 0;
 
     for(size_t idx = 0; idx < size; idx++)
     if(FieldsProperties[idx].Exist and FieldsProperties[idx].Volume <= 0.0)
@@ -928,10 +888,9 @@ void PhaseField::CalculateGrainsVolume(void)
         }
         if(FieldsProperties[idx].Stage != GrainStages::Stable)
         {
-            NumberOfNuclei ++;
+            //NumberOfNuclei ++;
         }
     }
-    NucleationPresent = (NumberOfNuclei > 0);
 
     for(size_t n = 0; n < Nphases; n++)
     {
@@ -986,7 +945,7 @@ void PhaseField::SetFlagsDR(void)
     OMP_PARALLEL_STORAGE_LOOP_END
 }
 
-void PhaseField::Finalize(const BoundaryConditions& BC, bool finalize)
+void PhaseField::Finalize(const BoundaryConditions& BC)
 {
     CombinePhaseFields();
 
@@ -994,20 +953,20 @@ void PhaseField::Finalize(const BoundaryConditions& BC, bool finalize)
     {
         case Resolutions::Single:
         {
-            FinalizeSR(BC, finalize);
+            FinalizeSR(BC);
             break;
         }
         case Resolutions::Dual:
         {
-            FinalizeDR(BC, finalize);
+            FinalizeDR(BC);
             break;
         }
     }
 }
 
-void PhaseField::FinalizeSR(const BoundaryConditions& BC, bool finalize)
+void PhaseField::FinalizeSR(const BoundaryConditions& BC)
 {
-    if(finalize)
+    if(ApplyConstraints)
     {
         #ifdef MPI_PARALLEL
         OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,Fields,Fields.Bcells(),)
@@ -1032,9 +991,9 @@ void PhaseField::FinalizeSR(const BoundaryConditions& BC, bool finalize)
     CalculateGrainsVolume();
 }
 
-void PhaseField::FinalizeDR(const BoundaryConditions& BC, bool finalize)
+void PhaseField::FinalizeDR(const BoundaryConditions& BC)
 {
-    if(finalize)
+    if(ApplyConstraints)
     {
         #ifdef MPI_PARALLEL
         OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,FieldsDR,FieldsDR.Bcells(),)
@@ -1246,29 +1205,25 @@ NodeA<double> PhaseField::Dot2(const int i, const int j, const int k, const doub
 }
 
 void PhaseField::MergeIncrements(const BoundaryConditions& BC,
-                                 const double dt,
-                                 const bool finalize,
-                                 const bool clear)
+                                 const double dt)
 {
     switch(Grid.Resolution)
     {
         case Resolutions::Single:
         {
-            MergeIncrementsSR(BC, dt, finalize, clear);
+            MergeIncrementsSR(BC, dt);
             break;
         }
         case Resolutions::Dual:
         {
-            MergeIncrementsDR(BC, dt, finalize, clear);
+            MergeIncrementsDR(BC, dt);
             break;
         }
     }
 }
 
 void PhaseField::MergeIncrementsSR(const BoundaryConditions& BC,
-                                   const double dt,
-                                   const bool finalize,
-                                   const bool clear)
+                                   const double dt)
 {
     OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,Fields,0,)
     {
@@ -1283,7 +1238,7 @@ void PhaseField::MergeIncrementsSR(const BoundaryConditions& BC,
                 {
                     factor *= PairwiseGrowthFactors.get_sym1(psi->indexA,psi->indexB);
                 }
-            
+
                 double value = factor*(psi->value1 + psi->value2)*dt;
                 if(fabs(value) >= DBL_EPSILON)
                 {
@@ -1291,17 +1246,15 @@ void PhaseField::MergeIncrementsSR(const BoundaryConditions& BC,
                     Fields(i,j,k).add_value(psi->indexB, -value);
                 }
             }
-            if(clear) FieldsDot(i,j,k).clear();
+            FieldsDot(i,j,k).clear();
         }
     }
     OMP_PARALLEL_STORAGE_LOOP_END
-    Finalize(BC, finalize);
+    Finalize(BC);
 }
 
 void PhaseField::MergeIncrementsDR(const BoundaryConditions& BC,
-                                   const double dt,
-                                   const bool finalize,
-                                   const bool clear)
+                                   const double dt)
 {
     OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,FieldsDR,0,)
     {
@@ -1324,11 +1277,11 @@ void PhaseField::MergeIncrementsDR(const BoundaryConditions& BC,
                     FieldsDR(i,j,k).add_value(psi->indexB, -value);
                 }
             }
-            if(clear) FieldsDotDR(i,j,k).clear();
+            FieldsDotDR(i,j,k).clear();
         }
     }
     OMP_PARALLEL_STORAGE_LOOP_END
-    Finalize(BC, finalize);
+    Finalize(BC);
 }
 
 void PhaseField::NormalizeIncrements(const BoundaryConditions& BC, const double dt)
@@ -2152,9 +2105,6 @@ void PhaseField::WriteVTK(Settings& locSettings, const int tStep, const bool Cur
                 ListOfFields.push_back((VTK::Field_t) {"PrincipalCurvature_2_" + std::to_string(n), [n,this](int i,int j,int k){return PrincipalCurvatures(i,j,k,n)[1];}});
             }
             VTK::Write(Filename, locSettings, ListOfFields, precision);
-#ifndef WIN32       
-            locSettings.Meta.AddPart(Filename, "File", "VTK file with phase field data", "application/xml");
-#endif
             break;
         }
         case Resolutions::Dual:
@@ -2186,9 +2136,6 @@ void PhaseField::WriteVTK(Settings& locSettings, const int tStep, const bool Cur
                 ListOfFields.push_back((VTK::Field_t) {"Curvature_" + std::to_string(n),[n,this](int i,int j,int k){return CurvaturePhaseDR(i,j,k,n);}});
             }
             VTK::Write(Filename, locSettings, ListOfFields, precision, 2);
-#ifndef WIN32
-            locSettings.Meta.AddPart(Filename, "File", "VTK file with phase field data", "application/xml");
-#endif
             break;
         }
     }
@@ -2225,9 +2172,6 @@ void PhaseField::WriteDistortedVTK(
                 ListOfFields.push_back((VTK::Field_t) {"PrincipalCurvature_2_" + std::to_string(n), [n,this](int i,int j,int k){return PrincipalCurvatures(i,j,k,n)[1];}});
             }
             VTK::WriteDistorted(Filename, locSettings, EP, ListOfFields, precision);
-            #ifndef WIN32       
-            locSettings.Meta.AddPart(Filename, "File", "VTK file with distorted phase field data", "application/xml");
-            #endif
             break;
         }
         case Resolutions::Dual:
@@ -2255,87 +2199,292 @@ void PhaseField::WriteDistortedVTK(
             ListOfFields.push_back((VTK::Field_t) {"ParentGrain", [this](int i,int j,int k){return ParentGrainDR(i,j,k);}});
 
             VTK::WriteDistorted(Filename, locSettings, EP, ListOfFields, precision, 2);
-            #ifndef WIN32       
-            locSettings.Meta.AddPart(Filename, "File", "VTK file with distorted phase field data", "application/xml");
-            #endif
             break;
         }
     }
 }
 
-void PhaseField::WriteLaplacianVTK(Settings& locSettings,
-                                   const int tStep,
-                                   size_t PhiIndex,
-                                   const int precision)
+void PhaseField::WriteNormalsVTK(Settings& locSettings,
+                                 const int tStep,
+                                 const int idxA,
+                                 const int idxB,
+                                 const int precision) const
 {
     std::vector<VTK::Field_t> ListOfFields;
-    std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, "Laplacian_" + to_string(PhiIndex) + "_", tStep, ".vts");
-    switch (Grid.Resolution)
-    {
-        case Resolutions::Single:
-        {
-            ListOfFields.push_back((VTK::Field_t) {"Laplacian_" + std::to_string(PhiIndex), [PhiIndex,this](int i,int j,int k){return Fields(i,j,k).get_laplacian(PhiIndex);}});
-            VTK::Write(Filename, locSettings, ListOfFields, precision);
-            #ifndef WIN32       
-            locSettings.Meta.AddPart(Filename, "File", "VTK file with phase field laplacian data", "application/xml");
-            #endif
-            break;
-        }
-        case Resolutions::Dual:
-        {
-            ListOfFields.push_back((VTK::Field_t) {"Laplacian_" + std::to_string(PhiIndex), [PhiIndex,this](int i,int j,int k){return FieldsDR(i,j,k).get_laplacian(PhiIndex);}});
-            VTK::Write(Filename, locSettings, ListOfFields, precision, 2);
-            #ifndef WIN32       
-            locSettings.Meta.AddPart(Filename, "File", "VTK file with phase field laplacian data", "application/xml");
-            #endif
-            break;
-        }
-    }
+    ListOfFields.push_back((VTK::Field_t) {"InterfaceNormals", [this, idxA, idxB](int i, int j, int k){return Normals(i,j,k).get_asym1(idxA,idxB);}});
+
+    std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, "InterfaceNormals_", tStep, ".vts");
+    VTK::Write(Filename, locSettings, ListOfFields, precision);
 }
 
-void PhaseField::WriteIndividualPhaseFieldValuesVTK(Settings& locSettings,
-                                                    const int tStep,
-                                                    const std::initializer_list<size_t> FieldIndices,
-                                                    const int precision) const
+void PhaseField::WriteKanapy(Settings& locSettings, const int tStep) const
 {
-    std::vector<VTK::Field_t> ListOfFields;
-    std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, "PhaseFieldValues_", tStep, ".vts");
-    switch (Grid.Resolution)
+    using json = nlohmann::json;
+
+    //-------------------------------------------------------------
+    // Build header (metadata)
+    //-------------------------------------------------------------
+    json root;   // <-- renamed from "j" for clarity
+
+    // Identifier and date
+    std::string identifier = "OpenPhase_" + std::to_string(tStep);
+
+    std::time_t now = std::time(nullptr);
+    std::tm* ptm = std::localtime(&now);
+    char date_buf[20];
+    std::strftime(date_buf, 20, "%Y-%m-%d", ptm);
+
+    root["identifier"]  = identifier;
+    root["title"]       = "Spatiotemporal microstructure data";
+    root["date"]        = date_buf;
+    root["description"] = "Microstructure data generated by OpenPhase.";
+    root["rights"]      = "Creative Commons Attribution 4.0 International";
+
+    root["rights_holder"]        = json::array({"TBD"});
+    root["creator"]              = json::array({"TBD"});
+    root["creator_ORCID"]        = nullptr;
+    root["creator_affiliation"]  = json::array({"TBD"});
+    root["creator_institute"]    = json::array({"TBD"});
+    root["creator_group"]        = json::array({"TBD"});
+
+    root["contributor"]              = json::array({"TBD"});
+    root["contributor_ORCID"]        = json::array({"TBD"});
+    root["contributor_affiliation"]  = json::array({"TBD"});
+    root["contributor_institute"]    = json::array({"TBD"});
+    root["contributor_group"]        = json::array({"TBD"});
+
+    root["shared_with"] = json::array({
+        json{{"access_type", "c"}},
+        json{{"access_type", "all"}}
+    });
+
+    root["funder_name"]     = "TBD";
+    root["fund_identifier"] = "TBD";
+    root["publisher"]       = "TBD";
+    root["relation"]        = json::array({"TBD"});
+
+    root["keywords"] = json::array({
+        "GrainGrowth",
+        "Workflow"
+    });
+
+    root["software"]         = "OpenPhase";
+    root["software_version"] = "2.0.0.4";
+
+    root["system"]         = "Ubuntu";
+    root["system_version"] = "24.04";
+    root["processor_specifications"] = "";
+
+    root["input_path"]  = "Current working directory";
+    root["results_path"] = "TBD";
+
+    root["RVE_size"] = {
+        static_cast<double>(Grid.Nx),
+        static_cast<double>(Grid.Ny),
+        static_cast<double>(Grid.Nz)
+    };
+
+    root["RVE_continuity"] = true;
+
+    root["discretization_type"] = "Structured";
+    root["discretization_unit_size"] = { Grid.dx, Grid.dx, Grid.dx };
+    root["discretization_count"] = Grid.Nx * Grid.Ny * Grid.Nz;
+
+    root["Origin"] = {
+        {"software", "OpenPhase"},
+        {"software_version", "2.0.0.4"},
+        {"system", "Ubuntu"},
+        {"system_version", "24.04"}
+    };
+
+    root["global_temperature"] = 298;
+
+    //-------------------------------------------------------------
+    // Phases section
+    //-------------------------------------------------------------
+    json phases = json::array();
+
+    for (size_t i = 0; i < FieldsProperties.size(); ++i)
     {
-        case Resolutions::Single:
-        {
-            for (auto IteratorIndex = FieldIndices.begin();
-                      IteratorIndex != FieldIndices.end(); IteratorIndex++)
-            {
-                ListOfFields.push_back((VTK::Field_t) {"FieldValue_" + std::to_string(*IteratorIndex), [IteratorIndex,this](int i,int j,int k){return Fields(i,j,k).get_value(*IteratorIndex);}});
-            }
-            VTK::Write(Filename, locSettings, ListOfFields, precision);
-            #ifndef WIN32       
-            locSettings.Meta.AddPart(Filename, "File", "VTK file with individual phase field data", "application/xml");
-            #endif
-            break;
-        }
-        case Resolutions::Dual:
-        {
-            for (auto IteratorIndex = FieldIndices.begin();
-                      IteratorIndex != FieldIndices.end(); IteratorIndex++)
-            {
-                ListOfFields.push_back((VTK::Field_t) {"FieldValue_" + std::to_string(*IteratorIndex), [IteratorIndex,this](int i,int j,int k){return FieldsDR(i,j,k).get_value(*IteratorIndex);}});
-            }
-            VTK::Write(Filename, locSettings, ListOfFields, precision, 2);
-            #ifndef WIN32       
-            locSettings.Meta.AddPart(Filename, "File", "VTK file with individual phase field data", "application/xml");
-            #endif
-            break;
-        }
+        json p;
+
+        p["phase_id"] = i;
+
+        EulerAngles phi;
+        phi.set(FieldsProperties[i].Orientation,"XZX");
+
+        p["Orientation"] = { phi.Q[0], phi.Q[1], phi.Q[2] };
+
+        phases.push_back(p);
     }
+
+    root["phases"] = phases;
+
+    //-------------------------------------------------------------
+    // Microstructure: grains + voxels
+    //-------------------------------------------------------------
+    json micro;
+    micro["time"] = tStep;
+
+    micro["grid"]["status"]       = "regular";
+    micro["grid"]["grid_size"]    = { Grid.Nx, Grid.Ny, Grid.Nz };
+    micro["grid"]["grid_spacing"] = { Grid.dx, Grid.dx, Grid.dx };
+
+    //-------------------------------------------------------------
+    // Grains
+    //-------------------------------------------------------------
+    micro["grains"] = json::array();
+
+    for (size_t g = 0; g < FieldsProperties.size(); ++g)
+    {
+        json gr;
+
+        gr["grain_id"]     = g + 1;
+        gr["phase_id"]     = FieldsProperties[g].Phase + 1;
+        gr["grain_volume"] = FieldsProperties[g].Volume;
+
+        EulerAngles phi;
+        phi.set(FieldsProperties[g].Orientation,"ZXZ");
+
+        gr["Orientation"] = { phi.Q[0], phi.Q[1], phi.Q[2] };
+
+        micro["grains"].push_back(gr);
+    }
+
+    //-------------------------------------------------------------
+    // Voxels
+    //-------------------------------------------------------------
+    json voxels = json::array();
+    int voxel_id = 1;
+
+    for (int ii = 0; ii < Grid.Nx; ++ii)
+    for (int jj = 0; jj < Grid.Ny; ++jj)     // <--- renamed from j2
+    for (int kk = 0; kk < Grid.Nz; ++kk)
+    {
+        json v;
+
+        int g = Fields(ii, jj, kk).majority_index();
+
+        v["voxel_id"] = voxel_id++;
+        v["grain_id"] = g + 1;
+
+        v["centroid_coordinates"] = {
+            ii + 0.5,
+            jj + 0.5,
+            kk + 0.5
+        };
+
+        v["voxel_index"] = {
+            ii + 1,
+            jj + 1,
+            kk + 1
+        };
+
+        v["voxel_volume"] = 1;
+
+        EulerAngles phi;
+        phi.set(FieldsProperties[g].Orientation,"ZXZ");
+
+        v["Orientation"] = { phi.Q[0], phi.Q[1], phi.Q[2] };
+
+        voxels.push_back(v);
+    }
+
+    micro["voxels"] = voxels;
+
+    //-------------------------------------------------------------
+    // Insert microstructure
+    //-------------------------------------------------------------
+    root["microstructure"] = json::array({ micro });
+
+    //-------------------------------------------------------------
+    // Write to file
+    //-------------------------------------------------------------
+    std::string FileName =
+        FileInterface::MakeFileName(locSettings.VTKDir,
+                                    thisclassname + "Kanapy_",
+                                    tStep,
+                                    ".json");
+
+    std::ofstream o(FileName);
+    o << std::setw(4) << root << std::endl;
+    o.close();
 }
 
-bool PhaseField::WriteMPI(const std::string& FileName)
-{
-	Fields.WriteToFile(FileName+"/Fields.data");
-    return true;
-}
+
+//void PhaseField::WriteLaplacianVTK(Settings& locSettings,
+//                                   const int tStep,
+//                                   size_t PhiIndex,
+//                                   const int precision)
+//{
+//    std::vector<VTK::Field_t> ListOfFields;
+//    std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, "Laplacian_" + to_string(PhiIndex) + "_", tStep, ".vts");
+//    switch (Grid.Resolution)
+//    {
+//        case Resolutions::Single:
+//        {
+//            ListOfFields.push_back((VTK::Field_t) {"Laplacian_" + std::to_string(PhiIndex), [PhiIndex,this](int i,int j,int k){return Fields(i,j,k).get_laplacian(PhiIndex);}});
+//            VTK::Write(Filename, locSettings, ListOfFields, precision);
+//            #ifndef _WIN32
+//            locSettings.Meta.AddPart(Filename, "File", "VTK file with phase field laplacian data", "application/xml");
+//            #endif
+//            break;
+//        }
+//        case Resolutions::Dual:
+//        {
+//            ListOfFields.push_back((VTK::Field_t) {"Laplacian_" + std::to_string(PhiIndex), [PhiIndex,this](int i,int j,int k){return FieldsDR(i,j,k).get_laplacian(PhiIndex);}});
+//            VTK::Write(Filename, locSettings, ListOfFields, precision, 2);
+//            #ifndef _WIN32
+//            locSettings.Meta.AddPart(Filename, "File", "VTK file with phase field laplacian data", "application/xml");
+//            #endif
+//            break;
+//        }
+//    }
+//}
+//
+//void PhaseField::WriteIndividualPhaseFieldValuesVTK(Settings& locSettings,
+//                                                    const int tStep,
+//                                                    const std::initializer_list<size_t> FieldIndices,
+//                                                    const int precision) const
+//{
+//    std::vector<VTK::Field_t> ListOfFields;
+//    std::string Filename = FileInterface::MakeFileName(locSettings.VTKDir, "PhaseFieldValues_", tStep, ".vts");
+//    switch (Grid.Resolution)
+//    {
+//        case Resolutions::Single:
+//        {
+//            for (auto IteratorIndex = FieldIndices.begin();
+//                      IteratorIndex != FieldIndices.end(); IteratorIndex++)
+//            {
+//                ListOfFields.push_back((VTK::Field_t) {"FieldValue_" + std::to_string(*IteratorIndex), [IteratorIndex,this](int i,int j,int k){return Fields(i,j,k).get_value(*IteratorIndex);}});
+//            }
+//            VTK::Write(Filename, locSettings, ListOfFields, precision);
+//            #ifndef _WIN32
+//            locSettings.Meta.AddPart(Filename, "File", "VTK file with individual phase field data", "application/xml");
+//            #endif
+//            break;
+//        }
+//        case Resolutions::Dual:
+//        {
+//            for (auto IteratorIndex = FieldIndices.begin();
+//                      IteratorIndex != FieldIndices.end(); IteratorIndex++)
+//            {
+//                ListOfFields.push_back((VTK::Field_t) {"FieldValue_" + std::to_string(*IteratorIndex), [IteratorIndex,this](int i,int j,int k){return FieldsDR(i,j,k).get_value(*IteratorIndex);}});
+//            }
+//            VTK::Write(Filename, locSettings, ListOfFields, precision, 2);
+//            #ifndef _WIN32
+//            locSettings.Meta.AddPart(Filename, "File", "VTK file with individual phase field data", "application/xml");
+//            #endif
+//            break;
+//        }
+//    }
+//}
+//
+//bool PhaseField::WriteMPI(const std::string& FileName)
+//{
+//	Fields.WriteToFile(FileName+"/Fields.data");
+//    return true;
+//}
 
 bool PhaseField::Write(const std::string& FileName) const
 {
@@ -2386,6 +2535,7 @@ bool PhaseField::Write(const std::string& FileName) const
     out.close();
     return true;
 }
+
 
 bool PhaseField::Write(const Settings& locSettings, const int tStep) const
 {
@@ -2667,6 +2817,7 @@ void PhaseField::ConsumePlane(const int dx, const int dy, const int dz,
     ConsoleOutput::WriteStandard(thisclassname, "Plane consumed");
 }
 
+
 void PhaseField::ConsumePlaneSR(const int dx, const int dy, const int dz,
                                 const int x, const int y, const int z,
                                 const BoundaryConditions& BC)
@@ -2845,6 +2996,49 @@ void PhaseField::WriteVolumePercentages(const std::string& filename, double time
     }
 }
 
+void PhaseField::WriteVolumeFractions(const std::string& filename, double time,
+                                      char separator, bool percent) const
+{
+    /** This function will create tabulated data on the volume percent of each
+    thermodynamic phase. Each time this function is called, a new row will be
+    written in the specified file name for the current time step. If the file is
+    not present it will be created, if the phase already exists, the new data
+    will be appended!*/
+
+    // NOTE USED BY OPSTUDIO GUI !!!!!!
+
+    double scale = 1.0;
+    if(percent) scale = 100.0;
+
+#ifdef MPI_PARALLEL
+    if (MPI_RANK == 0)
+#endif
+    {
+        if (!std::filesystem::exists(filename))
+        {
+            // Write data header
+            std::ofstream file(filename, ios::out);
+            file << "time";
+            for(size_t idx = 0; idx < Nphases; idx++)
+            {
+                file << separator << PhaseNames[idx];
+            }
+            file << "\n";
+            file.close();
+        }
+
+        // Write data
+        std::ofstream file(filename, ios::app);
+        file << std::scientific << time;
+        for(size_t idx = 0; idx < Nphases; idx++)
+        {
+            file << std::scientific << separator << scale*FractionsTotal[idx];
+        }
+        file << "\n";
+        file.close();
+    }
+}
+
 void PhaseField::WriteGrainsVolume(int time_step, double time, std::string filename)
 {
     /** This function will write a list of all grain volumes in a file, each
@@ -2941,7 +3135,10 @@ size_t PhaseField::PlantGrainNucleus(size_t PhaseIndex, int x, int y, int z)
     FieldsProperties[locIndex].State = PhaseAggregateStates[PhaseIndex];
     FieldsProperties[locIndex].Density = PhaseEquilibriumDensities[PhaseIndex];
 
-    NucleationPresent = true;
+    if(Grid.Resolution == Resolutions::Dual)
+    {
+       FieldsProperties[locIndex].RefVolume *= 0.5;
+    }
 
     if (x - Grid.OffsetX >= 0 && x - Grid.OffsetX < Grid.Nx and
         y - Grid.OffsetY >= 0 && y - Grid.OffsetY < Grid.Ny and
@@ -2984,7 +3181,6 @@ PhaseField& PhaseField::operator= (const PhaseField& rhs)
     if (this != &rhs and rhs.thisclassname == "PhaseField")
     {
         thisclassname = rhs.thisclassname;
-        NucleationPresent = rhs.NucleationPresent;
 
         Grid = rhs.Grid;
 
@@ -3058,20 +3254,9 @@ PhaseField& PhaseField::operator= (const PhaseField& rhs)
     return *this;
 }
 
-std::vector<int> PhaseField::GetPresentPhaseFields() const
-{
-    std::vector<int> indeces;
-    for(unsigned int n = 0; n < FieldsProperties.size(); n++)
-    if(FieldsProperties[n].Exist)
-    {
-        indeces.push_back(n);
-    }
-
-    return indeces;
-}
-
 std::vector<int> PhaseField::VicinityPhaseFields(const int i,
-                                           const int j, const int k) const
+                                                 const int j,
+                                                 const int k) const
 {
     // Analyze vicinity
     std::vector<int> tempPFindex;
@@ -3187,17 +3372,35 @@ void PhaseField::SelectiveCombinePhaseFields(const BoundaryConditions& BC,
                                              const size_t TargetPFIndex,
                                              const size_t SourcePFIndex)
 {
-    switch(Grid.Resolution)
+    // Check if source phase field exists in the simulation domain.
+    // Skip merging entirely if it does not.
+    if(SourcePFIndex < FieldsProperties.size())
     {
-        case Resolutions::Single:
+        // Make sure there is storage in the FieldsProperties for the target phase field.
+        if(TargetPFIndex >= FieldsProperties.size())
         {
-            SelectiveCombinePhaseFieldsSR(BC,TargetPFIndex,SourcePFIndex);
-            break;
+            FieldsProperties.Resize(TargetPFIndex + 1);
         }
-        case Resolutions::Dual:
+
+        // Make sure the target phase field gets the correct phase assigned to it.
+        if(!FieldsProperties[TargetPFIndex].Exist)
         {
-            SelectiveCombinePhaseFieldsDR(BC,TargetPFIndex,SourcePFIndex);
-            break;
+            FieldsProperties[TargetPFIndex].Exist = true;
+            FieldsProperties[TargetPFIndex].Phase = FieldsProperties[SourcePFIndex].Phase;
+        }
+
+        switch(Grid.Resolution)
+        {
+            case Resolutions::Single:
+            {
+                SelectiveCombinePhaseFieldsSR(BC,TargetPFIndex,SourcePFIndex);
+                break;
+            }
+            case Resolutions::Dual:
+            {
+                SelectiveCombinePhaseFieldsDR(BC,TargetPFIndex,SourcePFIndex);
+                break;
+            }
         }
     }
 }
@@ -3491,7 +3694,7 @@ bool PhaseField::ThermodynamicPhasePresent(size_t alpha)
 
     return result;
 }
-
+//TODO: add MPI reduction
 bool PhaseField::ThermodynamicPhasePairPresent(size_t alpha, size_t beta)
 {
     bool result = false;
@@ -3519,64 +3722,64 @@ bool PhaseField::ThermodynamicPhasePairPresent(size_t alpha, size_t beta)
     return result;
 }
 
-std::vector<int> PhaseField::GetMaxPhaseFieldOverlap(const size_t thPhase1,
-        const size_t thPhase2)
-{
-    std::vector<int> maxOverlap;
-    Matrix<int> Overlap;
-    size_t numberOfGrains = FieldsProperties.size();
-    Overlap.Allocate(numberOfGrains, numberOfGrains);
-
-    OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,Fields,0,)
-    {
-        if (Fields(i,j,k).interface())
-        {
-            for (auto it  = Fields(i,j,k).cbegin();
-                      it != Fields(i,j,k).cend(); ++it)
-            {
-                size_t locIndex1 = it->index;
-                size_t thPhaseIndex1 = FieldsProperties[locIndex1].Phase;
-                if (thPhaseIndex1 == thPhase1)
-                {
-                    for (auto jt = it+1; jt != Fields(i,j,k).cend(); ++jt)
-                    {
-                        size_t locIndex2 = jt->index;
-                        size_t thPhaseIndex2 = FieldsProperties[locIndex2].Phase;
-                        if (thPhaseIndex2 == thPhase2)
-                        {
-                            Overlap.add(locIndex1, locIndex2, 1);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    OMP_PARALLEL_STORAGE_LOOP_END
-
-    int maxNx = -1;
-    int maxNy = -1;
-    for (size_t it = 0; it < numberOfGrains-1; it++)
-    for (size_t jt = it+1; jt < numberOfGrains; jt++)
-    {
-        if (maxNx < Overlap.get(it, jt))
-        {
-            maxNx = it;
-            maxNy = jt;
-        }
-    }
-
-    if (maxNx == -1 or maxNy == -1)
-    {
-        maxOverlap.push_back(-1);
-        maxOverlap.push_back(-1);
-        maxOverlap.push_back(-1);
-        return maxOverlap;
-    }
-    maxOverlap.push_back(maxNx);
-    maxOverlap.push_back(maxNy);
-    maxOverlap.push_back(Overlap.get(maxNx, maxNy));
-    return maxOverlap;
-}
+//std::vector<int> PhaseField::GetMaxPhaseFieldOverlap(const size_t thPhase1,
+//        const size_t thPhase2)
+//{
+//    std::vector<int> maxOverlap;
+//    Matrix<int> Overlap;
+//    size_t numberOfGrains = FieldsProperties.size();
+//    Overlap.Allocate(numberOfGrains, numberOfGrains);
+//
+//    OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,Fields,0,)
+//    {
+//        if (Fields(i,j,k).interface())
+//        {
+//            for (auto it  = Fields(i,j,k).cbegin();
+//                      it != Fields(i,j,k).cend(); ++it)
+//            {
+//                size_t locIndex1 = it->index;
+//                size_t thPhaseIndex1 = FieldsProperties[locIndex1].Phase;
+//                if (thPhaseIndex1 == thPhase1)
+//                {
+//                    for (auto jt = it+1; jt != Fields(i,j,k).cend(); ++jt)
+//                    {
+//                        size_t locIndex2 = jt->index;
+//                        size_t thPhaseIndex2 = FieldsProperties[locIndex2].Phase;
+//                        if (thPhaseIndex2 == thPhase2)
+//                        {
+//                            Overlap.add(locIndex1, locIndex2, 1);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//    OMP_PARALLEL_STORAGE_LOOP_END
+//
+//    int maxNx = -1;
+//    int maxNy = -1;
+//    for (size_t it = 0; it < numberOfGrains-1; it++)
+//    for (size_t jt = it+1; jt < numberOfGrains; jt++)
+//    {
+//        if (maxNx < Overlap.get(it, jt))
+//        {
+//            maxNx = it;
+//            maxNy = jt;
+//        }
+//    }
+//
+//    if (maxNx == -1 or maxNy == -1)
+//    {
+//        maxOverlap.push_back(-1);
+//        maxOverlap.push_back(-1);
+//        maxOverlap.push_back(-1);
+//        return maxOverlap;
+//    }
+//    maxOverlap.push_back(maxNx);
+//    maxOverlap.push_back(maxNy);
+//    maxOverlap.push_back(Overlap.get(maxNx, maxNy));
+//    return maxOverlap;
+//}
 
 Matrix<int> PhaseField::GetPhaseFieldOverlap(const size_t thPhase1,
         const size_t thPhase2)
@@ -3618,8 +3821,7 @@ Matrix<int> PhaseField::GetPhaseFieldOverlap(const size_t thPhase1,
 
 void PhaseField::Advect(AdvectionHR& Adv, const Velocities& Vel,
         const BoundaryConditions& BC,
-        const double dt, const double tStep,
-        const bool finalize)
+        const double dt, const double tStep)
 {
     if(FieldsAdvectionDot   .IsNotAllocated()) FieldsAdvectionDot   .Allocate(Grid, Fields.Bcells());
     if(FieldsAdvectionBackup.IsNotAllocated()) FieldsAdvectionBackup.Allocate(Grid, Fields.Bcells());
@@ -3627,15 +3829,14 @@ void PhaseField::Advect(AdvectionHR& Adv, const Velocities& Vel,
     if(not FieldsAdvectionDot   .IsSize(Grid.Nx, Grid.Ny, Grid.Nz)) FieldsAdvectionDot   .Reallocate(Grid.Nx, Grid.Ny, Grid.Nz);
     if(not FieldsAdvectionBackup.IsSize(Grid.Nx, Grid.Ny, Grid.Nz)) FieldsAdvectionBackup.Reallocate(Grid.Nx, Grid.Ny, Grid.Nz);
 
-    Adv.AdvectPhaseField(*this, Vel, BC, dt, tStep, finalize);
+    Adv.AdvectPhaseField(*this, Vel, BC, dt, tStep);
     CalculateFractions();
     //ConsoleOutput::WriteStandard(thisclassname, "Advected");
 }
 
 void PhaseField::AdvectALE(AdvectionHR& Adv, const Velocities& Vel,
         const BoundaryConditions& BC,
-        const double dt, const double tStep,
-        const bool finalize)
+        const double dt, const double tStep)
 {
     if(FieldsAdvectionDot   .IsNotAllocated()) FieldsAdvectionDot   .Allocate(Grid, Fields.Bcells());
     if(FieldsAdvectionBackup.IsNotAllocated()) FieldsAdvectionBackup.Allocate(Grid, Fields.Bcells());
@@ -3643,15 +3844,14 @@ void PhaseField::AdvectALE(AdvectionHR& Adv, const Velocities& Vel,
     if(not FieldsAdvectionDot   .IsSize(Grid.Nx, Grid.Ny, Grid.Nz)) FieldsAdvectionDot   .Reallocate(Grid.Nx, Grid.Ny, Grid.Nz);
     if(not FieldsAdvectionBackup.IsSize(Grid.Nx, Grid.Ny, Grid.Nz)) FieldsAdvectionBackup.Reallocate(Grid.Nx, Grid.Ny, Grid.Nz);
 
-    Adv.AdvectPhaseFieldALE(*this, Vel, BC, dt, tStep, finalize);
+    Adv.AdvectPhaseFieldALE(*this, Vel, BC, dt, tStep);
     Finalize(BC);
     ConsoleOutput::WriteStandard(thisclassname, "Advected");
 }
 
 void PhaseField::Advect(AdvectionHR& Adv, const Velocities& Vel,
         const BoundaryConditions& BC, FlowSolverLBM& LBM,
-        const double dt, const double tStep,
-        const bool finalize)
+        const double dt, const double tStep)
 {
     if(FieldsAdvectionDot   .IsNotAllocated()) FieldsAdvectionDot   .Allocate(Grid, Fields.Bcells());
     if(FieldsAdvectionBackup.IsNotAllocated()) FieldsAdvectionBackup.Allocate(Grid, Fields.Bcells());
@@ -3660,12 +3860,28 @@ void PhaseField::Advect(AdvectionHR& Adv, const Velocities& Vel,
     if(not FieldsAdvectionBackup.IsSize(Grid.Nx, Grid.Ny, Grid.Nz)) FieldsAdvectionBackup.Reallocate(Grid.Nx, Grid.Ny, Grid.Nz);
 
     LBM.DetectObstacles(*this);
-    Adv.AdvectPhaseField(*this, Vel, BC, dt, tStep, finalize);
+    Adv.AdvectPhaseField(*this, Vel, BC, dt, tStep);
     LBM.DetectObstaclesAdvection(*this,Vel,BC);
     CalculateFractions();
     //ConsoleOutput::WriteStandard(thisclassname, "Advected");
 }
 
+void PhaseField::AdvectALE(AdvectionHR& Adv, const Velocities& Vel,
+        const BoundaryConditions& BC, FlowSolverLBM& LBM,
+        const double dt, const double tStep)
+{
+    if(FieldsAdvectionDot   .IsNotAllocated()) FieldsAdvectionDot   .Allocate(Grid, Fields.Bcells());
+    if(FieldsAdvectionBackup.IsNotAllocated()) FieldsAdvectionBackup.Allocate(Grid, Fields.Bcells());
+
+    if(not FieldsAdvectionDot   .IsSize(Grid.Nx, Grid.Ny, Grid.Nz)) FieldsAdvectionDot   .Reallocate(Grid.Nx, Grid.Ny, Grid.Nz);
+    if(not FieldsAdvectionBackup.IsSize(Grid.Nx, Grid.Ny, Grid.Nz)) FieldsAdvectionBackup.Reallocate(Grid.Nx, Grid.Ny, Grid.Nz);
+
+    LBM.DetectObstacles(*this);
+    Adv.AdvectPhaseFieldALE(*this, Vel, BC, dt, tStep);
+    LBM.DetectObstaclesAdvection(*this,Vel,BC);
+    CalculateFractions();
+    //ConsoleOutput::WriteStandard(thisclassname, "Advected");
+}
 Tensor<double,1> PhaseField::NewFractions(const int x, const int y, const int z, double locdt) const
 {
     Tensor<double,1> newFractions = Fractions(x,y,z);
@@ -3895,5 +4111,47 @@ double PhaseField::CalculateSolidMass() const
 
     SolidMass *= Grid.CellVolume();
     return SolidMass;
+}
+
+void PhaseField::SmoothInitialization()
+{
+    // Spread interfaces by overlapping the grains near the interface
+    ConsoleOutput::WriteSimple("Creating grain boundaries...");
+    auto TempFields = Fields;
+    STORAGE_LOOP_BEGIN(i,j,k,Fields,0)
+    if(Fields(i,j,k).size() == 1)
+    {
+        size_t alpha_index = Fields(i,j,k).begin()->index;
+
+        for(int di = -1; di <= 1; di++)
+        for(int dj = -1; dj <= 1; dj++)
+        for(int dk = -1; dk <= 1; dk++)
+        if(i+di >= 0 and i+di < Grid.Nx and
+           j+dj >= 0 and j+dj < Grid.Ny and
+           k+dk >= 0 and k+dk < Grid.Nz and
+           (di != 0 or dj != 0 or dk != 0))
+        {
+            bool grain_not_present = true;
+            for(auto beta  = Fields(i+di,j+dj,k+dk).begin();
+                     beta != Fields(i+di,j+dj,k+dk).end(); ++beta)
+            if(beta->index == alpha_index)
+            {
+                grain_not_present = false;
+                break;
+            }
+
+            if(grain_not_present)
+            {
+                for(auto beta  = Fields(i+di,j+dj,k+dk).begin();
+                         beta != Fields(i+di,j+dj,k+dk).end(); ++beta)
+                {
+                    TempFields(i,j,k).add_value(beta->index, 1.0);
+                }
+                TempFields(i+di,j+dj,k+dk).add_value(alpha_index, 1.0);
+            }
+        }
+    }
+    STORAGE_LOOP_END
+    Fields = TempFields;
 }
 }// namespace openphase

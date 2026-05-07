@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2014
- *   Main contributors :   Oleg Shchyglo; Marvin Tegeler; Matthias Stratmann
+ *
+ *  File created :   2014
+ *  Main contributors :   Oleg Shchyglo; Marvin Tegeler; Matthias Stratmann
  *
  */
 
@@ -82,6 +82,27 @@ struct HeatSourceStructure
     dVector3 Position;                                                          ///< Position of the center of the heat source for ellipsoidal or rectangular shapes [grid coordinates]
     dVector3 Size;                                                              ///< Heat source size for ellipsoidal (three orthogonal radii) and rectangular (three orthogonal side lengths) shape sources [grid coordinates]
     dVector3 Velocity;                                                          ///< Heat source sweep velocity (only for ellipsoidal and rectangular types) [true units]
+
+    HeatSourceStructure(void) :                                                 ///< Default constructor
+        Type(HeatSourceTypes::Phase),
+        TriggerON(EventTriggers::TimeStep),
+        TriggerOFF(EventTriggers::TimeStep),
+        Distribution(HeatSourceEnergyDistributions::Gaussian),
+        Mode(HeatSourceModes::ThreeDimensional),
+        Active(false),
+        Repeat(0),
+        Value(0.0),
+        ONtriggerValue(0.0),
+        OFFtriggerValue(0.0),
+        PhaseIndex(0),
+        PhaseIndexON(0),
+        PhaseIndexOFF(0),
+        Position(dVector3()),
+        Size(dVector3()),
+        Velocity(dVector3())
+    {
+
+    }
     void Read(std::ifstream& inp)                                               ///< Reads heat sources data from a given file stream
     {
         inp.read(reinterpret_cast<char*>(&Type           ), sizeof(int));

@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2011
- *   Main contributors :   Oleg Shchyglo; Raphael Schiedung
+ *
+ *  File created :   2011
+ *  Main contributors :   Oleg Shchyglo; Raphael Schiedung
  *
  */
 
@@ -117,7 +117,7 @@ class Grain                                                                     
         {
             inp.read(reinterpret_cast<char*>(&Orientation[i]), sizeof(double));
         }
-        Orientation.setRotationMatrix();
+        Orientation.set_rotation_matrix();
     }
 
     void ReadH5(std::vector<double> dbuffer, int& n)                            ///< Reads grains info from a given file stream
@@ -155,7 +155,7 @@ class Grain                                                                     
         {
             Orientation[i] = dbuffer[n]; ++n;
         }
-        Orientation.setRotationMatrix();
+        Orientation.set_rotation_matrix();
     }
 
     void WriteH5(std::vector<double>& dbuffer)                                  ///< Reads grains info from a given file stream
@@ -323,7 +323,7 @@ class Grain                                                                     
         MAXVolume     = 0.0;
         Density       = 0.0;
         VolumeRatio   = 1.0;
-        Orientation.set_to_zero();
+        Orientation.set_to_zero_rotation();
         InertiaM.set_to_zero();
         Rcm.set_to_zero();
         Vcm.set_to_zero();
@@ -393,11 +393,12 @@ class Grain                                                                     
     bool IsNucleus(void) const
     {
         return Stage != GrainStages::Stable;
-    };
+    }
+
     bool IsPresent(void) const
     {
         return Exist;
-    };
+    }
 };
 
 class GrainsProperties
@@ -714,7 +715,7 @@ class GrainsProperties
             GrainsStorage[i].Exist = true;
             GrainsStorage[i].Phase = PhaseIndex;
             GrainsStorage[i].Parent = 0;
-            GrainsStorage[i].Orientation.set_to_zero();
+            GrainsStorage[i].Orientation.set_to_zero_rotation();
             return i;
         }
 
@@ -723,7 +724,7 @@ class GrainsProperties
         locGrain.Exist  = true;
         locGrain.Phase  = PhaseIndex;
         locGrain.Parent = 0;
-        locGrain.Orientation.set_to_zero();
+        locGrain.Orientation.set_to_zero_rotation();
 
         GrainsStorage.push_back(locGrain);
         return GrainsStorage.size() - 1;
@@ -900,22 +901,7 @@ class GrainsProperties
         }
 #endif
     }
-    //void Write(const size_t ID, const long int tStep) const
-    //{
-    //    std::ostringstream FileName;
-    //    FileName.fill('0');
-    //    FileName << "Checkpoint/PhaseField/GrainStats" << std::setw(8) << ID << "_" << tStep << ".dat";
 
-    //    Write(FileName.str());
-    //}
-    //void Read(const size_t ID, const long int tStep)
-    //{
-    //    std::ostringstream FileName;
-    //    FileName.fill('0');
-    //    FileName << "Checkpoint/PhaseField/GrainStats" << std::setw(8) << ID << "_" << tStep << ".dat";
-
-    //    Read(FileName.str());
-    //}
     void WriteH5(const long int tStep, H5Interface& H5)
     {
         std::vector<double> data;
@@ -926,6 +912,7 @@ class GrainsProperties
         }
         H5.WriteCheckPoint(tStep, thisclassname, data);
     }
+
     void ReadH5(const long int tStep, H5Interface& H5)
     {
         std::vector<double> data;
@@ -949,6 +936,26 @@ class GrainsProperties
         {
             it->GrowthConstraintsViolation = GrowthConstraintsViolations::None;
         }
+    }
+
+    void ClearGrainsForcesAndAccelerations()                                    ///< Resets forces and accelerations for each grain in dynamic simulations. It has to be called at the beginning of each time-step when advection is used!
+    {
+        for (size_t pIdx = 0ul; pIdx < GrainsStorage.size(); pIdx++)
+        if(GrainsStorage[pIdx].Exist)
+        {
+            GrainsStorage[pIdx].ClearForcesAndAccelerations();
+        }
+    }
+
+    std::vector<int> GetPresentGrains() const
+    {
+        std::vector<int> indices;
+        for (size_t pIdx = 0ul; pIdx < GrainsStorage.size(); pIdx++)
+        if(GrainsStorage[pIdx].Exist)
+        {
+            indices.push_back(pIdx);
+        }
+        return indices;
     }
 
     std::string thisclassname = "GrainsProperties";

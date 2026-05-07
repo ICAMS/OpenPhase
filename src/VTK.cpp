@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,10 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2014
- *   Main contributors :   Philipp Engels, Raphael Schiedung, Muhammad Adil Ali,
- *                         Marvin Tegeler, Oleg Shchyglo
+ *
+ *  File created :   2014
+ *  Main contributors :   Philipp Engels, Raphael Schiedung, Muhammad Adil Ali,
+ *                        Marvin Tegeler, Oleg Shchyglo
  *
  */
 
@@ -79,7 +79,10 @@ void VTK::Write(
     const int precision,
     const int resolution)
 {
-	const long int Nx = get_Nx(resolution, locSettings);
+#ifndef ACADEMIC
+	WriteCompressed(Filename,locSettings,ListOfFields,precision,resolution);
+#else
+    const long int Nx = get_Nx(resolution, locSettings);
     const long int Ny = get_Ny(resolution, locSettings);
     const long int Nz = get_Nz(resolution, locSettings);
 
@@ -126,6 +129,7 @@ void VTK::Write(
 
     op_mpi_write_vtk(Filename, buffer, hbuffer, tbuffer);
 #endif
+#endif
 }
 
 void VTK::WriteCompressed(
@@ -170,6 +174,7 @@ void VTK::WriteCompressed(
     VTK::WriteCoordinates(buffer, locSettings, resolution);
     buffer << "</Piece>\n";
 
+
     hbuffer << "<?xml version= \"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n";
     hbuffer << "<VTKFile type=\"StructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
     hbuffer << "<StructuredGrid WholeExtent=\""
@@ -191,6 +196,9 @@ void VTK::WriteDistorted(
     const int precision,
     const int resolution)
 {
+#ifndef ACADEMIC
+WriteDistortedCompressed(Filename,locSettings,EP,ListOfFields,precision,resolution);
+#else
     const long int Nx = get_Nx(resolution, locSettings);
     const long int Ny = get_Ny(resolution, locSettings);
     const long int Nz = get_Nz(resolution, locSettings);
@@ -237,6 +245,7 @@ void VTK::WriteDistorted(
     tbuffer << "</VTKFile> \n";
 
     op_mpi_write_vtk(Filename, buffer, hbuffer, tbuffer);
+#endif
 #endif
 }
 
@@ -296,5 +305,6 @@ void VTK::WriteDistortedCompressed(
     op_mpi_write_vtk(Filename, buffer, hbuffer, tbuffer);
 #endif
 }
+
 
 }// namespace openphase

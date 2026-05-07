@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2021
- *   Main contributors :   Raphael Schiedung
+ *
+ *  File created :   2021
+ *  Main contributors :   Raphael Schiedung
  *
  */
 
@@ -37,10 +37,10 @@ struct GrandPotentialPhaseDensity_CompressibleFluid: GrandPotentialPhaseDensity 
 {
     GrandPotentialPhaseDensity_CompressibleFluid(size_t PhaseIdxInp): GrandPotentialPhaseDensity(PhaseIdxInp){};
 
-    void Initialize(Settings& locSettings); ///<  Initializes global settings
+    void Initialize(Settings& locSettings) override; ///<  Initializes global settings
     void ReadInput(std::stringstream& InputFile, int moduleLocation) override;  ///<  Reads input parameters from a file
 
-    double PhasePressure ([[maybe_unused]] double Temperature, const Tensor<double,1>& ChemicalPotential) const override
+    double PhasePotential ([[maybe_unused]] double Temperature, const Tensor<double,1>& ChemicalPotential) const override
     {
         const double& K   = BulkModulus[0];
         const double& Vm0 = ReferenceMolarVolume[0];
@@ -50,7 +50,7 @@ struct GrandPotentialPhaseDensity_CompressibleFluid: GrandPotentialPhaseDensity 
 
         assert(K*Vm0 + mu0 - mu > 0 && "Invalid input parameters!");
 
-        return p0 - K*std::log((K*Vm0 + mu0 - mu)/(K*Vm0));
+        return -p0 + K*std::log((K*Vm0 + mu0 - mu)/(K*Vm0));
     }
     double PhaseConcentration   ([[maybe_unused]] double Temperature, double ChemicalPotential, size_t comp) const override
     {
@@ -77,7 +77,7 @@ struct GrandPotentialPhaseDensity_CompressibleFluid: GrandPotentialPhaseDensity 
         return K/(K*Vm0 + mu0 - mu)/(K*Vm0 + mu0 - mu);
     }
 
-    double PhasePressure (double height, [[maybe_unused]] double Temperature, const Tensor<double,1>& ChemicalPotential) const override
+    double PhasePotential (double height, [[maybe_unused]] double Temperature, const Tensor<double,1>& ChemicalPotential) const override
     {
         const double& K   = BulkModulus[0];
         const double& M   = MolarMass[0];
@@ -90,7 +90,7 @@ struct GrandPotentialPhaseDensity_CompressibleFluid: GrandPotentialPhaseDensity 
 
         assert(M*g*h + K*Vm0 + mu0 - mu > 0 && "Invalid input parameters!");
 
-        return p0 - K*std::log((M*g*h + K*Vm0 + mu0 - mu)/(K*Vm0));
+        return -p0 + K*std::log((M*g*h + K*Vm0 + mu0 - mu)/(K*Vm0));
     }
     double PhaseConcentration (double height, [[maybe_unused]] double Temperature, double ChemicalPotential, size_t comp) const override
     {

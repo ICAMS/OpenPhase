@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,11 +18,12 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2021
- *   Main contributors :   Raphael Schiedung
+ *
+ *  File created :   2021
+ *  Main contributors :   Raphael Schiedung
  *
  */
+
 
 #include "AdvectionHR.h"
 #include "BoundaryConditions.h"
@@ -1034,7 +1035,7 @@ void GrandPotentialSolver::WriteVTK(const Settings& locSettings, const PhaseFiel
     for(size_t comp = 0; comp < Ncomp; comp++)
     {
          ListOfFields.push_back((VTK::Field_t){"Chemical Potential "+ElementNames[comp]+" [J]", [this, comp                ] (long i, long j, long k) {return ChemicalPotential (i,j,k,{comp});}});
-         ListOfFields.push_back((VTK::Field_t){ElementNames[comp]+ " [kg/m^3]"                , [this, comp, &Phase, &omega] (long i, long j, long k) {return MolarMasses[comp]*Concentrations(i,j,k,{comp});}});
+         ListOfFields.push_back((VTK::Field_t){ElementNames[comp]+ " [kg/m^3]"                , [this, comp                ] (long i, long j, long k) {return MolarMasses[comp]*Concentrations(i,j,k,{comp});}});
          ListOfFields.push_back((VTK::Field_t){ElementNames[comp]+ " [mol/mol]"               , [this, comp, &Phase, &omega] (long i, long j, long k) {return MoleFraction      (i,j,k,comp,Phase,omega);}});
     }
     ListOfFields.push_back((VTK::Field_t){"Molar Volume [m^3/mol]",    [this, &Phase, &omega] (long i, long j, long k) {return MolarVolume(i,j,k,Phase,omega);}});

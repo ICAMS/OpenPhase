@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2011
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev
+ *
+ *  File created :   2011
+ *  Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev
  *
  */
 
@@ -40,7 +40,6 @@ class BoundaryConditions;
 class InterfaceProperties;
 class SemiImplicitCoupling;
 class Temperature;
-class ThermodynamicPropertiesEQP;
 class ThermodynamicPropertiesEQP;
 
 enum class AveragingWeightsModes
@@ -96,7 +95,14 @@ class OP_EXPORTS DrivingForce : public OPObject                                 
 
     Storage3D<NodeDF, 0> Force;                                                 ///< Driving force storage
 
-    DrivingForce& operator= (const DrivingForce& rhs);                          ///< Copy operator for DrivingForce class
+    DrivingForce& operator+=(const DrivingForce& other);
+
+    // Moved from TextOutput
+
+    NodeAB<double,double> IntegrateDG(PhaseField& Phase,
+                                      std::string filename,
+                                      double RealTime);
+    // End moved form TextOutput
 
     void AverageGlobal(PhaseField& Phase, double time);
     NodeDF AverageDG;

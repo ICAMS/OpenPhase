@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2015
- *   Main contributors :   Philipp Engels; Marvin Tegeler; Raphael Schiedung
+ *
+ *  File created :   2015
+ *  Main contributors :   Philipp Engels; Marvin Tegeler; Raphael Schiedung
  *
  */
 
@@ -61,7 +61,6 @@ void AdvectionHR::Initialize(Settings& locSettings, std::string ObjectNameSuffix
 
 void AdvectionHR::ReadInput(const std::string InputFileName)
 {
-    ConsoleOutput::WriteLineInsert(thisclassname+" input");
     ConsoleOutput::WriteStandard("Source", InputFileName);
 
     std::fstream inpF(InputFileName.c_str(), std::ios::in | std::ios_base::binary);
@@ -74,16 +73,13 @@ void AdvectionHR::ReadInput(const std::string InputFileName)
     inp << inpF.rdbuf();
     inpF.close();
 
-    ConsoleOutput::WriteLineInsert("AdvectionHR input");
-    ConsoleOutput::WriteStandard("Source", InputFileName);
 
     ReadInput(inp);
-
-    ConsoleOutput::WriteLine();
 }
 
 void AdvectionHR::ReadInput(std::stringstream& inp)
 {
+    ConsoleOutput::WriteLineInsert(thisclassname+" input");
     int moduleLocation = FileInterface::FindModuleLocation(inp, thisclassname);
     std::string schemeString = FileInterface::ReadParameterK(inp, moduleLocation, "scheme", false, "UPWIND");
 
@@ -140,6 +136,9 @@ void AdvectionHR::ReadInput(std::stringstream& inp)
             break;
         }
     }
+
+    ConsoleOutput::WriteLine();
+    ConsoleOutput::WriteBlankLine();
 }
 
 void AdvectionHR::CalculateLocalAdvectionPhaseField(
@@ -421,8 +420,7 @@ void AdvectionHR::AdvectPhaseField(
         const Velocities& Vel,
         const BoundaryConditions& BC,
         const double dt,
-        const int tStep,
-        const bool finalize)
+        const int tStep)
 {
     assert(Phase.Fields.Bcells() >= 2 && "Number of Bcells for storage PhaseField::Fields needs to be 2 or higher.");
 
@@ -447,7 +445,7 @@ void AdvectionHR::AdvectPhaseField(
         ConsoleOutput::WriteWarning("Warning reduce time step, cfl > 0.5!", "AdvectionHR", "CalculateAdvection");
     }
 
-    Phase.Finalize(BC,finalize);
+    Phase.Finalize(BC);
 }
 
 void AdvectionHR::AdvectPhaseFieldALE(
@@ -455,8 +453,7 @@ void AdvectionHR::AdvectPhaseFieldALE(
         const Velocities& Vel,
         const BoundaryConditions& BC,
         const double dt,
-        const int tStep,
-        const bool finalize)
+        const int tStep)
 {
     assert(Phase.Fields.Bcells() >= 2 && "Number of Bcells for storage PhaseField::Fields needs to be 2 or higher.");
 
@@ -479,6 +476,6 @@ void AdvectionHR::AdvectPhaseFieldALE(
         ConsoleOutput::WriteWarning("Warning reduce time step, cfl > 0.5!", "AdvectionHR", "CalculateAdvection");
     }
 
-    Phase.Finalize(BC,finalize);
+    Phase.Finalize(BC);
 }
 }// namespace openphase

@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,6 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2015
- *   Main contributors :   Oleg Shchyglo
  *
  */
 
@@ -43,6 +40,7 @@ enum class LaplacianStencils                                                    
 // 1D, 2D and 3D Laplacian stencils.
 // Note that 1D and 2D stencils for convenience defined in 3D arrays
 // but should only be used with inactive dimensions suppressed.
+
 
 /// Standard Laplacian stencils
 const double LaplacianStencil1D_3[3][3][3] = {{{0.0,   0.0,   0.0},
@@ -143,6 +141,7 @@ const double LaplacianStencil2D_LB[3][3][3] = {{{    0.0, 1.0/6.0,      0.0},
                                                 {1.0/6.0, 2.0/3.0, 1.0/6.0},
                                                 {    0.0, 1.0/6.0,     0.0}}};  ///< Laplacian stencil based on D2Q9 lattice Boltzmann stencil. It is the same as 2D stencil by Dave Hale
 
+
 const double LaplacianStencil3D_LB[3][3][3] = {{{1.0/36.0, 1.0/9.0, 1.0/36.0},
                                                 {1.0/9.0,  4.0/9.0, 1.0/9.0 },
                                                 {1.0/36.0, 1.0/9.0, 1.0/36.0}},
@@ -160,9 +159,9 @@ class LaplacianStencil                                                          
  public:
     struct LaplacianStencilEntry
     {
-        int di;                                                                 ///< x coordinate of stencil element
-        int dj;                                                                 ///< y coordinate of stencil element
-        int dk;                                                                 ///< z coordinate of stencil element
+        int di;                                                                 ///< X coordinate of stencil element
+        int dj;                                                                 ///< Y coordinate of stencil element
+        int dk;                                                                 ///< Z coordinate of stencil element
         double weight;                                                          ///< Weight associated with the stencil element
     };
 
@@ -190,7 +189,7 @@ class LaplacianStencil                                                          
         }
         weight_zero = UserStencil[1][1][1];
     }
-    void SetNoCenter(const double UserStencil[3][3][3], GridParameters& Dimensions)
+    void SetNoCenter(const double UserStencil[3][3][3], GridParameters& Dimensions)///< Sets the diffusion stencil without center element using user specified Laplacian stencil
     {
         SetNoCenter(UserStencil,Dimensions.dx, Dimensions.dNx, Dimensions.dNy, Dimensions.dNz);
     }
@@ -217,21 +216,21 @@ class LaplacianStencil                                                          
         }
         weight_zero = UserStencil[1][1][1];
     }
-    void Set(const double UserStencil[3][3][3], GridParameters& Dimensions)
+    void Set(const double UserStencil[3][3][3], GridParameters& Dimensions)     ///< Sets the diffusion stencil using user specified Laplacian stencil
     {
         Set(UserStencil,Dimensions.dx, Dimensions.dNx, Dimensions.dNy, Dimensions.dNz);
     }
 
-    size_t size() const {return StencilElements.size();};                       ///< Returns the size of stencil.
-    typedef std::vector<LaplacianStencilEntry>::iterator iterator;              ///< Iterator over stencil
-    typedef std::vector<LaplacianStencilEntry>::const_iterator citerator;       ///< Constant iterator over stencil
-    iterator  begin() {return StencilElements.begin();};                        ///< Iterator to the begin of stencil
-    iterator  end()   {return StencilElements.end();};                          ///< Iterator to the end of stencil
-    citerator cbegin() const {return StencilElements.cbegin();};                ///< Constant iterator to the begin of stencil
-    citerator cend()   const {return StencilElements.cend();};                  ///< Constant iterator to the end of stencil
-    iterator erase(iterator it) {it = StencilElements.erase(it); return it;}    ///< Erases entry
+    size_t size() const {return StencilElements.size();};                       ///< Returns the size of the stencil.
+    typedef std::vector<LaplacianStencilEntry>::iterator iterator;              ///< Iterator over the stencil
+    typedef std::vector<LaplacianStencilEntry>::const_iterator citerator;       ///< Constant iterator over the stencil
+    iterator  begin() {return StencilElements.begin();};                        ///< Iterator to the begin of the stencil
+    iterator  end()   {return StencilElements.end();};                          ///< Iterator to the end of the stencil
+    citerator cbegin() const {return StencilElements.cbegin();};                ///< Constant iterator to the begin of the stencil
+    citerator cend()   const {return StencilElements.cend();};                  ///< Constant iterator to the end of the stencil
+    iterator erase(iterator it) {it = StencilElements.erase(it); return it;}    ///< Erases the entry pointed to by the given iterator
 
-    double weight_zero;                                                         ///< Extra copy of stencil center element
+    double weight_zero;                                                         ///< Copy of the center element of the stencil
  protected:
  private:
     std::vector< LaplacianStencilEntry > StencilElements;                       ///< Stencil storage

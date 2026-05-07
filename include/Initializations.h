@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,11 +18,11 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2014
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev;
- *                         Reza Darvishi Kamachali; Philipp Engels;
- *                         Raphael Schiedung
+ *
+ *  File created :   2014
+ *  Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev;
+ *                        Reza Darvishi Kamachali; Philipp Engels;
+ *                        Raphael Schiedung
  *
  */
 
@@ -60,6 +60,11 @@ class OP_EXPORTS Initializations// : public OPObject
     static size_t Ellipsoid(PhaseField& Phase, size_t PhaseIndex,
             double RadiusX, double RadiusY, double RadiusZ,
             double x0, double y0, double z0, BoundaryConditions& BC);                     ///< Initializes a spherical grain
+    static size_t Ellipsoid(PhaseField& Phase, size_t PhaseIndex,
+            double RadiusX, double RadiusY, double RadiusZ,
+            double x0, double y0, double z0,
+            double tx, double ty, double tz,   // Euler angles (ZYX)
+            BoundaryConditions& BC);                                            ///< Initializes a rotated ellipsoidal grain
     static size_t SectionalPlane(PhaseField& Phase, const size_t PhaseIndex,
             const dVector3 Point, const dVector3 Orientation,
             const BoundaryConditions& BC,
@@ -83,10 +88,33 @@ class OP_EXPORTS Initializations// : public OPObject
     static std::vector<size_t> TwoWalls(PhaseField& Phase,
             size_t ChannelPhaseIndex, size_t WallsPhaseIndex,
             double WallsThickness, BoundaryConditions& BC);
+    static std::vector<size_t> TwoWalls(PhaseField& Phase,
+            size_t ChannelPhaseIndex, size_t WallsPhaseIndex,
+            double WallsThickness, BoundaryConditions& BC, int axis);
     static size_t Rectangular(PhaseField& Phase, const size_t PhaseIndex,
             const double Lx, const double Ly, const double Lz,
             const double x0, const double y0, const double z0,
             const BoundaryConditions& BC, const bool Finalize = true);                                        ///< Initializes a rectangular grain
+    static size_t Rectangular(PhaseField& Phase, const size_t PhaseIndex,
+            const double Lx, const double Ly, const double Lz,
+            const double x0, const double y0, const double z0,
+            const double tx, const double ty, const double tz,
+            const BoundaryConditions& BC, const bool Finalize = true);                                        ///< Initializes a rotated rectangular grain
+    static void GenerateBlobbyParams(size_t numBumps, std::vector<double>& amplitudes, 
+            std::vector<double>& freqTheta, std::vector<double>& freqPhi, 
+            std::vector<double>& phases, double maxAmplitude);
+    static double BlobbySDF(double x, double y, double z,
+            double x0, double y0, double z0,
+            double Lx, double Ly, double Lz,
+            const std::vector<double>& amplitudes,
+            const std::vector<double>& freqTheta,
+            const std::vector<double>& freqPhi,
+            const std::vector<double>& phases);
+    static size_t BlobbyAuto(PhaseField& Phase, size_t PhaseIndex, 
+            double Lx, double Ly, double Lz,
+            double x0, double y0, double z0, double maxAmplitude, size_t numBumps,
+            const BoundaryConditions& BC, const bool Finalize = true);
+
     static size_t Cylinder(PhaseField& Phase, const size_t PhaseIndex,
             const double Radius, const double length, const int Axis,
             const double x0, const double y0, const double z0,
@@ -159,6 +187,7 @@ class OP_EXPORTS Initializations// : public OPObject
             BoundaryConditions& BC);
     static void ReadCSV(PhaseField& Phase, BoundaryConditions& BC,
             std::filesystem::path FilePath, char Separator = ',');
+    static void ReadKanapyData(PhaseField& Phase, BoundaryConditions& BC, std::filesystem::path FilePath);
 
     /// Calculates global coordinates from local mpi coordinates
     template<typename T>

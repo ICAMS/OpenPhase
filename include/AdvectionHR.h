@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2015
- *   Main contributors :   Philipp Engels; Marvin Tegeler; Raphael Schiedung
+ *
+ *  File created :   2015
+ *  Main contributors :   Philipp Engels; Marvin Tegeler; Raphael Schiedung
  *
  */
 
@@ -31,8 +31,8 @@
 #include "PhaseField.h"
 #include "Settings.h"
 #include "Velocities.h"
-#include "Containers/NodeVectorN.h"
 #include <set>
+#include "Containers.h"
 
 namespace openphase
 {
@@ -51,15 +51,13 @@ class OP_EXPORTS AdvectionHR : OPObject
             const Velocities& Vel,
             const BoundaryConditions& BC,
             const double dt,
-            const int tStep,
-            const bool finalize = true);                                        ///< single-time steps advection method for phase-fields that advects solid phases incompressible and fluid phases compressible
+            const int tStep);                                                   ///< single-time steps advection method for phase-fields that advects solid phases incompressible and fluid phases compressible
     void AdvectPhaseFieldALE(
                 PhaseField& Phase,
                 const Velocities& Vel,
                 const BoundaryConditions& BC,
                 const double dt,
-                const int tStep,
-                const bool finalize = true);                                    ///< single-time steps advection method for phase-fields that advects solid phases compressible
+                const int tStep);                                               ///< single-time steps advection method for phase-fields that advects solid phases compressible
 
     template<bool compressible = true, class T, size_t Rank>
     void AdvectField(
@@ -87,7 +85,6 @@ class OP_EXPORTS AdvectionHR : OPObject
             const double dt,
             const int tStep) const;                                             ///< multi-time steps advection method (non-standard method!)
 
- private:
 
     AdvectionSchemes Scheme;
     double (*Limiter)(const double,const double);
@@ -125,6 +122,7 @@ class OP_EXPORTS AdvectionHR : OPObject
             double q, double qp, double qm, double qpp, double qmm,
             double dt, double dx,
             double (*Limiter)(const double,const double));                      ///< Fundamental advection algorithm
+private:
 
     template<bool compressible, class T, size_t Rank>
     static void CalculacteLocalAdvectionIncrements(
@@ -268,7 +266,7 @@ void AdvectionHR::CalculacteLocalAdvectionIncrements(
             FieldDot(i,j,k)[n] += AdvectionKernel<compressible>(CFL,v,vp,vm,q[n],qp[n],qm[n],qpp[n],qmm[n],dt,dx,Limiter);
         }
     }
-    else if constexpr (std::is_same<T,NodeVectorN>::value)
+    else if constexpr (std::is_same<T,NodeVN>::value)
     {
         if constexpr (Rank == 0)
         {
@@ -280,7 +278,7 @@ void AdvectionHR::CalculacteLocalAdvectionIncrements(
 //            for (auto alpha = qmm.cbegin(); alpha != qmm.cend(); alpha++) GrainIdxs.insert(alpha->index);
 
             for (auto idx = GrainIdxs.cbegin(); idx != GrainIdxs.cend(); idx++)
-            for (size_t ss = 0; ss < Field(i, j, k).size_of_vector(); ss++)
+            for (size_t ss = 0; ss < Field(i, j, k).get_vector_size(); ss++)
             {
                 double q_value   = q  .get(*idx, ss);
                 double qp_value  = qp .exist(*idx) ? qp .get(*idx, ss) : q_value;
@@ -304,7 +302,7 @@ void AdvectionHR::CalculacteLocalAdvectionIncrements(
 //                for (auto alpha = qmm[n].cbegin(); alpha != qmm[n].cend(); alpha++) GrainIdxs.insert(alpha->index);
 
                 for (auto idx = GrainIdxs.cbegin(); idx != GrainIdxs.cend(); idx++)
-                for (size_t ss = 0; ss < Field(i, j, k)[n].size_of_vector(); ss++)
+                for (size_t ss = 0; ss < Field(i, j, k)[n].get_vector_size(); ss++)
                 {
                     double q_value   = q[n].get(*idx, ss);
                     double qp_value  = qp[n].exist(*idx)  ? qp[n].get(*idx, ss)  : q_value;

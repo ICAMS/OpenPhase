@@ -45,8 +45,10 @@ using namespace openphase;
 class LocalLBM : public FlowSolverLBM                                           ///< Modification of FLowSolverLBM which are only used in this example
 {
  public:
-    LocalLBM(Settings& locSettings, double in_dt): FlowSolverLBM(locSettings, in_dt){};
-
+    LocalLBM(Settings& locSettings, double in_dt): FlowSolverLBM(locSettings)
+    {
+        SetTimeStep(in_dt);
+    };
     void InitializeSingle();                                                    ///<  Initializes a single density
     void InitializeSphere(const double Radius, const int i0, const int j0,
             const int k0, const double* rho = nullptr);  ///<  Initializes a single sphere
@@ -197,7 +199,7 @@ int main(int argc, char *argv[])
             ConsoleOutput::WriteBlankLine();
         }
 
-        Phase.ClearGrainsForcesAndAccelerations();
+        Phase.FieldsProperties.ClearGrainsForcesAndAccelerations();
         LB.Solve(Phase, Vel, BC);
         ISS.Calculate(Phase, BC, [] (int i ,int j, int k){return 0.0;}, RTC.dt);
         ISF.CalculateSolidVelocities(Phase, Vel, BC, RTC.dt);

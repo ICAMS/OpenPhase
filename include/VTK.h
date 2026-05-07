@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,10 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2014
- *   Main contributors :   Philipp Engels, Raphael Schiedung, Muhammad Adil Ali,
- *                         Marvin Tegeler, Oleg Shchyglo
+ *
+ *  File created :   2014
+ *  Main contributors :   Philipp Engels, Raphael Schiedung, Muhammad Adil Ali,
+ *                        Marvin Tegeler, Oleg Shchyglo
  *
  */
 
@@ -79,6 +79,7 @@ struct OP_EXPORTS VTK                                                           
         }
         buffer << "</DataArray>\n";
     }
+
 
     template <typename T, class function_t>
     static void ForEachCompressed (T& buffer,
@@ -186,32 +187,32 @@ struct OP_EXPORTS VTK                                                           
             else if (Field.Function(0,0,0).type() == typeid(dVector3))
             {
                 WriteFieldHeader(buffer, Field.Name, "Float64", 3);
-                ForEach(buffer,Nx,Ny,Nz,[&Field, precision](int i,int j,int k){return std::any_cast<dVector3>(Field.Function(i,j,k)).write(precision);});
+                ForEach(buffer,Nx,Ny,Nz,[&Field, precision](int i,int j,int k){return std::any_cast<dVector3>(Field.Function(i,j,k)).get_output_string(precision);});
             }
             else if (Field.Function(0,0,0).type() == typeid(dVector6))
             {
                 WriteFieldHeader(buffer, Field.Name, "Float64", 6);
-                ForEach(buffer,Nx,Ny,Nz,[&Field, precision](int i,int j,int k){return std::any_cast<dVector6>(Field.Function(i,j,k)).write(precision);});
+                ForEach(buffer,Nx,Ny,Nz,[&Field, precision](int i,int j,int k){return std::any_cast<dVector6>(Field.Function(i,j,k)).get_output_string(precision);});
             }
             else if (Field.Function(0,0,0).type() == typeid(vStrain))
             {
                 WriteFieldHeader(buffer, Field.Name, "Float64", 6);
-                ForEach(buffer,Nx,Ny,Nz,[&Field, precision](int i,int j,int k){return std::any_cast<vStrain>(Field.Function(i,j,k)).write(precision);});
+                ForEach(buffer,Nx,Ny,Nz,[&Field, precision](int i,int j,int k){return std::any_cast<vStrain>(Field.Function(i,j,k)).get_output_string(precision);});
             }
             else if (Field.Function(0,0,0).type() == typeid(vStress))
             {
                 WriteFieldHeader(buffer, Field.Name, "Float64", 6);
-                ForEach(buffer,Nx,Ny,Nz,[&Field, precision](int i,int j,int k){return std::any_cast<vStress>(Field.Function(i,j,k)).write(precision);});
+                ForEach(buffer,Nx,Ny,Nz,[&Field, precision](int i,int j,int k){return std::any_cast<vStress>(Field.Function(i,j,k)).get_output_string(precision);});
             }
             else if (Field.Function(0,0,0).type() == typeid(dMatrix3x3))
             {
                 WriteFieldHeader(buffer, Field.Name, "Float64", 9);
-                ForEach(buffer,Nx,Ny,Nz,[&Field, precision](int i,int j,int k){return std::any_cast<dMatrix3x3>(Field.Function(i,j,k)).write(precision);});
+                ForEach(buffer,Nx,Ny,Nz,[&Field, precision](int i,int j,int k){return std::any_cast<dMatrix3x3>(Field.Function(i,j,k)).get_output_string(precision);});
             }
             else if (Field.Function(0,0,0).type() == typeid(dMatrix6x6))
             {
                 WriteFieldHeader(buffer, Field.Name, "Float64", 36);
-                ForEach(buffer,Nx,Ny,Nz,[&Field, precision](int i,int j,int k){return std::any_cast<dMatrix6x6>(Field.Function(i,j,k)).write(precision);});
+                ForEach(buffer,Nx,Ny,Nz,[&Field, precision](int i,int j,int k){return std::any_cast<dMatrix6x6>(Field.Function(i,j,k)).get_output_string(precision);});
             }
         }
     }
@@ -279,32 +280,32 @@ struct OP_EXPORTS VTK                                                           
             else if (Field.Function(0,0,0).type() == typeid(dVector3))
             {
                 WriteFieldHeader(buffer, Field.Name, "Float32", 3, "binary");
-                ForEachCompressed(buffer,Nx,Ny,Nz,[&Field](int i,int j,int k){return std::any_cast<dVector3>(Field.Function(i,j,k)).writeCompressed();});
+                ForEachCompressed(buffer,Nx,Ny,Nz,[&Field](int i,int j,int k){return std::any_cast<dVector3>(Field.Function(i,j,k)).get_vector_float();});
             }
             else if (Field.Function(0,0,0).type() == typeid(dVector6))
             {
                 WriteFieldHeader(buffer, Field.Name, "Float32", 6, "binary");
-                ForEachCompressed(buffer,Nx,Ny,Nz,[&Field](int i,int j,int k){return std::any_cast<dVector6>(Field.Function(i,j,k)).writeCompressed();});
+                ForEachCompressed(buffer,Nx,Ny,Nz,[&Field](int i,int j,int k){return std::any_cast<dVector6>(Field.Function(i,j,k)).get_vector_float();});
             }
             else if (Field.Function(0,0,0).type() == typeid(vStrain))
             {
                 WriteFieldHeader(buffer, Field.Name, "Float32", 6, "binary");
-                ForEachCompressed(buffer,Nx,Ny,Nz,[&Field](int i,int j,int k){return std::any_cast<vStrain>(Field.Function(i,j,k)).writeCompressed();});
+                ForEachCompressed(buffer,Nx,Ny,Nz,[&Field](int i,int j,int k){return std::any_cast<vStrain>(Field.Function(i,j,k)).get_vector_float();});
             }
             else if (Field.Function(0,0,0).type() == typeid(vStress))
             {
                 WriteFieldHeader(buffer, Field.Name, "Float32", 6, "binary");
-                ForEachCompressed(buffer,Nx,Ny,Nz,[&Field](int i,int j,int k){return std::any_cast<vStress>(Field.Function(i,j,k)).writeCompressed();});
+                ForEachCompressed(buffer,Nx,Ny,Nz,[&Field](int i,int j,int k){return std::any_cast<vStress>(Field.Function(i,j,k)).get_vector_float();});
             }
             else if (Field.Function(0,0,0).type() == typeid(dMatrix3x3))
             {
                 WriteFieldHeader(buffer, Field.Name, "Float32", 9, "binary");
-                ForEachCompressed(buffer,Nx,Ny,Nz,[&Field](int i,int j,int k){return std::any_cast<dMatrix3x3>(Field.Function(i,j,k)).writeCompressed();});
+                ForEachCompressed(buffer,Nx,Ny,Nz,[&Field](int i,int j,int k){return std::any_cast<dMatrix3x3>(Field.Function(i,j,k)).get_vector_float();});
             }
             else if (Field.Function(0,0,0).type() == typeid(dMatrix6x6))
             {
                 WriteFieldHeader(buffer, Field.Name, "Float32", 36, "binary");
-                ForEachCompressed(buffer,Nx,Ny,Nz,[&Field](int i,int j,int k){return std::any_cast<dMatrix6x6>(Field.Function(i,j,k)).writeCompressed();});
+                ForEachCompressed(buffer,Nx,Ny,Nz,[&Field](int i,int j,int k){return std::any_cast<dMatrix6x6>(Field.Function(i,j,k)).get_vector_float();});
             }
         }
     }
@@ -348,6 +349,7 @@ struct OP_EXPORTS VTK                                                           
     //        const std::string Filename,
     //        const Settings& locSettings,
     //        ListOfData_t ListOfData);
+
 
     template <typename T>
     static void WriteHeader(T& buffer, const int Nx, const int Ny, const int Nz, int resolution = 1)

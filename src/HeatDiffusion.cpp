@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,10 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2014
- *   Main contributors :   Oleg Shchyglo; Philipp Engels; Raphael Schiedung;
- *                         Marvin Tegeler; Helge Schaar
+ *
+ *  File created :   2014
+ *  Main contributors :   Oleg Shchyglo; Philipp Engels; Raphael Schiedung;
+ *                        Marvin Tegeler; Helge Schaar
  *
  */
 
@@ -30,6 +30,9 @@
 #include "PhaseField.h"
 #include "BoundaryConditions.h"
 #include "Composition.h"
+#ifndef ACADEMIC
+#include "Thermodynamics/ThermodynamicPropertiesEQP.h"
+#endif
 
 namespace openphase
 {
@@ -201,6 +204,34 @@ void HeatDiffusion::SetLocalLatentHeatAndApply(const PhaseField& Phase, Temperat
     OMP_PARALLEL_STORAGE_LOOP_END
     Qdot.Clear();
 }
+#ifndef ACADEMIC
+void HeatDiffusion::SetEffectiveProperties(const PhaseField& Phase,
+                                           const ThermodynamicPropertiesEQP& TP,
+                                           const Composition& Cx, const Temperature& Tx)
+{
+    if(Tx.LatentHeatMode == LatentHeatModes::Local)
+    {
+        SetLocalLatentHeat(Phase,Tx);                                              //TODO: take local latent heat from ThermodynamicProperties
+    }
+
+    OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,EffectiveThermalConductivity,EffectiveThermalConductivity.Bcells(),)
+    {
+        EffectiveHeatCapacity(i,j,k) = 0.0;
+        EffectiveThermalConductivity(i,j,k) = 0.0;
+
+        for(size_t alpha = 0; alpha < Phase.Nphases; ++alpha)
+        if(Phase.Fractions(i,j,k,{alpha}) > 0.0)
+        {
+            EffectiveHeatCapacity(i,j,k)
+            += TP.ExtrapolationData(i,j,k)({alpha,alpha}).heat_capacity*Phase.Fractions(i,j,k,{alpha})/Cx.TotalMolarVolume;
+
+            EffectiveThermalConductivity(i,j,k)
+            += PhaseThermalConductivity[alpha]*Phase.Fractions(i,j,k,{alpha});
+        }
+    }
+    OMP_PARALLEL_STORAGE_LOOP_END
+}
+#endif
 void HeatDiffusion::SetEffectiveProperties(const PhaseField& Phase, const Temperature& Tx)
 {
     if(Tx.LatentHeatMode == LatentHeatModes::Local)

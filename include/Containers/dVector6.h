@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,6 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2011
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev;
- *                         Philipp Engels
  *
  */
 
@@ -40,6 +36,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <array>
 
 namespace openphase
 {
@@ -66,7 +63,7 @@ class dVector6
 
     dVector6(std::initializer_list<double> vecinit)
     {
-        assert(vecinit.size() == 6 && "Initialization list size is not equal to storage range.");
+        assert(vecinit.size() == 6 && "Initialization list size is not equal storage range.");
 
         int ii = 0;
         for (auto it = vecinit.begin(); it != vecinit.end(); it++)
@@ -100,41 +97,16 @@ class dVector6
         return *this;
     }
 
-    void pack(std::vector<double>& buffer)
-    {
-        for (int i = 0; i < 6; ++i)
-        {
-            buffer.push_back(storage[i]);
-        }
-    }
-
-    void unpack(std::vector<double>& buffer, size_t& it)
-    {
-        for (int i = 0; i < 6; ++i)
-        {
-            storage[i] = buffer[it]; ++it;
-        }
-    }
-
     dVector6& set_to_unity(void)
     {
         storage[0] = 1.0;
         storage[1] = 1.0;
         storage[2] = 1.0;
-        storage[3] = 0.0;
-        storage[4] = 0.0;
-        storage[5] = 0.0;
+        storage[3] = 1.0;
+        storage[4] = 1.0;
+        storage[5] = 1.0;
         return *this;
     }
-
-    /*bool operator==(const vStrain& rhs)
-    {
-        for (int i = 0; i < 6; i++)
-        {
-            if (storage[i] != rhs[i]){return false;};
-        }
-        return true;
-    };*/
 
     dVector6 operator*(const double m) const
     {
@@ -254,25 +226,19 @@ class dVector6
         return *this;
     }
 
-    double norm(void) const  /// Frobenius norm
+    double norm(void) const                                                     ///< Frobenius norm
     {
-        /*
-         * multiplication by 0.5 of the off diagonal elements before taking
-         * square and doubling the result due to double appearance of the off
-         * diagonal elements => 0.5^2 * 2 = 0.5
-         */
         double tmp = storage[0] * storage[0]
                    + storage[1] * storage[1]
                    + storage[2] * storage[2]
-                   + storage[3] * storage[3] * 0.5
-                   + storage[4] * storage[4] * 0.5
-                   + storage[5] * storage[5] * 0.5;
+                   + storage[3] * storage[3]
+                   + storage[4] * storage[4]
+                   + storage[5] * storage[5];
         return sqrt(tmp);
     }
 
-    double max_abs(void) const
+    double max_abs(void) const                                                  ///< Returns maximum absolute value
     {
-        // Returns maximum absolute value
         double tempmax = 0.0;
         for (int i = 0; i < 6; i++)
         {
@@ -284,9 +250,35 @@ class dVector6
         return tempmax;
     }
 
-    double trace() const
+    double* data(void)
     {
-        return storage[0] + storage[1] + storage[2];
+        return storage.data();
+    }
+
+    const double* data(void) const
+    {
+        return storage.data();
+    }
+
+    constexpr size_t size(void) const
+    {
+        return 6;
+    }
+
+    void pack(std::vector<double>& buffer)
+    {
+        for (int i = 0; i < 6; ++i)
+        {
+            buffer.push_back(storage[i]);
+        }
+    }
+
+    void unpack(std::vector<double>& buffer, size_t& it)
+    {
+        for (int i = 0; i < 6; ++i)
+        {
+            storage[i] = buffer[it]; ++it;
+        }
     }
 
     std::string print(void) const
@@ -295,61 +287,113 @@ class dVector6
         out << "< | ";
         for(int i = 0; i < 6; i++)
         {
-            out << storage[i]<< " " << " | ";
+            out << storage[i] << " " << " | ";
         }
         out << " >";
         return out.str();
     }
 
-    std::string write(const int precision = 16, const char sep = ' ') const
+    void read_binary(std::istream& inp)
+    {
+        for(size_t i = 0; i < 6; i++)
+        {
+            inp >> storage[i];
+        }
+    }
+
+    void read_ASCII(std::istream& inp)
+    {
+        for(size_t i = 0; i < 6; i++)
+        {
+            inp >> storage[i];
+        }
+    }
+
+    void write_binary(std::ostream& outp) const
+    {
+        for(size_t i = 0; i < 6; i++)
+        {
+            outp << storage[i];
+        }
+    }
+
+    void write_ASCII(std::ostream& outp, const int precision = std::numeric_limits<double>::digits10 + 1, const char sep = ' ') const
+    {
+        outp << std::setprecision(precision) << std::defaultfloat;
+        for(size_t i = 0; i < 6; i++)
+        {
+            outp << storage[i] << sep;
+        }
+        outp << std::endl;
+    }
+
+    std::string get_output_string(const int precision = std::numeric_limits<double>::digits10 + 1, const char sep = ' ') const
     {
         std::stringstream out;
         out << std::setprecision(precision) << std::defaultfloat;
-        out << storage[0] << sep;
-        out << storage[1] << sep;
-        out << storage[2] << sep;
-        out << storage[5] << sep;
-        out << storage[3] << sep;
-        out << storage[4] << sep;
+        for(size_t i = 0; i < 6; i++)
+        {
+            out << storage[i] << sep;
+        }
         return out.str();
     }
 
+    std::vector<double> get_vector() const
+    {
+        std::vector<double> out(6);
+        for(int i = 0; i < 6; i++)
+        {
+            out[i] = storage[i];
+        }
+        return out;
+    }
+
+    std::vector<float> get_vector_float() const
+    {
+        std::vector<float> out(6);
+        for(int i = 0; i < 6; i++)
+        {
+            out[i] = (float)storage[i];
+        }
+        return out;
+    }
+
+    //============================= Deprecated methods==========================
+
+    [[deprecated]]
+    std::string write(const int precision = std::numeric_limits<double>::digits10 + 1, const char sep = ' ') const
+    {
+        std::stringstream out;
+        out << std::setprecision(precision) << std::defaultfloat;
+        for(size_t i = 0; i < 6; i++)
+        {
+            out << storage[i] << sep;
+        }
+        return out.str();
+    }
+
+    [[deprecated]]
     std::vector<float> writeCompressed() const
     {
-        std::vector<float> out;
-        out.push_back((float)storage[0]);
-        out.push_back((float)storage[1]);
-        out.push_back((float)storage[2]);
-        out.push_back((float)storage[5]);
-        out.push_back((float)storage[3]);
-        out.push_back((float)storage[4]);
+        std::vector<float> out(6);
+        for(int i = 0; i < 6; i++)
+        {
+            out[i] = (float)storage[i];
+        }
         return out;
     }
 
+    [[deprecated]]
     std::vector<double> writeBinary() const
     {
-        std::vector<double> out;
-        out.push_back((double)storage[0]);
-        out.push_back((double)storage[1]);
-        out.push_back((double)storage[2]);
-        out.push_back((double)storage[5]);
-        out.push_back((double)storage[3]);
-        out.push_back((double)storage[4]);
+        std::vector<double> out(6);
+        for(int i = 0; i < 6; i++)
+        {
+            out[i] = storage[i];
+        }
         return out;
-    };
-    double* data(void)
-    {
-        return storage.data();
-    };
-    const double* data(void) const
-    {
-        return storage.data();
-    };
-
-    constexpr size_t size(void) const
-    {
-        return 6u;
     }
+    //==========================================================================
  protected:
  private:
     std::array<double, 6> storage;

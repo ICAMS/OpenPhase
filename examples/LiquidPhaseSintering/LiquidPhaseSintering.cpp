@@ -45,7 +45,10 @@ using namespace openphase;
 class LocalLBM : public FlowSolverLBM                                           ///< Modification of FLowSolverLBM which are only used in this example
 {
  public:
-    LocalLBM(Settings& locSettings, double in_dt): FlowSolverLBM(locSettings, in_dt){};
+    LocalLBM(Settings& locSettings, double in_dt): FlowSolverLBM(locSettings)
+    {
+        SetTimeStep(in_dt);
+    };
 
     double rho_l = 1.8141;                                                      ///<  Initial liquid density
     double rho_v = 0.2;                                                         ///<  Vapor gas density
@@ -332,7 +335,7 @@ int main(int argc, char *argv[])
         }
 
         IP.Set(Phase,BC);
-        Phase.ClearGrainsForcesAndAccelerations();
+        Phase.FieldsProperties.ClearGrainsForcesAndAccelerations();
         LB.Solve(Phase, Vel, BC);
         if (RTC.tStep > tAdvect)
         {

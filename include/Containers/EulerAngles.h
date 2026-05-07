@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,627 +18,163 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2014
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Philipp Engels;
- *                         Hesham Salama
  *
  */
 
 #ifndef EULERANGLES_H
 #define EULERANGLES_H
 
-#include "Includes.h"
+#include "Globals.h"
+
+#include <cassert>
+#include <cfloat>
+#include <cmath>
+#include <cstring>
+#include <fstream>
+#include <initializer_list>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <vector>
+#include <array>
+#include <unordered_map>
 
 namespace openphase
 {
+//================================ Declarations ================================
 
-enum EulerConvention{ XZX, XYX, YXY, YZY, ZXZ, ZYZ, /* proper Euler angles*/
-                      XYZ, YZX, ZXY, XZY, ZYX, YXZ, /* Tait–Bryan angles*/
-                      NNN /*default convention -> convention not set*/};
+enum class AngleModes : int                                                     ///< Angle representation modes
+{
+    Radians,
+    Degrees
+};
 
-const std::vector<std::string>
-     EulerConventionS{"XZX", "XYX", "YXY", "YZY", "ZXZ", "ZYZ", /* proper Euler angles*/
-                      "XYZ", "YZX", "ZXY", "XZY", "ZYX", "YXZ", /* Tait–Bryan angles*/
-                      "NNN" /*default convention -> convention not set*/};
+const std::vector<std::string> RadiansStrings
+     {"RADIANS", "RAD"};
+
+const std::vector<std::string> DegreesStrings
+     {"DEGREES", "DEG"};
+
+const std::unordered_map<std::string, AngleModes> AngleRepresentationTable =
+{
+    {"RADIANS", AngleModes::Radians},
+    {"RAD", AngleModes::Radians},
+
+    {"DEGREES", AngleModes::Degrees},
+    {"DEG", AngleModes::Degrees}
+};
+
+AngleModes AngleRepresentation(std::string locAngleRepresentationString);       ///< Converts angle representation mode string to the corresponding enum entry
+
+enum class EulerConventions: int
+    {XZX, XYX, YXY, YZY, ZXZ, ZYZ, /* proper Euler angles*/
+     XYZ, YZX, ZXY, XZY, ZYX, YXZ, /* Tait–Bryan angles*/
+     NNN /*default convention -> convention not set*/};
+
+const std::vector<std::string> EulerConventionStrings
+     {"XZX", "XYX", "YXY", "YZY", "ZXZ", "ZYZ", /* proper Euler angles*/
+      "XYZ", "YZX", "ZXY", "XZY", "ZYX", "YXZ", /* Tait–Bryan angles*/
+      "NNN" /*default convention -> convention not set*/};
+
+const std::unordered_map<std::string, EulerConventions> EulerConventionTable =
+{
+    {"XZX", EulerConventions::XZX},
+    {"XYX", EulerConventions::XYX},
+    {"YXY", EulerConventions::YXY},
+    {"YZY", EulerConventions::YZY},
+    {"ZXZ", EulerConventions::ZXZ},
+    {"ZYZ", EulerConventions::ZYZ},
+
+    {"XYZ", EulerConventions::XYZ},
+    {"YZX", EulerConventions::YZX},
+    {"ZXY", EulerConventions::ZXY},
+    {"XZY", EulerConventions::XZY},
+    {"ZYX", EulerConventions::ZYX},
+    {"YXZ", EulerConventions::YXZ}
+};
+
+EulerConventions EulerConvention(std::string locConventionString);              ///< Converts Euler angles' convention string to the corresponding enum entry
 
 class Quaternion;
+class dMatrix3x3;
+class dVector3;
 
-class OP_EXPORTS EulerAngles                                                    ///< Orientation angles and their Cos() and Sin().
+class OP_EXPORTS EulerAngles                                                    ///< Euler angles and their Cos() and Sin().
 {
-//  Storages:
  public:
-    union
-    {
-        double Q[3];
-    };
+    std::array<double,3> Q;                                                     ///< Stores three Euler angles in radians
+
+    EulerAngles();                                                              ///< Default constructor
+    EulerAngles(std::initializer_list<double> Angles,
+                std::string locConventionString);                               ///< Constructor, initializes the Euler angles using initializer list and convention string
+    EulerAngles(std::initializer_list<double> Angles,
+                EulerConventions locConvention);                                ///< Constructor, initializes the Euler angles using initializer list and convention
+    EulerAngles(const EulerAngles& rhs);                                        ///< Copy constructor
+
+    bool operator==(const EulerAngles& rhs);                                    ///< Comparison operator. Returns true if two EulerAngles are of the same convention and their values are within DBL_EPSILON from one another.
+
+    void set(const double q1, const double q2, const double q3,
+            std::string locConventionString);                                   ///< Sets Euler angles to the specified values following given convention string
+    void set(const double q1, const double q2, const double q3,
+             EulerConventions locConvention);                                   ///< Sets Euler angles to the specified values following given convention
+    void set_convention(const std::string locConventionString);                 ///< Sets Euler angles convention using given convention string
+    void set_convention(const EulerConventions locConvention);                  ///< Sets Euler angles convention
+    void set(const dMatrix3x3& RotMatrix, std::string locConventionString);     ///< Sets Euler angles form the rotation matrix using give convention string
+    void set(const dMatrix3x3& RotMatrix, EulerConventions locConvention);      ///< Sets Euler angles form the rotation matrix using give convention
+    void set(Quaternion Quat, std::string locConventionString,
+             const bool active = true);                                         ///< Sets Euler angles from the quaternion using specified convention and type of rotation (active/passive) string
+    void set(Quaternion Quat, EulerConventions locConvention,
+             const bool active = true);                                         ///< Sets Euler angles from the quaternion using specified convention and type of rotation (active/passive)
+    //void set(dVector3 Axis, const double Angle, std::string locConventionString);///< Sets Euler angles from axis-angle entries using given convention string.
+    //void set(dVector3 Axis, const double Angle, EulerConventions locConvention);///< Sets Euler angles from axis-angle entries using given convention.
+
+    void set_trigonometric_functions(void);                                     ///< Sets internal sines and cosines of Euler angles for faster computations.
+    void set_to_zero(void);                                                     ///< Sets Euler angles to zero.
+
+    void add(const double q1, const double q2, const double q3);                ///< Adds specified values to the corresponding Euler angles
+
+    EulerAngles& operator= (const EulerAngles& rhs);                            ///< Assignment operator.
+    EulerAngles  operator+ (const EulerAngles& rhs) const;                      ///< Returns the sum of two Euler angles
+    EulerAngles  operator- (const EulerAngles& rhs) const;                      ///< Returns the difference of two Euler angles
+    EulerAngles& operator+=(const EulerAngles& rhs);                            ///< Adds rhs to the current Euler angles
+    EulerAngles& operator-=(const EulerAngles& rhs);                            ///< Subtracts rhs to the current Euler angles
+    EulerAngles  operator* (const double rhs) const;                            ///< Returns Euler angles multiplied by the specified factor
+    EulerAngles& operator*=(const double rhs);                                  ///< Multiplies Euler angles by the specified factor
+
+    std::string get_convention(void) const;                                     ///< Returns Euler angle convention
+    dMatrix3x3  get_rotation_matrix(void) const;                                ///< Returns rotation matrix corresponding to Euler angles
+    Quaternion  get_quaternion(const bool Active = true) const;                 ///< Returns quaternion corresponding to Euler angles considering rotation type (active/passive)
+    void        get_axis_angle(dVector3& Axis, double& Angle) const;            ///< Returns axis-angle representation of the stored Euler angles
+
+    void read_binary(std::istream& inp);                                        ///< Reads Euler angles from a file stream in binary format
+    void read_ASCII(std::istream& inp);                                         ///< Reads Euler angles from a file stream in ASCII format
+    void read_degrees(std::istream& inp);                                       ///< Reads Euler angles in degrees from a file stream in ASCII format
+
+    void write_binary(std::ostream& out) const;                                 ///< Writes Euler angles to a file stream in binary format
+    void write_ASCII(std::ostream& out,
+                     const int precision = 16, const char sep = ' ') const;     ///< Writes Euler angles to a file stream in ASCII format
+    void write_degrees(std::ostream& out,
+                       const int precision = 16, const char sep = ' ') const;   ///< Writes Euler angles in degrees to a file stream in ASCII format
+
+    std::string get_output_string(std::string ModeString,
+            const int precision = std::numeric_limits<double>::digits10 + 1,
+            const char sep = ' ') const;                                        ///< Returns a string of Euler angles values with given precision separated by "sep"
+
+    std::string get_output_string(AngleModes Mode,
+            const int precision = std::numeric_limits<double>::digits10 + 1,
+            const char sep = ' ') const;                                        ///< Returns a string of Euler angles values with given precision separated by "sep"
+
+    std::string print(void) const;                                              ///< Returns formatted string containing Euler angles and corresponding convention in degrees
+    std::string print_entire(void) const;                                       ///< Returns formatted string containing full container content.
 
-    union
-    {
-        double CosQ[3];
-    };
-
-    union
-    {
-        double SinQ[3];
-    };
-
-    EulerConvention Convention;                                                 ///< Stores the convention for the Euler angles
-
-    bool IsSet;                                                                 ///< Indicates whether sin/cos are set.
-
-//  Methods:
-
-    EulerAngles(): IsSet(false)                                                 ///< Constructor
-    {
-        Convention = NNN;
-
-        Q[0] = 0.0;
-        Q[1] = 0.0;
-        Q[2] = 0.0;
-
-        SinQ[0] = 0.0;
-        SinQ[1] = 0.0;
-        SinQ[2] = 0.0;
-
-        CosQ[0] = 1.0;
-        CosQ[1] = 1.0;
-        CosQ[2] = 1.0;
-    };
-
-    EulerAngles(std::initializer_list<double> Angles, EulerConvention locConvention)
-    {
-        assert(Angles.size() == 3 && "Initialization list size is not equal to storage range");
-
-        unsigned int ii = 0;
-        for (auto it = Angles.begin(); it != Angles.end(); it++)
-        {
-            Q[ii] = *it;
-            ii += 1;
-        }
-
-        Convention = locConvention;
-
-        SinQ[0] = sin(Q[0]);
-        SinQ[1] = sin(Q[1]);
-        SinQ[2] = sin(Q[2]);
-
-        CosQ[0] = cos(Q[0]);
-        CosQ[1] = cos(Q[1]);
-        CosQ[2] = cos(Q[2]);
-
-        IsSet = true;
-    }
-
-    EulerAngles(const EulerAngles& rhs)
-    {
-        Convention = rhs.Convention;
-
-        Q[0] = rhs.Q[0];
-        Q[1] = rhs.Q[1];
-        Q[2] = rhs.Q[2];
-
-        SinQ[0] = rhs.SinQ[0];
-        SinQ[1] = rhs.SinQ[1];
-        SinQ[2] = rhs.SinQ[2];
-
-        CosQ[0] = rhs.CosQ[0];
-        CosQ[1] = rhs.CosQ[1];
-        CosQ[2] = rhs.CosQ[2];
-
-        IsSet = rhs.IsSet;
-    };
-
-    bool operator==(const EulerAngles& rhs)
-    {
-        double epsilon = fabs(Q[0] - rhs.Q[0]) + fabs(Q[1] - rhs.Q[1]) + fabs(Q[2] - rhs.Q[2]);
-        if(Convention == rhs.Convention and epsilon < 3.0*DBL_EPSILON)
-        {
-            return true;
-        }
-        return false;
-    }
-
-    void set(const double q1, const double q2, const double q3, EulerConvention locConvention)
-    {
-        Convention = locConvention;
-
-        Q[0] = q1;
-        Q[1] = q2;
-        Q[2] = q3;
-
-        SinQ[0] = sin(Q[0]);
-        SinQ[1] = sin(Q[1]);
-        SinQ[2] = sin(Q[2]);
-
-        CosQ[0] = cos(Q[0]);
-        CosQ[1] = cos(Q[1]);
-        CosQ[2] = cos(Q[2]);
-
-        IsSet = true;
-    };
-
-    void setTrigonometricFunctions()
-    {
-        if(IsSet == false)
-        {
-            SinQ[0] = sin(Q[0]);
-            SinQ[1] = sin(Q[1]);
-            SinQ[2] = sin(Q[2]);
-
-            CosQ[0] = cos(Q[0]);
-            CosQ[1] = cos(Q[1]);
-            CosQ[2] = cos(Q[2]);
-
-            IsSet = true;
-        }
-    };
-
-    void set_to_zero(void)
-    {
-        if(Convention != NNN)
-        {
-            Q[0] = 0.0;
-            Q[1] = 0.0;
-            Q[2] = 0.0;
-
-            SinQ[0] = 0.0;
-            SinQ[1] = 0.0;
-            SinQ[2] = 0.0;
-
-            CosQ[0] = 1.0;
-            CosQ[1] = 1.0;
-            CosQ[2] = 1.0;
-
-            IsSet = false;
-        }
-        else
-        {
-            std::cerr << " EulerAngles::set_to_zero(): Trying to set values of"
-                      << " EulerAngles object that has no valid convention!"
-                      << " Use EulerAngles::set_to_zero(q1, q2, q3, Convention)"
-                      << " instead! Terminating!\n";
-            OP_Exit(EXIT_FAILURE);
-        }
-    };
-
-    void set_convention(const EulerConvention locConvention)
-    {
-        if(Convention == NNN)
-        {
-            Convention = locConvention;
-        }
-        else
-        {
-            std::cerr << " EulerAngles::set_convention(): Trying to set convention of"
-                      << " EulerAngles object that has a valid convention already!"
-                      << " Use EulerAngles::set(q1, q2, q3, Convention)"
-                      << " instead! Terminating!\n";
-            OP_Exit(EXIT_FAILURE);
-
-        }
-    };
-
-    //Conversion implemented from three.js Math //
-    void set(dMatrix3x3 RotMatrix, EulerConvention locConvention)
-    {
-        switch(locConvention)
-        {
-            case XYZ:
-            {
-                Q[1] = asin(std::max(-1.0,std::min(1.0,RotMatrix(0,2))));
-                if (fabs( RotMatrix(0,2) ) < 0.9999999 )
-                {
-                    Q[0] = atan2( - RotMatrix(1,2), RotMatrix(2,2) );
-                    Q[2] = atan2( - RotMatrix(0,1), RotMatrix(0,0) );
-                }
-                else
-                {
-                    Q[0] = atan2( RotMatrix(2,1), RotMatrix(1,1) );
-                    Q[2] = 0;
-                }
-                break;
-            }
-            case YXZ:
-            {
-
-                Q[0] = asin(-std::max(-1.0,std::min(RotMatrix(1,2),1.0)));
-
-                if (fabs( RotMatrix(1,2) ) < 0.9999999 )
-                {
-                    Q[1] = atan2( RotMatrix(0,2), RotMatrix(2,2) );
-                    Q[2] = atan2( RotMatrix(1,0), RotMatrix(1,1) );
-                }
-                else
-                {
-                    Q[1] = atan2( RotMatrix(2,0), RotMatrix(0,0) );
-                    Q[2] = 0;
-                }
-                break;
-            }
-            case ZXY:
-            {
-                Q[0] = asin(std::max(-1.0,std::min(RotMatrix(2,1),1.0)));
-
-                if (fabs( RotMatrix(2,0) ) < 0.9999999 )
-                {
-                    Q[1] = atan2( RotMatrix(2,0), RotMatrix(2,2) );
-                    Q[2] = atan2( RotMatrix(0,1), RotMatrix(1,1) );
-                }
-                else
-                {
-                    Q[1] = 0;
-                    Q[2] = atan2( RotMatrix(1,0), RotMatrix(0,0) );
-                }
-                break;
-            }
-            case ZYX:
-            {
-                Q[1] = asin(-std::max(-1.0,std::min(RotMatrix(2,0),1.0)));
-
-                if (fabs( RotMatrix(2,0) ) < 0.9999999 )
-                {
-
-                    Q[0] = atan2( RotMatrix(2,1), RotMatrix(2,2) );
-                    Q[2] = atan2( RotMatrix(1,0), RotMatrix(0,0) );
-                }
-                else
-                {
-                    Q[0] = 0;
-                    Q[2] = atan2( RotMatrix(0,1), RotMatrix(1,1) );
-                }
-                break;
-            }
-            case YZX:
-            {
-                Q[2] = asin(std::max(-1.0,std::min(RotMatrix(1,0),1.0)));
-
-                if (fabs( RotMatrix(1,0) ) < 0.9999999 )
-                {
-                    Q[0] = atan2( RotMatrix(1,2), RotMatrix(1,1) );
-                    Q[1] = atan2( RotMatrix(2,0), RotMatrix(0,0) );
-                }
-                else
-                {
-                    Q[0] = 0;
-                    Q[1] = atan2( RotMatrix(0,2), RotMatrix(2,2) );
-                }
-                break;
-            }
-            case XZY:
-            {
-                Q[2] = asin(-std::max(-1.0,std::min(RotMatrix(0,1),1.0)));
-
-                if (fabs( RotMatrix(0,1) ) < 0.9999999 )
-                {
-                    Q[0] = atan2( RotMatrix(2,1), RotMatrix(1,1) );
-                    Q[1] = atan2( RotMatrix(0,2), RotMatrix(0,0) );
-                }
-                else
-                {
-                    Q[0] = atan2( RotMatrix(1,2), RotMatrix(2,2) );
-                    Q[1] = 0;
-                }
-                break;
-            }
-            default:
-            {
-                std::cerr << " Wrong Euler Convention selected"
-                          << " Check->EulerAngles::setFromRotationMatrix(dMatrix3x3)\n";
-                OP_Exit(EXIT_FAILURE);
-            }
-        }
-
-        Convention = locConvention;
-
-        SinQ[0] = sin(Q[0]);
-        SinQ[1] = sin(Q[1]);
-        SinQ[2] = sin(Q[2]);
-
-        CosQ[0] = cos(Q[0]);
-        CosQ[1] = cos(Q[1]);
-        CosQ[2] = cos(Q[2]);
-
-        IsSet = true;
-    }
-
-    void set(Quaternion Quat, EulerConvention locConvention, const bool active = true);
-
-    void set(dVector3 Axis, const double Angle)
-    {
-        double s = sin(Angle);
-        double c = cos(Angle);
-        double t = 1.0 - c;
-        double norm = Axis.length();
-        if(norm == 0)
-        {
-            std::cerr << "Axis length must be greater than zero"
-                      << "EulerAngles::set(axis,angle)"
-                      << "Terminating!\n";
-            OP_Exit(EXIT_FAILURE);
-        }
-        else
-        {
-            Axis.normalize();
-        }
-        // north pole singularity detected
-        if ((Axis[0]*Axis[1]*t + Axis[2]*s) > 0.998)
-        {
-            Q[0] = 2.0*atan2(Axis[0]*sin(Angle/2),cos(Angle/2));
-            Q[1] = Pi/2.0;
-            Q[2] = 0;
-        }
-        // south pole singularity detected
-        if ((Axis[0]*Axis[1]*t + Axis[2]*s) < -0.998)
-        {
-            Q[0] = -2.0*atan2(Axis[0]*sin(Angle/2),cos(Angle/2));
-            Q[1] = -Pi/2.0;
-            Q[2] = 0;
-        }
-        else
-        {
-            Q[0] = atan2(Axis[1] * s - Axis[0] * Axis[2] * t , 1.0 - (Axis[1]*Axis[1] + Axis[2]*Axis[2]) * t);
-            Q[1] = asin (Axis[0] * Axis[1] * t + Axis[2] * s);
-            Q[2] = atan2(Axis[0] * s - Axis[1] * Axis[2] * t , 1.0 - (Axis[0]*Axis[0] + Axis[2]*Axis[2]) * t);
-        }
-
-        SinQ[0] = sin(Q[0]);
-        SinQ[1] = sin(Q[1]);
-        SinQ[2] = sin(Q[2]);
-
-        CosQ[0] = cos(Q[0]);
-        CosQ[1] = cos(Q[1]);
-        CosQ[2] = cos(Q[2]);
-
-        IsSet = true;
-    }
-
-    void add(const double q1, const double q2, const double q3)
-    {
-        Q[0] += q1;
-        Q[1] += q2;
-        Q[2] += q3;
-
-        SinQ[0] = sin(Q[0]);
-        SinQ[1] = sin(Q[1]);
-        SinQ[2] = sin(Q[2]);
-
-        CosQ[0] = cos(Q[0]);
-        CosQ[1] = cos(Q[1]);
-        CosQ[2] = cos(Q[2]);
-
-        IsSet = true;
-    };
-
-    EulerAngles& operator=(const EulerAngles& rhs)
-    {
-
-        assert(((Convention == rhs.Convention) or (Convention == NNN)) and "Euler angle conventions do not coincide!");
-
-        Convention = rhs.Convention;
-
-        Q[0] = rhs.Q[0];
-        Q[1] = rhs.Q[1];
-        Q[2] = rhs.Q[2];
-
-        SinQ[0] = sin(rhs.Q[0]);
-        SinQ[1] = sin(rhs.Q[1]);
-        SinQ[2] = sin(rhs.Q[2]);
-
-        CosQ[0] = cos(rhs.Q[0]);
-        CosQ[1] = cos(rhs.Q[1]);
-        CosQ[2] = cos(rhs.Q[2]);
-
-        IsSet = true;
-
-        return *this;
-    };
-
-    EulerAngles operator+(const EulerAngles& rhs) const
-    {
-        assert(Convention == rhs.Convention && "Euler angle conventions do not coincide!");
-
-        EulerAngles returnAng;
-
-        returnAng.Convention = rhs.Convention;
-
-        returnAng.Q[0] = Q[0] + rhs.Q[0];
-        returnAng.Q[1] = Q[1] + rhs.Q[1];
-        returnAng.Q[2] = Q[2] + rhs.Q[2];
-
-        returnAng.SinQ[0] = sin(returnAng.Q[0]);
-        returnAng.SinQ[1] = sin(returnAng.Q[1]);
-        returnAng.SinQ[2] = sin(returnAng.Q[2]);
-
-        returnAng.CosQ[0] = cos(returnAng.Q[0]);
-        returnAng.CosQ[1] = cos(returnAng.Q[1]);
-        returnAng.CosQ[2] = cos(returnAng.Q[2]);
-
-        returnAng.IsSet = true;
-
-        return returnAng;
-    };
-
-    EulerAngles operator-(const EulerAngles& rhs) const
-    {
-        assert(Convention == rhs.Convention && "Euler angle conventions do not coincide!");
-
-        EulerAngles returnAng;
-
-        returnAng.Convention = rhs.Convention;
-
-        returnAng.Q[0] = Q[0] - rhs.Q[0];
-        returnAng.Q[1] = Q[1] - rhs.Q[1];
-        returnAng.Q[2] = Q[2] - rhs.Q[2];
-
-        returnAng.SinQ[0] = sin(returnAng.Q[0]);
-        returnAng.SinQ[1] = sin(returnAng.Q[1]);
-        returnAng.SinQ[2] = sin(returnAng.Q[2]);
-
-        returnAng.CosQ[0] = cos(returnAng.Q[0]);
-        returnAng.CosQ[1] = cos(returnAng.Q[1]);
-        returnAng.CosQ[2] = cos(returnAng.Q[2]);
-
-        returnAng.IsSet = true;
-
-        return returnAng;
-    };
-
-    EulerAngles& operator+=(const EulerAngles& rhs)
-    {
-        assert(Convention == rhs.Convention && "Euler angle conventions do not coincide!");
-
-        Q[0] += rhs.Q[0];
-        Q[1] += rhs.Q[1];
-        Q[2] += rhs.Q[2];
-
-        SinQ[0] = sin(Q[0]);
-        SinQ[1] = sin(Q[1]);
-        SinQ[2] = sin(Q[2]);
-
-        CosQ[0] = cos(Q[0]);
-        CosQ[1] = cos(Q[1]);
-        CosQ[2] = cos(Q[2]);
-
-        IsSet = true;
-
-        return *this;
-    };
-
-    EulerAngles& operator-=(const EulerAngles& rhs)
-    {
-        assert(Convention == rhs.Convention && "Euler angle conventions do not coincide!");
-
-        Q[0] += rhs.Q[0];
-        Q[1] += rhs.Q[1];
-        Q[2] += rhs.Q[2];
-
-        SinQ[0] = sin(Q[0]);
-        SinQ[1] = sin(Q[1]);
-        SinQ[2] = sin(Q[2]);
-
-        CosQ[0] = cos(Q[0]);
-        CosQ[1] = cos(Q[1]);
-        CosQ[2] = cos(Q[2]);
-
-        IsSet = true;
-
-        return *this;
-    };
-
-    EulerAngles get_degree(void) const
-    {
-        EulerAngles returnAng;
-
-        returnAng.Convention = Convention;
-
-        returnAng.SinQ[0] = sin(Q[0]);
-        returnAng.SinQ[1] = sin(Q[1]);
-        returnAng.SinQ[2] = sin(Q[2]);
-
-        returnAng.CosQ[0] = cos(Q[0]);
-        returnAng.CosQ[1] = cos(Q[1]);
-        returnAng.CosQ[2] = cos(Q[2]);
-
-        returnAng.Q[0] = Q[0]*(180.0/Pi);
-        returnAng.Q[1] = Q[1]*(180.0/Pi);
-        returnAng.Q[2] = Q[2]*(180.0/Pi);
-
-        returnAng.IsSet = true;
-
-        return returnAng;
-    };
-
-    std::string get_convention(void) const
-    {
-        std::string returnCon = EulerConventionS[Convention];
-        return returnCon;
-    };
-
-    EulerAngles operator*(const double rhs) const
-    {
-        EulerAngles returnAng;
-        returnAng.set_convention(Convention);
-        returnAng.set_to_zero();
-
-        returnAng.Q[0] = Q[0]*rhs;
-        returnAng.Q[1] = Q[1]*rhs;
-        returnAng.Q[2] = Q[2]*rhs;
-
-        returnAng.SinQ[0] = sin(returnAng.Q[0]);
-        returnAng.SinQ[1] = sin(returnAng.Q[1]);
-        returnAng.SinQ[2] = sin(returnAng.Q[2]);
-
-        returnAng.CosQ[0] = cos(returnAng.Q[0]);
-        returnAng.CosQ[1] = cos(returnAng.Q[1]);
-        returnAng.CosQ[2] = cos(returnAng.Q[2]);
-
-        return returnAng;
-    };
-
-    EulerAngles& operator*=(const double rhs)
-    {
-        Q[0] = Q[0]*rhs;
-        Q[1] = Q[1]*rhs;
-        Q[2] = Q[2]*rhs;
-
-        SinQ[0] = sin(Q[0]);
-        SinQ[1] = sin(Q[1]);
-        SinQ[2] = sin(Q[2]);
-
-        CosQ[0] = cos(Q[0]);
-        CosQ[1] = cos(Q[1]);
-        CosQ[2] = cos(Q[2]);
-
-        return *this;
-    };
-
-    dMatrix3x3 getRotationMatrix() const;
-    Quaternion getQuaternion(const bool Active = true) const;
-    void getAxisAngle(dVector3& Axis, double& Angle);
-
-    std::string print(void) const
-    {
-        std::stringstream out;
-
-        out << "[" << Q[0] << ", "
-                   << Q[1] << ", "
-                   << Q[2] << "]["
-                   << EulerConventionS[Convention]
-                   << "]";
-       return out.str();
-    };
-    std::string print_degree(void) const
-    {
-        std::stringstream out;
-
-        out << "[" << Q[0]* (180.0/Pi) << ", "
-                   << Q[1]* (180.0/Pi) << ", "
-                   << Q[2]* (180.0/Pi) << "]["
-                   << EulerConventionS[Convention]
-                   << "]";
-       return out.str();
-    };
-    std::string print_entire(void) const
-    {
-        std::stringstream out;
-
-        out << "Angle      [" << Q[0] << ", "
-                              << Q[1] << ", "
-                              << Q[2] << "]\n"
-            << "Convention [" << EulerConventionS[Convention]
-                              << "]\n"
-            << "Sin        [" << SinQ[0] << ", "
-                              << SinQ[1] << ", "
-                              << SinQ[2] << "]\n"
-            << "Cos        [" << CosQ[0] << ", "
-                              << CosQ[1] << ", "
-                              << CosQ[2] << "]\n"
-            << "Is set:     " << IsSet << "\n";
-       return out.str();
-    };
  protected:
  private:
+    bool is_set;                                                                ///< Indicates whether sin/cos are set.
+    EulerConventions Convention;                                                ///< Stores the convention for the Euler angles
+    std::array<double,3> CosQ;                                                  ///< Stores cosines of the stored Euler angles
+    std::array<double,3> SinQ;                                                  ///< Stores sines of the stored Euler angles
 };
 
 }// namespace openphase

@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2011
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev
+ *
+ *  File created :   2011
+ *  Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev
  *
  */
 
@@ -883,7 +883,15 @@ void DrivingForce::WriteVTK(const Settings& locSettings,
             if(Phase.FieldsProperties[it1->index].Phase == alpha and
                Phase.FieldsProperties[it2->index].Phase == beta)
             {
-                tempdG += Force(i,j,k).get_raw(it1->index, it2->index);
+
+                if(alpha == beta)
+                {
+                    tempdG += std::fabs(Force(i,j,k).get_raw(it1->index, it2->index));
+                }
+                else
+                {
+                    tempdG += Force(i,j,k).get_raw(it1->index, it2->index);
+                }
                 counter ++;
             }
             if(counter > 1.0)
@@ -903,7 +911,14 @@ void DrivingForce::WriteVTK(const Settings& locSettings,
             if(Phase.FieldsProperties[it1->index].Phase == alpha and
                Phase.FieldsProperties[it2->index].Phase == beta)
             {
-                tempdG += Force(i,j,k).get_tmp(it1->index, it2->index);
+                if(alpha == beta)
+                {
+                    tempdG += std::fabs(Force(i,j,k).get_tmp(it1->index, it2->index));
+                }
+                else
+                {
+                    tempdG += Force(i,j,k).get_tmp(it1->index, it2->index);
+                }
                 counter ++;
             }
             if(counter > 1.0)
@@ -923,7 +938,14 @@ void DrivingForce::WriteVTK(const Settings& locSettings,
             if(Phase.FieldsProperties[it1->index].Phase == alpha and
                Phase.FieldsProperties[it2->index].Phase == beta)
             {
-                tempdG += Force(i,j,k).get_average(it1->index, it2->index);
+                if(alpha == beta)
+                {
+                    tempdG += std::fabs(Force(i,j,k).get_average(it1->index, it2->index));
+                }
+                else
+                {
+                    tempdG += Force(i,j,k).get_average(it1->index, it2->index);
+                }
                 counter ++;
             }
             if(counter > 1.0)
@@ -967,33 +989,90 @@ void DrivingForce::Remesh(int newNx, int newNy, int newNz, const BoundaryConditi
     ConsoleOutput::WriteStandard(thisclassname, "Remeshed");
 }
 
-DrivingForce& DrivingForce::operator= (const DrivingForce& rhs)
+
+NodeAB<double,double> DrivingForce::IntegrateDG(PhaseField& Phase, std::string filename, double RealTime)
 {
-    // protect against self-assignment and copy of uninitialized object
-    if (this != &rhs and rhs.thisclassname == "DrivingForce")
+    const std::string separator = " ";
+
+    NodeAB<double,double> dg;
+    NodeAB<double,double> num_point;
+    STORAGE_LOOP_BEGIN(i, j, k, Phase.Fields, 0)
     {
-        thisclassname = rhs.thisclassname;
+        if (Phase.Fields(i,j,k).interface())
+        {
+            for(auto it  = Force(i,j,k).begin();
+                     it != Force(i,j,k).end(); ++it)
+            {
+                size_t indexA = it->indexA;
+                size_t indexB = it->indexB;
 
-        Grid = rhs.Grid;
-
-        Nphases = rhs.Nphases;
-        Range   = rhs.Range;
-        PhiThreshold = rhs.PhiThreshold;
-
-        OvershootCounter   = rhs.OvershootCounter;
-        MAXOvershootPOS    = rhs.MAXOvershootPOS;
-        MAXOvershootNEG    = rhs.MAXOvershootNEG;
-        MAXDrivingForcePOS = rhs.MAXDrivingForcePOS;
-        MAXDrivingForceNEG = rhs.MAXDrivingForceNEG;
-
-        Limit      = rhs.Limit;
-        Limiting   = rhs.Limiting;
-        Averaging  = rhs.Averaging;
-
-        Force = rhs.Force;
+                size_t pIndexA = Phase.FieldsProperties[indexA].Phase;
+                size_t pIndexB = Phase.FieldsProperties[indexB].Phase;
+                double phase = 1.0; //sqrt(Phase.Fields(i,j,k).get_value(indexA)*Phase.Fields(i,j,k).get_value(indexB));
+                dg.add_asym1(pIndexA, pIndexB, phase*it->raw);
+                num_point.add_sym1(pIndexA, pIndexB,phase);
+            }
+        }
     }
-    return *this;
+    STORAGE_LOOP_END
+    #ifdef MPI_PARALLEL
+    for (size_t i = 0; i < Phase.Nphases; ++i)
+    for (size_t j = 0; j < i; ++j)
+    {
+        double value = dg.get_asym1(i,j);
+        double rvalue = 0;
+        OP_MPI_Allreduce(&value,&rvalue, 1, OP_MPI_DOUBLE, OP_MPI_SUM, OP_MPI_COMM_WORLD);
+        dg.set_asym1(i,j,rvalue);
+        double numpoints = num_point.get_sym1(i,j);
+        double rnumpoints = 0;
+        OP_MPI_Allreduce(&numpoints,&rnumpoints, 1, OP_MPI_DOUBLE, OP_MPI_SUM, OP_MPI_COMM_WORLD);
+        num_point.set_asym1(i,j,rnumpoints);
+    }
+    #endif
+    for (size_t i = 0; i < Phase.Nphases; ++i)
+    for (size_t j = 0; j < i; ++j)
+    {
+        double value = dg.get_asym1(i,j);
+        double numpoints = std::abs(num_point.get_sym1(i,j));
+        if (numpoints > 0.0)
+        {
+            dg.set_asym1(i,j,value/numpoints);
+        }
+        else
+        {
+            dg.set_asym1(i,j,0.0);
+        }
+    }
+    #ifdef MPI_PARALLEL
+    if(MPI_RANK == 0)
+    #endif
+    {
+        if (!std::filesystem::exists(filename) or RealTime == 0.0)
+        {
+            ofstream file(filename, ios::out | ios::trunc);
+            file << "Time";
+            for (size_t i =   0; i < Phase.Nphases; ++i)
+            for (size_t j = i+1; j < Phase.Nphases; ++j)
+            {
+                file << separator << "dG_" << i << "_" << j;
+            }
+            file << "\n";
+            file.close();
+        }
+
+        ofstream file(filename, ios::app);
+        file << RealTime;
+        for (size_t i =   0; i < Phase.Nphases; ++i)
+        for (size_t j = i+1; j < Phase.Nphases; ++j)
+        {
+            file << separator << dg.get_asym1(i,j);
+        }
+        file << "\n";
+        file.close();
+    }
+    return dg;
 }
+
 NodeDF DrivingForce::Force_at(const double x, const double y, const double z) const
 {
 #ifdef DEBUG
@@ -1137,6 +1216,22 @@ void DrivingForce::AverageGlobal(PhaseField& Phase, double time)
     outfile << std::endl;
     outfile.close();
 }
+
+    DrivingForce& DrivingForce::operator+=(const DrivingForce& other)
+    {
+        OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,Force,Force.Bcells(),)
+        {
+           for (auto it = other.Force(i,j,k).cbegin(); it != other.Force(i,j,k).cend(); ++it)
+           {
+                Force(i,j,k).add_raw(it->indexA, it->indexB, it->raw);
+                Force(i,j,k).add_average(it->indexA, it->indexB, it->average);
+                Force(i,j,k).add_tmp(it->indexA, it->indexB, it->tmp);
+           }
+        }
+        OMP_PARALLEL_STORAGE_LOOP_END
+
+        return *this;
+    }
 
 }// namespace openphase
 

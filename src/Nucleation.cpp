@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,10 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2014
- *   Main contributors :   Oleg Shchyglo; Alexander Monas; Marvin Tegeler;
- *                         Matthias Stratmann
+ *
+ *  File created :   2014
+ *  Main contributors :   Oleg Shchyglo; Alexander Monas; Marvin Tegeler;
+ *                        Matthias Stratmann
  *
  */
 
@@ -151,9 +151,9 @@ Quaternion NucleationParameters::SetSeedOrientation()
                 if(PositionDistributionY.b() == 0) a2 = OrientationDistributionA(OrientationGenerator2);
                 if(PositionDistributionZ.b() == 0) a3 = OrientationDistributionA(OrientationGenerator3);
 
-                EulerAngles ph1({a1,a2,a3},XYZ);
+                EulerAngles ph1({a1,a2,a3},"XYZ");
 
-                loc_orientation = ph1.getQuaternion().normalized();
+                loc_orientation = ph1.get_quaternion().normalized();
                 break;
             }
             case 3: // Full rotation freedom in 3D
@@ -391,10 +391,36 @@ void Nucleation::ReadInput(std::stringstream& inp)
             converter << n << "_" << m;
             string counter = converter.str();
 
-            Parameters(n, m).Allowed = FileInterface::ReadParameterB(inp, moduleLocation, string("Allowed_") + counter, false, "NO");
+            Parameters(n, m).Allowed = FileInterface::ReadParameterB(inp, moduleLocation, string("Allowed_") + counter, false, false);
 
             if(Parameters(n, m).Allowed)
             {
+                string generation_mode_input = FileInterface::ReadParameterK(inp, moduleLocation, string("GenerationMode_") + counter, false, "STATIC");
+
+                bool generation_mode_set = false;
+                if(generation_mode_input == "STATIC")
+                {
+                    Parameters(n, m).GenerationMode = NucleiGenerationModes::Static;
+                    generation_mode_set = true;
+                }
+                if(generation_mode_input == "CONTINUOUS")
+                {
+                    Parameters(n, m).GenerationMode = NucleiGenerationModes::Continuous;
+                    generation_mode_set = true;
+                }
+                if(generation_mode_input == "DYNAMIC")
+                {
+                    Parameters(n, m).GenerationMode = NucleiGenerationModes::Dynamic;
+                    generation_mode_set = true;
+                }
+                if(!generation_mode_set)
+                {
+                    //Wrong seed generation mode input
+                    string message  = "Wrong or no input for the seeds generation mode!";
+                    ConsoleOutput::WriteExit(message, thisclassname, "ReadInput()");
+                    OP_Exit(EXIT_FAILURE);
+                }
+
                 string location_input = FileInterface::ReadParameterK(inp, moduleLocation, string("Location_") + counter, false, "BULK");
 
                 bool valid_location_input = false;
@@ -760,7 +786,7 @@ void Nucleation::GenerateNucleationSites(PhaseField& Phase, Temperature& Tx)
 void Nucleation::CalculateNumberOfSeeds(PhaseField& Phase, Temperature& Tx)
 {
     double TotalVolume = Grid.TotalNumberOfCells();
-    double RealUnitsVolume = TotalVolume * pow(Grid.dx, Grid.Active());
+    double RealUnitsVolume = TotalVolume * Grid.CellVolume();
 
     for(size_t n = 0; n < Nphases; n++)
     for(size_t m = 0; m < Nphases; m++)
@@ -768,24 +794,14 @@ void Nucleation::CalculateNumberOfSeeds(PhaseField& Phase, Temperature& Tx)
        Parameters(n, m).Tmin <= Tx.Tmax and
        Parameters(n, m).Tmax >= Tx.Tmin)
     {
-        double PhaseFractions_m = 0.0;
-
-        if(Parameters(n, m).RelativeDensity)
-        {
-            for(size_t idx = 0; idx < Phase.FieldsProperties.size(); idx++)
-            if(Phase.FieldsProperties[idx].Phase == m)
-            {
-                PhaseFractions_m += Phase.FieldsProperties[idx].Volume;
-            }
-            PhaseFractions_m /= TotalVolume;
-        }
-        else
-        {
-            PhaseFractions_m = 1.0;
-        }
-
         if(Parameters(n, m).Density != 0.0)
         {
+            double PhaseFractions_m = 1.0;
+            if(Parameters(n, m).RelativeDensity)
+            {
+                PhaseFractions_m = Phase.FractionsTotal[m];
+            }
+
             double dNsites = Parameters(n, m).Density*RealUnitsVolume*PhaseFractions_m;
             if (dNsites > double(std::numeric_limits<size_t>::max()))
             {
@@ -802,21 +818,26 @@ void Nucleation::CalculateNumberOfSeeds(PhaseField& Phase, Temperature& Tx)
             }
         }
 
-//        for (auto it  = Parameters(n,m).GeneratedParticles.begin();
-//                  it != Parameters(n,m).GeneratedParticles.end(); )
-//        {
-//            if (it->planted)
-//            {
-//                //Parameters(n,m).NucleatedParticles.push_back(*it);
-//                it = Parameters(n,m).GeneratedParticles.erase(it);
-//            }
-//            else
-//            {
-//                it++;
-//            }
-//        }
-//
-        Parameters(n,m).Nseeds = Parameters(n,m).GeneratedNuclei.size();// + Parameters(n,m).NucleatedParticles.size();
+        switch(Parameters(n, m).GenerationMode)
+        {
+            case NucleiGenerationModes::Static:
+            {
+                Parameters(n, m).Nseeds = Parameters(n, m).GeneratedNuclei.size();
+                break;
+            }
+            case NucleiGenerationModes::Continuous:
+            {
+                Parameters(n, m).Nseeds = Parameters(n, m).GeneratedNuclei.size() - Parameters(n, m).PlantedNuclei.size();
+                Parameters(n, m).Generated = false;
+                break;
+            }
+            case NucleiGenerationModes::Dynamic:
+            default:
+            {
+                ConsoleOutput::WriteExit("Dynamic nuclei generation mode is not yet implemented!", thisclassname, "CalculateNumberOfSeeds");
+                OP_Exit(EXIT_FAILURE);
+            }
+        }
     }
 }
 
@@ -913,7 +934,7 @@ void Nucleation::WriteStatistics(const Settings& locSettings, const int tStep) c
     {
 #endif
 
-    string FileName = locSettings.TextDir + dirSeparator + "NucleationStatistics.dat";
+    string FileName = locSettings.TextDir + dirSeparator + "NucleationStatistics.csv";
 
     fstream NucFile;
 
@@ -935,6 +956,7 @@ void Nucleation::WriteStatistics(const Settings& locSettings, const int tStep) c
             << setw(10) << "Q4"
             << setw(14) << "dGnuc"
             << setw(14) << "dGmin" << endl;
+
 
     for(size_t n = 0; n < Nphases; n++)
     for(size_t m = 0; m < Nphases; m++)
@@ -1057,7 +1079,7 @@ void Nucleation::PlantNuclei(PhaseField& Phase, int tStep)
 
                                 Phase.FieldsProperties[locIndex].Variant = locVariant;
                                 Phase.FieldsProperties[locIndex].Parent  = ParentGrainIndex;
-                                Phase.FieldsProperties[locIndex].RefVolume /= Parameters(n,m).Nvariants;
+                                //Phase.FieldsProperties[locIndex].RefVolume /= Parameters(n,m).Nvariants;
                             }
                         }
                         break;
@@ -1087,7 +1109,7 @@ void Nucleation::PlantNuclei(PhaseField& Phase, int tStep)
 
                             Phase.FieldsProperties[locIndex].Variant = locVariant;
                             Phase.FieldsProperties[locIndex].Parent  = ParentGrainIndex;
-                            Phase.FieldsProperties[locIndex].RefVolume /= Parameters(n,m).Nvariants;
+                            //Phase.FieldsProperties[locIndex].RefVolume /= Parameters(n,m).Nvariants;
                         }
                         break;
                     }

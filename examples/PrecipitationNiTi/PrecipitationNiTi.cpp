@@ -78,18 +78,18 @@ int main(int argc, char *argv[])
     //int z1 = OPSettings.TotalNz/2;
 
     int matrixIdx = Initializations::Single(Phi, 0, BC);
-    EulerAngles ph1({0,0,0},XYZ);
-    Phi.FieldsProperties[matrixIdx].Orientation = ph1.getQuaternion();
+    EulerAngles ph1({0,0,0}, EulerConventions::XYZ);
+    Phi.FieldsProperties[matrixIdx].Orientation = ph1.get_quaternion();
     // First particle nucleation:
     //int particleIdx = Phi.PlantGrainNucleus(1, x1, y1, z1);
     //int particleIdx = Initializations::Sphere(Phi, 1, 5, x1, y1, z1, BC, OPSettings);
 
     //Phi.FieldsProperties[particleIdx].Variant = 0;
-    //Phi.FieldsProperties[particleIdx].Orientation = ph1.getQuaternion();
+    //Phi.FieldsProperties[particleIdx].Orientation = ph1.get_quaternion();
 
     // Second particle nucleation:
     //int particleIdx2 = Phi.PlantGrainNucleus(1, x1, y1, z1+5);
-    //Phi.FieldsProperties[particleIdx2].Orientation = ph1.getQuaternion();
+    //Phi.FieldsProperties[particleIdx2].Orientation = ph1.get_quaternion();
     //Phi.FieldsProperties[particleIdx2].Variant = 1;
 
     Cx.SetInitialMoleFractions(Phi);

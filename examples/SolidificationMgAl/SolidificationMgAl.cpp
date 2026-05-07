@@ -51,8 +51,8 @@ int main(int argc, char *argv[])
         size_t idx2 = Phi.PlantGrainNucleus(1, (OPSettings.Nx)/2,(OPSettings.Ny)/2,(OPSettings.Nz)/2);
         Phi.FieldsProperties[idx2].State = AggregateStates::Solid;
         // Orienting the nucleus as desired
-        EulerAngles locAngle({Pi/2.0, 0, Pi/8.0}, XYZ);
-        Phi.FieldsProperties[idx2].Orientation = locAngle.getQuaternion();*/
+        EulerAngles locAngle({Pi/2.0, 0, Pi/8.0}, EulerConventions::XYZ);
+        Phi.FieldsProperties[idx2].Orientation = locAngle.get_quaternion();*/
 
         // Liquid channel surrounded by alpha phase
         /*std::vector<size_t> ids = Initializations::TwoWalls(Phi, 0, 1, 10,BC,OPSettings);

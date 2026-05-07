@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2022
- *   Main contributors :   Oleg Shchyglo; Hossein Jafarzadeh, Muhammad Adil Ali
+ *
+ *  File created :   2022
+ *  Main contributors :   Oleg Shchyglo; Hossein Jafarzadeh, Muhammad Adil Ali
  *
  */
 
@@ -43,17 +43,15 @@ class DoubleObstacle;
 class Composition;
 class Temperature;
 class DrivingForce;
-class Orientations;
-class RunTimeControl;
 
 enum FractureModels
 {   
     Obstacle,               ///< Fracture model from  Schneider et al. http://dx.doi.org/10.1016/j.cma.2016.04.009
-    Well,                   ///< Fracture model from  Houssein et al.  https://doi.org/10.1007/s10704-024-00762-x
+    Well,                   ///< Fracture model from  Jafarzadeh et al.  https://doi.org/10.1007/s10704-024-00762-x
 };
 
 /******************************************************************************/
-class FractureField : public OPObject                                           ///< Fracture field class. It stores the crack phase field, performs basic operations on them.
+class OP_EXPORTS FractureField : public OPObject                                           ///< Fracture field class. It stores the crack phase field, performs basic operations on them.
 {
  public:
     FractureField(){ };
@@ -73,7 +71,15 @@ class FractureField : public OPObject                                           
                      dVector3 &CrackEnd,
                      Settings &OP,
                      BoundaryConditions &BC);                                            ///< Create a crack in the system From Houssein
-    
+    void CreateCrackwithPlane(dVector3 &CrackStart,
+                     dVector3 &CrackEnd,
+                     Settings &OP,
+                     BoundaryConditions &BC);                                            ///< Create a crack in the system From Houssein
+
+    void CalculateIncrements(const PhaseField& Phase,
+                             DoubleObstacle& DO,
+                             InterfaceProperties& IP,
+                             ElasticProperties& EP);                                     ///< Computes Fields_dot without merging (step 1 of Solve)
     void Solve(PhaseField &Phase,
                DoubleObstacle &DO,
                InterfaceProperties &IP,
@@ -93,7 +99,7 @@ class FractureField : public OPObject                                           
     
     void CorrectFractureProfile(BoundaryConditions &BC, double locMobility, size_t nSteps);
 
-    void CreatePF(PhaseField& Phase, size_t PhaseIndex, BoundaryConditions& BC);
+    size_t CreatePF(PhaseField& Phase, size_t PhaseIndex, BoundaryConditions& BC);
     void SetMobilityPF(PhaseField &Phase, InterfaceProperties &IP);
     void SetDrivingForcePF(const PhaseField &Phase, DrivingForce &dGab);
 
@@ -122,24 +128,11 @@ class FractureField : public OPObject                                           
                         const InterfaceProperties& IP, const int precision=16);          ///< Writes fracture energy in VTK format for a given timestep tStep
     void WriteDistortedVTK(const Settings& locSettings, const ElasticProperties& EP,
                            const int tStep,  const int precision = 16) const;            ///< Writes fracture fields on the distorted grid to the file in VTK format in MPI environment
-    void ApplyAdvection(Settings &locSettings,
-                        PhaseField& Phase,
-                        ElasticProperties& EP,
-                        Orientations& OR,
-                        AdvectionHR &Adv,
-                        Velocities &Vel,
-                        BoundaryConditions& BC,
-                        RunTimeControl &RTC,
-                        double dt);                                                      ///< Applies advection to the phase fields
-    
-    void FixAdvectionFractureProfile(ElasticProperties &EP);
-
-    void SaveDisplacements(ElasticProperties &EP);
-    void SetDisplacementsIncrement(Velocities& Vel, ElasticProperties &EP, double dt);
     double Energy(const InterfaceProperties &IP);                                        ///< Provides total interfacial energy in the simulation domain.
     double AverageEnergyDensity(const InterfaceProperties& IP);                          ///< Provides the average interfacial energy density in the simulation domain.
     double PointEnergy(const InterfaceProperties& IP, int i, int j, int k);              ///< Provides the interfacial energy in a given point (i,j,k).
     void PrintVolumeFractions(void);                                                  ///< Calculates the volume of the fracture field
+    void PrintStatistics(const double dt);                                            ///< Prints max Fields_dot, Fields_dot*dt, and advection CFL condition
 
     double sWidth; ///< (crack) surface width in grid points
 
@@ -147,10 +140,9 @@ class FractureField : public OPObject                                           
     Storage3D<double, 0> Fields_dot;                                                     /// Storage for the rate of change of the fracture field values
     Storage3D<double, 0> Laplacian;                                                      /// Storage for the Laplacian of the fracture field
     Storage3D<double, 0> Flag;                                                           /// Storage for flags indicating the state of the fracture field
-    Storage3D<dVector3, 0> DisplacementsOLD;                                             /// Storage for the Old displacements for the Advection
     Storage3D<double, 0> SurfaceEnergy;                                                     ///< Storage for the crack tip values
-    Storage3D<double, 0> TestOutput;                                                     ///< Storage for the crack tip values
-    Storage3D<double, 0> TestOutput2;                                                     ///< Storage for the crack tip values
+    Storage3D<double, 0> SurfaceTerm;                                                    ///< Storage for the surface/interface driving force term
+    Storage3D<double, 0> ElasticTerm;                                                    ///< Storage for the elastic driving force term
     
     FractureField& operator= (const FractureField& rhs);
 
@@ -163,6 +155,7 @@ class FractureField : public OPObject                                           
     double PFcutOff;                                                               ///< Cut-off value for the Fracture Field for creating a PhaseField
     void MergeIncrements(const BoundaryConditions& BC, const double dt);                 ///< Merges the increments into the phase fields
   protected:
+    double maxDisplacementIncrement = 0.0;                                            ///< Max displacement increment (advection CFL), updated in CalculateVelocity
   private:
     void Clear();                                                                        ///< Clears the phase field storage
     void SetFlags();                                                                     ///< Sets the flags which mark interfaces
@@ -180,6 +173,9 @@ class FractureField : public OPObject                                           
     double Xi;                                                                  ///< hydrogen degrading coefficient for fracture energy
     double delta_g_0;                                                           ///< Gibbs free energy difference between the decohering interface and the surrounding material
     double maxGradient;
+    double maxFieldsDotCached = 0.0;                                                  ///< Max |Fields_dot| cached at end of CalculateIncrements, before any zeroing
+    double maxSurfaceTermCached = 0.0;                                                ///< Max |surface/interface term| cached at end of CalculateIncrements
+    double maxElasticTermCached = 0.0;                                                ///< Max |elastic driving force term| cached at end of CalculateIncrements
     double InitialSurfaceEnergy;
 
     LaplacianStencils FractureFieldLaplacianStencil;                            ///< Laplacian stencil selector

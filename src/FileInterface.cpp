@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,15 +18,14 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2014
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev;
- *                         Philipp Engels; Johannes Goerler
+ *
+ *  File created :   2014
+ *  Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev;
+ *                        Philipp Engels; Johannes Goerler
  *
  */
 
 #include "FileInterface.h"
-#include <filesystem>
 
 namespace openphase
 {
@@ -254,6 +253,265 @@ int FileInterface::FindParameterLocation(const stringstream& sInp,
     return keyLocation;
 }
 
+
+Quaternion FileInterface::ReadParameterQ(const stringstream& sInp, int currentLocation, string Key,
+    const bool mandatory, const Quaternion defaultval)
+{
+    // Note the following optional arguments:
+    // verbose: if true, found variable is printed to terminal, standard = true
+    // mandatory: if parameter not found, program will stop (standard = true = mandatory)
+    // defaultval: if parameter not found and not mandatory, method returns defaultval
+
+    std::stringstream Inp(sInp.str());
+
+    streampos curPos(currentLocation);
+    Inp.seekg(curPos);
+
+    bool found = false;
+    Quaternion ReturnValue = defaultval;
+
+    while (!Inp.eof())
+    {
+        string tmp;
+        string tmp2;
+        string ReadKey;
+
+        getline(Inp, tmp, '$');
+        if (Inp.eof())
+        {
+            break;
+        }
+
+        bool endReading = false;
+        for (unsigned int i = 0; i < tmp.size(); i++)
+        {
+            if (tmp.at(i) == '@')
+            {
+                endReading = true;
+                break;
+            }
+        }
+
+        if (endReading)
+            break;
+
+        Inp >> ReadKey;
+
+        if (!ReadKey.compare(Key))
+        {
+            getline(Inp, tmp, ':');
+            tmp = removeLeadingTrailingWhiteSpaces(tmp);
+
+            ReturnValue.read_ASCII(Inp);
+
+            // Checks if comment is given, otherwise use "Key" as output
+            if (tmp.find_first_not_of(' ') == std::string::npos)
+            {
+                ConsoleOutput::WriteStandard("$" + Key, ReturnValue.get_output_string(), 5);
+            }
+            else
+            {
+                ConsoleOutput::WriteStandard("$" + Key + "\t" + tmp, ReturnValue.get_output_string(), 5);
+            }
+            found = true;
+            break;
+        }
+    }
+
+    if (not found)
+    {
+        if (mandatory)
+        {
+            ConsoleOutput::WriteExit("Parameter for Key \"" + Key + "\" does not exist in the input file.");
+            OP_Exit(EXIT_FAILURE);
+        }
+        else
+        {
+            // Return defaultval instead
+            ReturnValue = defaultval;
+            if(PRINT_DEFAULTS)
+            {
+                ConsoleOutput::WriteStandard("$" + Key + "\t(DEFAULT VALUE)", ReturnValue.get_output_string(), 5);
+            }
+        }
+    }
+    Inp.clear();
+    return ReturnValue;
+}
+
+EulerAngles FileInterface::ReadParameterEA(const stringstream& sInp, int currentLocation, string Key,
+    const bool mandatory, const EulerAngles defaultval)
+{
+    // Note the following optional arguments:
+    // verbose: if true, found variable is printed to terminal, standard = true
+    // mandatory: if parameter not found, program will stop (standard = true = mandatory)
+    // defaultval: if parameter not found and not mandatory, method returns defaultval
+
+    std::stringstream Inp(sInp.str());
+
+    streampos curPos(currentLocation);
+    Inp.seekg(curPos);
+
+    bool found = false;
+    EulerAngles ReturnValue = defaultval;
+
+    while (!Inp.eof())
+    {
+        string tmp;
+        string tmp2;
+        string ReadKey;
+
+        getline(Inp, tmp, '$');
+        if (Inp.eof())
+        {
+            break;
+        }
+
+        bool endReading = false;
+        for (unsigned int i = 0; i < tmp.size(); i++)
+        {
+            if (tmp.at(i) == '@')
+            {
+                endReading = true;
+                break;
+            }
+        }
+
+        if (endReading)
+            break;
+
+        Inp >> ReadKey;
+
+        if (!ReadKey.compare(Key))
+        {
+            getline(Inp, tmp, ':');
+            tmp = removeLeadingTrailingWhiteSpaces(tmp);
+
+            ReturnValue.read_degrees(Inp);
+
+            // Checks if comment is given, otherwise use "Key" as output
+            if (tmp.find_first_not_of(' ') == std::string::npos)
+            {
+                ConsoleOutput::WriteStandard("$" + Key, ReturnValue.get_output_string("DEGREES"), 5);
+            }
+            else
+            {
+                ConsoleOutput::WriteStandard("$" + Key + "\t" + tmp, ReturnValue.get_output_string("DEGREES"), 5);
+            }
+            found = true;
+            break;
+        }
+    }
+
+    if (not found)
+    {
+        if (mandatory)
+        {
+            ConsoleOutput::WriteExit("Parameter for Key \"" + Key + "\" does not exist in the input file.");
+            OP_Exit(EXIT_FAILURE);
+        }
+        else
+        {
+            // Return defaultval instead
+            ReturnValue = defaultval;
+            if(PRINT_DEFAULTS)
+            {
+                ConsoleOutput::WriteStandard("$" + Key + "\t(DEFAULT VALUE)", ReturnValue.get_output_string("DEGREES"), 5);
+            }
+        }
+    }
+    Inp.clear();
+    return ReturnValue;
+}
+
+dVectorN FileInterface::ReadParameterAA(const stringstream& sInp, int currentLocation, string Key,
+    const bool mandatory, const dVectorN defaultval)
+{
+    // Note the following optional arguments:
+    // verbose: if true, found variable is printed to terminal, standard = true
+    // mandatory: if parameter not found, program will stop (standard = true = mandatory)
+    // defaultval: if parameter not found and not mandatory, method returns defaultval
+
+    std::stringstream Inp(sInp.str());
+
+    streampos curPos(currentLocation);
+    Inp.seekg(curPos);
+
+    bool found = false;
+    dVectorN ReturnValue = defaultval;
+
+    while (!Inp.eof())
+    {
+        string tmp;
+        string tmp2;
+        string ReadKey;
+
+        getline(Inp, tmp, '$');
+        if (Inp.eof())
+        {
+            break;
+        }
+
+        bool endReading = false;
+        for (unsigned int i = 0; i < tmp.size(); i++)
+        {
+            if (tmp.at(i) == '@')
+            {
+                endReading = true;
+                break;
+            }
+        }
+
+        if (endReading)
+            break;
+
+        Inp >> ReadKey;
+
+        if (!ReadKey.compare(Key))
+        {
+            getline(Inp, tmp, ':');
+            tmp = removeLeadingTrailingWhiteSpaces(tmp);
+
+            for(size_t i = 0; i < 4; i++)
+            {
+                Inp >> ReturnValue[i];
+            }
+
+            // Checks if comment is given, otherwise use "Key" as output
+            if (tmp.find_first_not_of(' ') == std::string::npos)
+            {
+                ConsoleOutput::WriteStandard("$" + Key, ReturnValue, 5);
+            }
+            else
+            {
+                ConsoleOutput::WriteStandard("$" + Key + "\t" + tmp, ReturnValue, 5);
+            }
+            found = true;
+            break;
+        }
+    }
+
+    if (not found)
+    {
+        if (mandatory)
+        {
+            ConsoleOutput::WriteExit("Parameter for Key \"" + Key + "\" does not exist in the input file.");
+            OP_Exit(EXIT_FAILURE);
+        }
+        else
+        {
+            // Return defaultval instead
+            ReturnValue = defaultval;
+            if(PRINT_DEFAULTS)
+            {
+                ConsoleOutput::WriteStandard("$" + Key + "\t(DEFAULT VALUE)", ReturnValue, 5);
+            }
+        }
+    }
+    Inp.clear();
+    return ReturnValue;
+}
+
 double FileInterface::ReadParameterD(const stringstream& sInp, int currentLocation, string Key,
     const bool mandatory, const double defaultval)
 {
@@ -337,7 +595,6 @@ double FileInterface::ReadParameterD(const stringstream& sInp, int currentLocati
                 ConsoleOutput::WriteStandard("$" + Key + "\t(DEFAULT VALUE)", ReturnValue, 5);
             }
         }
-
     }
     Inp.clear();
     return ReturnValue;
@@ -346,50 +603,50 @@ double FileInterface::ReadParameterD(const stringstream& sInp, int currentLocati
 double FileInterface::ReadParameterD(const json& j, const string module, string Key,
     const bool mandatory, const double defaultval)
 {
-	double ReturnValue = defaultval;
-	if (!j.value(module,true))
-	{
-		if (!j[module].value(Key, true))
-		{
-			ReturnValue = j[module].value(Key, true);
-			ConsoleOutput::WriteStandard("$" + Key, ReturnValue, 5);
-		}
-		else
-		{
-		    if (mandatory)
-		    {
-		        ConsoleOutput::WriteExit("Parameter for Key $" + Key + " does not exist in the input file.");
-		        OP_Exit(EXIT_FAILURE);
-		    }
-		    else
-		    {
-		        // Return defaultval instead
-		        ReturnValue = defaultval;
-		        if(PRINT_DEFAULTS)
-		        {
-		            ConsoleOutput::WriteStandard("$" + Key + "\t(DEFAULT VALUE)", ReturnValue, 5);
-		        }
-		    }
+    double ReturnValue = defaultval;
+    if (!j.value(module,true))
+    {
+        if (!j[module].value(Key, true))
+        {
+            ReturnValue = j[module].value(Key, true);
+            ConsoleOutput::WriteStandard("$" + Key, ReturnValue, 5);
+        }
+        else
+        {
+            if (mandatory)
+            {
+                ConsoleOutput::WriteExit("Parameter for Key $" + Key + " does not exist in the input file.");
+                OP_Exit(EXIT_FAILURE);
+            }
+            else
+            {
+                // Return defaultval instead
+                ReturnValue = defaultval;
+                if(PRINT_DEFAULTS)
+                {
+                    ConsoleOutput::WriteStandard("$" + Key + "\t(DEFAULT VALUE)", ReturnValue, 5);
+                }
+            }
 
-		}
-	}
-	else
-	{
-	    if (mandatory)
-	    {
-	        ConsoleOutput::WriteExit("Parameter for Key $" + Key + " does not exist in the input file.");
-	        OP_Exit(EXIT_FAILURE);
-	    }
-	    else
-	    {
-	        // Return defaultval instead
-	        ReturnValue = defaultval;
-	        if(PRINT_DEFAULTS)
-	        {
-	            ConsoleOutput::WriteStandard("$" + Key + "\t(DEFAULT VALUE)", ReturnValue, 5);
-	        }
-	    }
-	}
+        }
+    }
+    else
+    {
+        if (mandatory)
+        {
+            ConsoleOutput::WriteExit("Parameter for Key $" + Key + " does not exist in the input file.");
+            OP_Exit(EXIT_FAILURE);
+        }
+        else
+        {
+            // Return defaultval instead
+            ReturnValue = defaultval;
+            if(PRINT_DEFAULTS)
+            {
+                ConsoleOutput::WriteStandard("$" + Key + "\t(DEFAULT VALUE)", ReturnValue, 5);
+            }
+        }
+    }
     return ReturnValue;
 }
 
@@ -534,7 +791,7 @@ dVector3 FileInterface::ReadParameterV3(const stringstream& sInp, int currentLoc
             getline(Inp, tmp, ':');
             tmp = removeLeadingTrailingWhiteSpaces(tmp);
 
-            ReturnValue.read(Inp);
+            ReturnValue.read_ASCII(Inp);
 
             // Checks if comment is given, otherwise use "Key" as output
             if (tmp.find_first_not_of(' ') == std::string::npos)
@@ -618,7 +875,7 @@ dVector3 FileInterface::ReadParameterV3(const stringstream& sInp, int currentLoc
                 getline(Inp, tmp, ':');
                 tmp = removeLeadingTrailingWhiteSpaces(tmp);
 
-                ReturnValue.read(Inp);
+                ReturnValue.read_ASCII(Inp);
 
                 // Checks if comment is given, otherwise use "Key" as output
                 if (tmp.find_first_not_of(' ') == std::string::npos)
@@ -706,7 +963,7 @@ iVector3 FileInterface::ReadParameterV3I(const stringstream& sInp, int currentLo
             getline(Inp, tmp, ':');
             tmp = removeLeadingTrailingWhiteSpaces(tmp);
 
-            ReturnValue.read(Inp);
+            ReturnValue.read_ASCII(Inp);
 
             // Checks if comment is given, otherwise use "Key" as output
             if (tmp.find_first_not_of(' ') == std::string::npos)
@@ -789,7 +1046,7 @@ dMatrix3x3 FileInterface::ReadParameterM3x3(const stringstream& sInp, int curren
             getline(Inp, tmp, ':');
             tmp = removeLeadingTrailingWhiteSpaces(tmp);
 
-            ReturnValue.read(Inp);
+            ReturnValue.read_ASCII(Inp);
 
             // Checks if comment is given, otherwise use "Key" as output
             if (tmp.find_first_not_of(' ') == std::string::npos)
@@ -874,7 +1131,7 @@ dMatrix6x6 FileInterface::ReadParameterT6(const stringstream& sInp, int currentL
             getline(Inp, tmp, ':');
             tmp = removeLeadingTrailingWhiteSpaces(tmp);
 
-            ReturnValue.read(Inp);
+            ReturnValue.read_ASCII(Inp);
 
             // Checks if comment is given, otherwise use "Key" as output
             if (tmp.find_first_not_of(' ') == std::string::npos)
@@ -957,7 +1214,7 @@ dMatrix6x6 FileInterface::ReadParameterM6x6(const stringstream& sInp, int curren
         {
             getline(Inp, tmp, ':');
             tmp = removeLeadingTrailingWhiteSpaces(tmp);
-            ReturnValue.read(Inp);
+            ReturnValue.read_ASCII(Inp);
 
             // Checks if comment is given, otherwise use "Key" as output
             if (tmp.find_first_not_of(' ') == std::string::npos)
@@ -1402,19 +1659,7 @@ bool FileInterface::ReadParameterB(const stringstream& sInp, int currentLocation
             ReturnValue = defaultval;
             if(PRINT_DEFAULTS)
             {
-                switch(defaultval)
-                {
-                    case true:
-                    {
-                        ConsoleOutput::WriteStandard("$" + Key + "\t(DEFAULT VALUE)", "YES");
-                        break;
-                    }
-                    case false:
-                    {
-                        ConsoleOutput::WriteStandard("$" + Key + "\t(DEFAULT VALUE)", "NO");
-                        break;
-                    }
-                }
+                ConsoleOutput::WriteStandard("$" + Key + "\t(DEFAULT VALUE)", (defaultval) ? "YES" : "NO");
             }
         }
     }
@@ -1518,19 +1763,7 @@ bool FileInterface::ReadParameterB(const stringstream& sInp, int currentLocation
             ReturnValue = defaultval;
             if(PRINT_DEFAULTS)
             {
-                switch(defaultval)
-                {
-                    case true:
-                    {
-                        ConsoleOutput::WriteStandard("$" + Key[0] + "\t(DEFAULT VALUE)", "YES");
-                        break;
-                    }
-                    case false:
-                    {
-                        ConsoleOutput::WriteStandard("$" + Key[0] + "\t(DEFAULT VALUE)", "NO");
-                        break;
-                    }
-                }
+                ConsoleOutput::WriteStandard("$" + Key[0] + "\t(DEFAULT VALUE)", (defaultval) ? "YES" : "NO");
             }
         }
     }
@@ -1583,7 +1816,7 @@ string FileInterface::ReadParameterF(const stringstream& sInp, int currentLocati
         if (!ReadKey.compare(Key))
         {
             getline(Inp, tmp, ':');
-            getline(Inp, tFileName);
+            getline(Inp >> std::ws, tFileName);
             if (tmp.find_first_not_of(' ') == std::string::npos)
             {
                 ConsoleOutput::WriteStandard("$" + Key, tFileName);
@@ -1598,9 +1831,9 @@ string FileInterface::ReadParameterF(const stringstream& sInp, int currentLocati
             break;
         }
     }
-    //string tmp;
-    //for (unsigned int i = 0; i < tFileName.size(); i++)
-    //    if (tFileName[i] != ' ') ReturnValue.push_back(tFileName[i]);
+    string tmp;
+    for (unsigned int i = 0; i < tFileName.size(); i++)
+        ReturnValue.push_back(tFileName[i]);
 
     if (not found)
     {
@@ -1671,7 +1904,7 @@ string FileInterface::ReadParameterF(const stringstream& sInp, int currentLocati
             if (!ReadKey.compare(Key[i]))
             {
                 getline(Inp, tmp, ':');
-                getline(Inp, tFileName);
+                getline(Inp >> std::ws, tFileName);
                 if (tmp.find_first_not_of(' ') == std::string::npos)
                 {
                     ConsoleOutput::WriteStandard("$" + Key[i], tFileName);
@@ -1692,9 +1925,9 @@ string FileInterface::ReadParameterF(const stringstream& sInp, int currentLocati
             break;
         }
     }
-    //string tmp;
-    //for (unsigned int i = 0; i < tFileName.size(); i++)
-    //    if (tFileName[i] != ' ') ReturnValue.push_back(tFileName[i]);
+    string tmp;
+    for (unsigned int i = 0; i < tFileName.size(); i++)
+        ReturnValue.push_back(tFileName[i]);
 
     if (not found)
     {

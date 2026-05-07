@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,6 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2014
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich;
- *                         Dmitry Medvedev; Philipp Engels
  *
  */
 
@@ -42,10 +38,12 @@ class dVector
     {
         set_to_zero();
     }
+
     dVector(const dVector<N>& vecinit)
     {
         storage = vecinit.storage;
     }
+
     dVector(std::initializer_list<double> vecinit)
     {
         assert(vecinit.size() == N && "Initialization list size is not equal to storage range.");
@@ -56,24 +54,29 @@ class dVector
             ii += 1;
         }
     }
+
     double& operator[](const size_t i)
     {
         assert(i < N && "Access beyond storage range");
         return storage[i];
-    };
+    }
+
     double const& operator[](const size_t i) const
     {
         assert(i < N && "Access beyond storage range");
         return storage[i];
-    };
+    }
+
     void set_to_zero(void)
     {
         storage.fill(0.0);
-    };
+    }
+
     void set_to_value(const double value)
     {
         for(int i = 0; i < N; i++) storage[i] = value;
-    };
+    }
+
     dVector<N> operator*(const double m) const
     {
         dVector<N> tmp;
@@ -82,7 +85,8 @@ class dVector
             tmp[i] = storage[i]*m;
         }
         return tmp;
-    };
+    }
+
     dVector<N>& operator*=(const double m)
     {
         for (int i = 0; i < N; i++)
@@ -90,7 +94,8 @@ class dVector
             storage[i] *= m;
         }
         return *this;
-    };
+    }
+
     dVector<N> operator+(const double rhs) const
     {
         dVector<N> tmp;
@@ -99,7 +104,8 @@ class dVector
             tmp[i] = storage[i] + rhs;
         }
         return tmp;
-    };
+    }
+
     dVector<N> operator+(const dVector<N>& rhs) const
     {
         dVector<N> tmp;
@@ -108,7 +114,8 @@ class dVector
             tmp[i] = storage[i] + rhs[i];
         }
         return tmp;
-    };
+    }
+
     dVector<N>& operator+=(const dVector<N>& rhs)
     {
         for (int i = 0; i < N; i++)
@@ -116,7 +123,8 @@ class dVector
             storage[i] += rhs[i];
         }
         return *this;
-    };
+    }
+
     dVector<N> operator-(const double rhs) const
     {
         dVector<N> tmp;
@@ -125,7 +133,8 @@ class dVector
             tmp[i] = storage[i] - rhs;
         }
         return tmp;
-    };
+    }
+
     dVector<N> operator-(const dVector<N>& rhs) const
     {
         dVector<N> tmp;
@@ -134,7 +143,8 @@ class dVector
             tmp[i] = storage[i] - rhs[i];
         }
         return tmp;
-    };
+    }
+
     dVector<N>& operator-=(const dVector<N>& rhs)
     {
         for (int i = 0; i < N; i++)
@@ -142,12 +152,14 @@ class dVector
             storage[i] -= rhs[i];
         }
         return *this;
-    };
+    }
+
     dVector<N>& operator=(const dVector<N>& rhs)
     {
         storage = rhs.storage;
         return *this;
-    };
+    }
+
     double sum_of_entries(void) const
     {
         double sum = 0.0;
@@ -156,7 +168,8 @@ class dVector
             sum += storage[i];
         }
         return sum;
-    };
+    }
+
     double average_entries(void) const
     {
         double sum = 0.0;
@@ -165,15 +178,28 @@ class dVector
             sum += storage[i];
         }
         return sum/double(N);
-    };
-    /*double* data(void)
+    }
+
+    size_t size(void) const
+    {
+        return storage.size();
+    }
+
+    size_t storage_size(void) const
+    {
+        return storage.size();
+    }
+
+    double* data(void)
     {
         return storage.data();
-    };
-    const double* const_data(void) const
+    }
+
+    const double* data(void) const
     {
-        return storage;
-    };*/
+        return storage.data();
+    }
+
     std::string print(void) const
     {
         std::stringstream out;
@@ -184,8 +210,7 @@ class dVector
         }
         out << storage[N-1] << "||";
         return out.str();
-    };
-
+    }
  protected:
  private:
     std::array<double, N> storage;

@@ -13,6 +13,8 @@ namespace op = openphase;
 int main(int argc, char **argv)
 {
     std::string InputFileName = op::DefaultInputFileName;
+    const double MaxError = 50*DBL_EPSILON;
+    double Error = 0.0;
 
 #ifdef MPI_PARALLEL
     int provided = 0;
@@ -69,7 +71,6 @@ int main(int argc, char **argv)
     index[2] = op::Initializations::SectionalPlane(Phase,  2,
             {Nx/2.,Ny/2.,Nz/2.}, {0,1,0}, BC);
 
-
     const double Volume20 = Phase.FieldsProperties[index[1]].Volume;
 
     double ElapsedTime = 0.0;
@@ -89,10 +90,9 @@ int main(int argc, char **argv)
             const double Volume1 = Phase.FieldsProperties[index[0]].Volume;
             const double Volume2 = Phase.FieldsProperties[index[1]].Volume;
             const double Volume3 = Phase.FieldsProperties[index[2]].Volume;
-
-            double Error = std::abs(Volume2 - Volume20)/Volume20;
-
+ 
             ElapsedTime += RTC.dt;
+            Error = std::abs(Volume2 - Volume20)/Volume20;
             op::ConsoleOutput::WriteTimeStep(tStep, RTC.nSteps);
             op::ConsoleOutput::Write("Elapsed time     [s]", ElapsedTime);
             op::ConsoleOutput::Write("Interface energy [J]", AvInterfaceEnergie);
@@ -103,33 +103,8 @@ int main(int argc, char **argv)
             op::ConsoleOutput::Write("Relative error", Error);
             op::ConsoleOutput::WriteBlankLine();
 
-            const double MaxError = 50*DBL_EPSILON;
-            if ((Error > MaxError) or (tStep == RTC.nSteps))
-            {
-                if (Error < MaxError)
-                {
-                    op::ConsoleOutput::WriteBlankLine();
-                    op::ConsoleOutput::WriteLine("_");
-                    op::ConsoleOutput::WriteBlankLine();
-                    op::ConsoleOutput::WriteSimple("Benchmark successfully completed");
-                    op::ConsoleOutput::WriteLine("_");
-                    op::ConsoleOutput::WriteBlankLine();
-                }
-
-                // Write simulation results
-                std::ofstream resultsSim ("Results.sim");
-                if (resultsSim.is_open())
-                {
-                    resultsSim << 2 << "\n";
-                    resultsSim << "RelativeVolumeError " << Error << " "
-                        << MaxError << "\n";
-                    resultsSim.flush();
-                    resultsSim.close();
-                }
-                break;
-            }
+            if (Error > MaxError) break;
         }
-
 
         // Actual calculation of the interface diffusion
         Timer.SetStart();
@@ -137,15 +112,40 @@ int main(int argc, char **argv)
         Timer.SetTimeStamp("Sigma.Set()");
         ID.CalculatePhaseFieldIncrements(Phase, IP);
         Timer.SetTimeStamp("ID.Calculate()");
-        Phase.MergeIncrements(BC, RTC.dt, false);
+        Phase.MergeIncrements(BC, RTC.dt);
         Timer.SetTimeStamp("Phase.MergeIncrements()");
 
         if(!(tStep%RTC.tScreenWrite)) Timer.PrintWallClockSummary();
     }
-    return 0;
+
+#ifdef MPI_PARALLEL
+    if (MPI_RANK == 0){
+#endif
+    std::ofstream resultsSim ("Results.sim");
+    if (resultsSim.is_open())
+    {
+        resultsSim << 2 << "\n";
+        resultsSim << "RelativeVolumeError " << Error << " " << MaxError << "\n";
+        resultsSim.flush();
+        resultsSim.close();
+    }
+#ifdef MPI_PARALLEL
+    }
+#endif
 
 #ifdef MPI_PARALLEL
     }
     OP_MPI_Finalize();
 #endif
+
+    if (Error > MaxError)
+    {
+        op::ConsoleOutput::Write("Benchmark FAILED!");
+        return EXIT_FAILURE;
+    }
+    else
+    {
+        op::ConsoleOutput::Write("Benchmark successfully completed");
+        return EXIT_SUCCESS;
+    }
 }

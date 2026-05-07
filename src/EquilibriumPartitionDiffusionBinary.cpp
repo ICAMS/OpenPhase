@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,22 +18,21 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2010
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev
+ *
+ *  File created :   2010
+ *  Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev
  *
  */
 
-#include "EquilibriumPartitionDiffusionBinary.h"
 #include "BoundaryConditions.h"
 #include "Composition.h"
 #include "DrivingForce.h"
+#include "EquilibriumPartitionDiffusionBinary.h"
 #include "InterfaceProperties.h"
 #include "PhaseField.h"
 #include "PhysicalConstants.h"
 #include "Settings.h"
 #include "Temperature.h"
-#include "VTK.h"
 
 namespace openphase
 {
@@ -93,6 +92,7 @@ void EquilibriumPartitionDiffusionBinary::Initialize(Settings& locSettings,
     Tcross.Allocate({Nphases, Nphases});
     Ccross.Allocate({Nphases, Nphases});
     Slope.Allocate({Nphases, Nphases});
+    IntMob.Allocate(Nphases,Nphases);
 
     IDC.resize(Nphases,1.0);
     DC.resize(Nphases,0.0);
@@ -144,7 +144,6 @@ void EquilibriumPartitionDiffusionBinary::Initialize(Settings& locSettings,
 
 void EquilibriumPartitionDiffusionBinary::ReadInput(const string InputFileName)
 {
-    ConsoleOutput::WriteLineInsert("EquilibriumPartitionDiffusionBinary input");
     ConsoleOutput::WriteStandard("Source", InputFileName);
 
     fstream inp(InputFileName.c_str(), ios::in | ios_base::binary);
@@ -155,9 +154,6 @@ void EquilibriumPartitionDiffusionBinary::ReadInput(const string InputFileName)
         OP_Exit(EXIT_FAILURE);
     };
 
-    ConsoleOutput::WriteLineInsert("EquilibriumPartitionDiffusion properties");
-    ConsoleOutput::WriteStandard("Source", InputFileName);
-
     std::stringstream data;
     data << inp.rdbuf();
     ReadInput(data);
@@ -167,6 +163,7 @@ void EquilibriumPartitionDiffusionBinary::ReadInput(const string InputFileName)
 
 void EquilibriumPartitionDiffusionBinary::ReadInput(stringstream& inp)
 {
+    ConsoleOutput::WriteLineInsert(thisclassname+" input");
     int moduleLocation = FileInterface::FindModuleLocation(inp, thisclassname);
 
     string RefCompName = FileInterface::ReadParameterK(inp, moduleLocation, string("RefElement"), true, "NN");
@@ -238,8 +235,8 @@ void EquilibriumPartitionDiffusionBinary::ReadInput(stringstream& inp)
     for(size_t n =   0; n < Nphases; ++n)
     {
         Slope({n, n}) = 1.0;
-    }
-
+    }    
+   
     string tmp1 = FileInterface::ReadParameterK(inp, moduleLocation, string("DiffusionStencil"), false, string("ISOTROPIC"));
     if(tmp1 == "SIMPLE")
     {
@@ -345,8 +342,11 @@ double EquilibriumPartitionDiffusionBinary::ReportMaximumTimeStep(Temperature& T
 
 double EquilibriumPartitionDiffusionBinary::EquilibriumComposition(size_t n,
                                                                    size_t m,
-                                                                   double Temp)
+                                                                   double Temp) const
 {
+    assert(n < Nphases && "Access to nonexistent phase in EquilibriumComposition");
+    assert(m < Nphases && "Access to nonexistent phase in EquilibriumComposition");
+    assert(Temp > 0.0);
     double eqC = Ccross({n, m});
     if(Slope({n, m}) != 0.0)
     {
@@ -357,8 +357,10 @@ double EquilibriumPartitionDiffusionBinary::EquilibriumComposition(size_t n,
 }
 
 double EquilibriumPartitionDiffusionBinary::PartitioningCoefficient(size_t n,
-                                                                    size_t m)
+                                                                    size_t m) const
 {
+    assert(n < Nphases && "Access to nonexistent phase in PartitioningCoefficient");
+    assert(m < Nphases && "Access to nonexistent phase in PartitioningCoefficient");
     double pt_coefficient = 0.0;
     if(Slope({m, n}) != 0.0)
     {
@@ -390,7 +392,7 @@ void EquilibriumPartitionDiffusionBinary::CalculateLocalPhaseConcentrations(
         size_t iteration = 0;
 
         do
-        {
+        { 
             iterate = false;
 
             Cx.MoleFractions(i,j,k).set_to_zero();
@@ -533,6 +535,7 @@ void EquilibriumPartitionDiffusionBinary::CalculateDrivingForce(PhaseField& Phas
                                                                 Temperature& Tx,
                                                                 DrivingForce& dG)
 {
+    assert(initialized && "EquilibriumPartitionDiffusionBinary not initialized");
     OMP_PARALLEL_STORAGE_LOOP_BEGIN(i,j,k,Cx.MoleFractionsTotal,0,)
     {
         if(Phase.Fields(i,j,k).interface())
@@ -632,8 +635,6 @@ void EquilibriumPartitionDiffusionBinary::CalculateInterfaceMobility(PhaseField&
                                                                      InterfaceProperties& IP)
 {
     CalculateDiffusionCoefficients(Tx);
-
-    Matrix<double> IntMob(Nphases,Nphases);
 
     for(size_t pIndexA = 0; pIndexA < Nphases; pIndexA++)
     for(size_t pIndexB = 0; pIndexB < Nphases; pIndexB++)

@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,10 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2014
- *   Main contributors :   Oleg Shchyglo; Philipp Engels; Raphael Schiedung;
- *                         Marvin Tegeler; Helge Schaar
+ *
+ *  File created :   2014
+ *  Main contributors :   Oleg Shchyglo; Philipp Engels; Raphael Schiedung;
+ *                        Marvin Tegeler; Helge Schaar
  *
  */
 
@@ -39,6 +39,9 @@ class GrainsProperties;
 class PhaseField;
 class Temperature;
 class BoundaryConditions;
+#ifndef ACADEMIC
+class ThermodynamicPropertiesEQP;
+#endif
 class Composition;
 
 class OP_EXPORTS HeatDiffusion : public OPObject                                ///< Heat equation solver class
@@ -55,6 +58,11 @@ class OP_EXPORTS HeatDiffusion : public OPObject                                
     void ReadInput(const std::string FileName) override;                        ///< Reads input parameters
     void ReadInput(std::stringstream& inp) override;                            ///< Reads input parameters
     void Remesh(int newNx, int newNy, int newNz, const BoundaryConditions& BC) override; ///< Changes system size while keeping the data
+#ifndef ACADEMIC
+    void SetEffectiveProperties(const PhaseField& Phase,
+                                const ThermodynamicPropertiesEQP& TP,
+                                const Composition& Cx, const Temperature& Tx);  ///< Set effective thermal properties
+#endif
     void SetEffectiveProperties(const PhaseField& Phase,
                                 const Temperature& Tx);                         ///< Set effective thermal properties
 

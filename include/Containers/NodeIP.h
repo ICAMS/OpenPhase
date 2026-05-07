@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,6 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2009
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich;
- *                         Reza Darvishi Kamachali; Dmitry Medvedev
  *
  */
 
@@ -33,9 +29,9 @@
 
 namespace openphase
 {
-/**********************************************************/
+/********************************* Declaration ********************************/
 
-struct InterfacePropertiesFieldEntry                                            ///< Structure for storing the field entry with two indices. Used in the NodeIP class as a storage unit.
+struct InterfacePropertiesEntry                                                 ///< Structure for storing the field entry with two indices. Used in the NodeIP class as a storage unit.
 {
     size_t indexA;                                                              ///< First index.
     size_t indexB;                                                              ///< Second index.
@@ -43,7 +39,7 @@ struct InterfacePropertiesFieldEntry                                            
     double stiffness;                                                           ///< Stiffness value.
     double mobility;                                                            ///< Mobility value.
 
-    InterfacePropertiesFieldEntry() :                                           ///< Default constructor.
+    InterfacePropertiesEntry() :                                                ///< Default constructor.
         indexA(0),
         indexB(0),
         energy(0.0),
@@ -52,7 +48,7 @@ struct InterfacePropertiesFieldEntry                                            
     {
 
     }
-    InterfacePropertiesFieldEntry(const InterfacePropertiesFieldEntry& entry) : ///< Copy constructor.
+    InterfacePropertiesEntry(const InterfacePropertiesEntry& entry) :           ///< Copy constructor.
         indexA(entry.indexA),
         indexB(entry.indexB),
         energy(entry.energy),
@@ -61,7 +57,7 @@ struct InterfacePropertiesFieldEntry                                            
     {
 
     }
-    InterfacePropertiesFieldEntry& operator=(const InterfacePropertiesFieldEntry& entry)///< Copy operator.
+    InterfacePropertiesEntry& operator=(const InterfacePropertiesEntry& entry)  ///< Copy operator.
     {
         indexA    = entry.indexA;
         indexB    = entry.indexB;
@@ -72,7 +68,8 @@ struct InterfacePropertiesFieldEntry                                            
     }
 };
 
-/**********************************************************/
+/******************************************************************************/
+
 class NodeIP                                                                    ///< Stores the interface properties with two indices and two values at a grid point. Provides access and manipulation methods for the stored field entries.
 {
  public:
@@ -119,26 +116,26 @@ class NodeIP                                                                    
                                     const double st_value);                     ///< Sets en_value and st_value in symmetric case: f(n,m) = f(m,n).
 
     void   set_energy_stiffness_and_mobility(const size_t n, const size_t m,
-                                             const double st_value,
                                              const double en_value,
-                                             const double mob_value);           ///< Sets en_value and mob_value in symmetric case: f(n,m) = f(m,n).
+                                             const double st_value,
+                                             const double mob_value);           ///< Sets en_value, st_value and mob_value in symmetric case: f(n,m) = f(m,n).
 
     void   add_energy_and_mobility(const size_t n, const size_t m,
                                    const double en_value,
                                    const double mob_value);                     ///< Increments en_value and mob_value in symmetric case: f(n,m) = f(m,n).
 
     void   add_stiffness_and_mobility(const size_t n, const size_t m,
-                                      const double stn_value,
+                                      const double st_value,
                                       const double mob_value);                  ///< Increments st_value and mob_value in symmetric case: f(n,m) = f(m,n).
 
     void   add_energy_and_stiffness(const size_t n, const size_t m,
-                                    const double st_value,
-                                    const double en_value);                     ///< Increments en_value and st_value in symmetric case: f(n,m) = f(m,n).
+                                    const double en_value,
+                                    const double st_value);                     ///< Increments en_value and st_value in symmetric case: f(n,m) = f(m,n).
 
     void   add_energy_stiffness_and_mobility(const size_t n, const size_t m,
-                                             const double st_value,
                                              const double en_value,
-                                             const double mob_value);           ///< Increments en_value and mob_value in symmetric case: f(n,m) = f(m,n).
+                                             const double st_value,
+                                             const double mob_value);           ///< Increments en_value, st_value and mob_value in symmetric case: f(n,m) = f(m,n).
 
     std::pair<double,double> get_energy_and_mobility(const size_t n,
                                                      const size_t m) const;     ///< Returns pair<en_value,mob_value> in symmetric case: f(n,m) = f(m,n).
@@ -147,7 +144,7 @@ class NodeIP                                                                    
     std::pair<double,double> get_energy_and_stiffness(const size_t n,
                                                       const size_t m) const;    ///< Returns pair<en_value,st_value> in symmetric case: f(n,m) = f(m,n).
 
-    InterfacePropertiesFieldEntry get_entry(const size_t n, const size_t m) const;   ///< Returns InterfacePropertiesFieldEntry in symmetric case: f(n,m) = f(m,n).
+    InterfacePropertiesEntry get_entry(const size_t n, const size_t m) const;   ///< Returns InterfacePropertiesEntry in symmetric case: f(n,m) = f(m,n).
 
     void   add_energies(const NodeIP& en_values);                               ///< Add en_value of two nodes in symmetric case: f(n,m) = f(m,n).
     void   add_stiffnesses(const NodeIP& st_values);                            ///< Add st_value of two nodes in symmetric case: f(n,m) = f(m,n).
@@ -158,32 +155,33 @@ class NodeIP                                                                    
     void   add_energies_stiffnesses_and_mobilities(const NodeIP& values);       ///< Add en_value, st_value and mob_value of two nodes in symmetric case: f(n,m) = f(m,n).
 
     void   add_energies_exist(const NodeIP& en_values);                         ///< Add only en_value existing in two nodes simultaneously in symmetric case: f(n,m) = f(m,n).
-    void   add_stiffnesses_exist(const NodeIP& en_values);                      ///< Add only st_value existing in two nodes simultaneously in symmetric case: f(n,m) = f(m,n).
+    void   add_stiffnesses_exist(const NodeIP& st_values);                      ///< Add only st_value existing in two nodes simultaneously in symmetric case: f(n,m) = f(m,n).
     void   add_mobilities_exist(const NodeIP& mob_values);                      ///< Add only mob_value existing in two nodes simultaneously in symmetric case: f(n,m) = f(m,n).
 
-    void    clear() {Fields.clear();};                                          ///< Empties the field storage. Sets flag to 0.
+    void    clear() {Fields.clear();};                                          ///< Empties the field storage.
     size_t  size() const {return Fields.size();};                               ///< Returns the size of storage.
-    typedef std::vector<InterfacePropertiesFieldEntry>::iterator iterator;      ///< Iterator over storage vector
-    typedef std::vector<InterfacePropertiesFieldEntry>::const_iterator citerator;///< Constant iterator over storage vector
+    size_t  capacity() const {return Fields.capacity();};                       ///< Returns the capacity of storage.
+    typedef std::vector<InterfacePropertiesEntry>::iterator iterator;           ///< Iterator over storage vector
+    typedef std::vector<InterfacePropertiesEntry>::const_iterator citerator;    ///< Constant iterator over storage vector
     iterator  begin() {return Fields.begin();};                                 ///< Iterator to the begin of storage vector
     iterator  end()   {return Fields.end();};                                   ///< Iterator to the end of storage vector
     citerator cbegin() const {return Fields.cbegin();};                         ///< Constant iterator to the begin of storage vector
     citerator cend()   const {return Fields.cend();};                           ///< Constant iterator to the end of storage vector
     iterator erase(iterator it) {return Fields.erase(it);};                     ///< Erase a single record pointed by iterator it
-    InterfacePropertiesFieldEntry& front(void) {return Fields.front();};        ///< Reference to the first FieldEntry.
-    const InterfacePropertiesFieldEntry& front(void) const {return Fields.front();};///< Constant reference to the first FieldEntry.
+    InterfacePropertiesEntry& front(void) {return Fields.front();};             ///< Reference to the first FieldEntry.
+    const InterfacePropertiesEntry& front(void) const {return Fields.front();}; ///< Constant reference to the first FieldEntry.
 
-    void pack(std::vector<double>& buffer);
-    void unpack(std::vector<double>& buffer, size_t& it);
-    void read(std::istream& inp);
-    void write(std::ostream& outp) const;
+    void pack(std::vector<double>& buffer);                                     ///< Writes NodeIP into the buffer (used for MPI mode communication)
+    void unpack(std::vector<double>& buffer, size_t& it);                       ///< Read NodeIP from the buffer (used for MPI mode communication)
+    void read(std::istream& inp);                                               ///< Reads NodeIP content from the input stream.
+    void write(std::ostream& outp) const;                                       ///< Writes NodeIP content into the output stream.
 
  protected:
  private:
-    std::vector<InterfacePropertiesFieldEntry> Fields;                          ///< Fields storage vector.
+    std::vector<InterfacePropertiesEntry> Fields;                               ///< InterfacePropertiesEntry storage vector.
 };
 
-/***************************************************************/
+/******************************* Implementation *******************************/
 
 inline NodeIP NodeIP::operator+(const NodeIP& n) const
 {
@@ -273,7 +271,7 @@ inline void NodeIP::set_energy(const size_t n, const size_t m,
         return;
     }
 
-    InterfacePropertiesFieldEntry NewEntry;
+    InterfacePropertiesEntry NewEntry;
     NewEntry.indexA = n;
     NewEntry.indexB = m;
     NewEntry.energy = en_value;
@@ -292,7 +290,7 @@ inline void NodeIP::set_stiffness(const size_t n, const size_t m,
         return;
     }
 
-    InterfacePropertiesFieldEntry NewEntry;
+    InterfacePropertiesEntry NewEntry;
     NewEntry.indexA = n;
     NewEntry.indexB = m;
     NewEntry.stiffness = st_value;
@@ -311,7 +309,7 @@ inline void NodeIP::set_mobility(const size_t n, const size_t m,
         return;
     }
 
-    InterfacePropertiesFieldEntry NewEntry;
+    InterfacePropertiesEntry NewEntry;
     NewEntry.indexA = n;
     NewEntry.indexB = m;
     NewEntry.mobility = mob_value;
@@ -330,7 +328,7 @@ inline void NodeIP::add_energy(const size_t n, const size_t m,
         return;
     }
 
-    InterfacePropertiesFieldEntry NewEntry;
+    InterfacePropertiesEntry NewEntry;
     NewEntry.indexA = n;
     NewEntry.indexB = m;
     NewEntry.energy = en_value;
@@ -349,7 +347,7 @@ inline void NodeIP::add_stiffness(const size_t n, const size_t m,
         return;
     }
 
-    InterfacePropertiesFieldEntry NewEntry;
+    InterfacePropertiesEntry NewEntry;
     NewEntry.indexA = n;
     NewEntry.indexB = m;
     NewEntry.stiffness = st_value;
@@ -368,7 +366,7 @@ inline void NodeIP::add_mobility(const size_t n, const size_t m,
         return;
     }
 
-    InterfacePropertiesFieldEntry NewEntry;
+    InterfacePropertiesEntry NewEntry;
     NewEntry.indexA = n;
     NewEntry.indexB = m;
     NewEntry.mobility = mob_value;
@@ -422,7 +420,7 @@ inline void NodeIP::set_energy_and_mobility(const size_t n, const size_t m,
         return;
     }
 
-    InterfacePropertiesFieldEntry NewEntry;
+    InterfacePropertiesEntry NewEntry;
     NewEntry.indexA = n;
     NewEntry.indexB = m;
     NewEntry.energy = en_value;
@@ -444,7 +442,7 @@ inline void NodeIP::set_stiffness_and_mobility(const size_t n, const size_t m,
         return;
     }
 
-    InterfacePropertiesFieldEntry NewEntry;
+    InterfacePropertiesEntry NewEntry;
     NewEntry.indexA = n;
     NewEntry.indexB = m;
     NewEntry.stiffness = st_value;
@@ -452,6 +450,7 @@ inline void NodeIP::set_stiffness_and_mobility(const size_t n, const size_t m,
 
     Fields.push_back(NewEntry);
 }
+
 
 inline void NodeIP::set_energy_and_stiffness(const size_t n, const size_t m,
                                              const double en_value,
@@ -466,7 +465,7 @@ inline void NodeIP::set_energy_and_stiffness(const size_t n, const size_t m,
         return;
     }
 
-    InterfacePropertiesFieldEntry NewEntry;
+    InterfacePropertiesEntry NewEntry;
     NewEntry.indexA = n;
     NewEntry.indexB = m;
     NewEntry.energy = en_value;
@@ -490,7 +489,7 @@ inline void NodeIP::set_energy_stiffness_and_mobility(const size_t n, const size
         return;
     }
 
-    InterfacePropertiesFieldEntry NewEntry;
+    InterfacePropertiesEntry NewEntry;
     NewEntry.indexA = n;
     NewEntry.indexB = m;
     NewEntry.energy = en_value;
@@ -513,7 +512,7 @@ inline void NodeIP::add_energy_and_mobility(const size_t n, const size_t m,
         return;
     }
 
-    InterfacePropertiesFieldEntry NewEntry;
+    InterfacePropertiesEntry NewEntry;
     NewEntry.indexA = n;
     NewEntry.indexB = m;
     NewEntry.energy = en_value;
@@ -535,7 +534,7 @@ inline void NodeIP::add_stiffness_and_mobility(const size_t n, const size_t m,
         return;
     }
 
-    InterfacePropertiesFieldEntry NewEntry;
+    InterfacePropertiesEntry NewEntry;
     NewEntry.indexA = n;
     NewEntry.indexB = m;
     NewEntry.stiffness = st_value;
@@ -557,7 +556,7 @@ inline void NodeIP::add_energy_and_stiffness(const size_t n, const size_t m,
         return;
     }
 
-    InterfacePropertiesFieldEntry NewEntry;
+    InterfacePropertiesEntry NewEntry;
     NewEntry.indexA = n;
     NewEntry.indexB = m;
     NewEntry.energy = en_value;
@@ -581,7 +580,7 @@ inline void NodeIP::add_energy_stiffness_and_mobility(const size_t n, const size
         return;
     }
 
-    InterfacePropertiesFieldEntry NewEntry;
+    InterfacePropertiesEntry NewEntry;
     NewEntry.indexA = n;
     NewEntry.indexB = m;
     NewEntry.energy = en_value;
@@ -627,7 +626,7 @@ inline std::pair<double,double> NodeIP::get_energy_and_stiffness(const size_t n,
     return std::pair<double,double>(0.0, 0.0);
 }
 
-inline InterfacePropertiesFieldEntry NodeIP::get_entry(const size_t n,
+inline InterfacePropertiesEntry NodeIP::get_entry(const size_t n,
                                                               const size_t m) const
 {
     for (auto i = Fields.cbegin(); i < Fields.cend(); ++i)
@@ -637,7 +636,7 @@ inline InterfacePropertiesFieldEntry NodeIP::get_entry(const size_t n,
         return *i;
     }
 
-    InterfacePropertiesFieldEntry NewEntry;
+    InterfacePropertiesEntry NewEntry;
     NewEntry.indexA = n;
     NewEntry.indexB = m;
 

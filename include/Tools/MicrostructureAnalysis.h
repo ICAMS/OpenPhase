@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2018
- *   Main contributors :   Oleg Shchyglo; Hesham Salama
+ *
+ *  File created :   2018
+ *  Main contributors :   Oleg Shchyglo; Hesham Salama
  *
  */
 
@@ -31,6 +31,7 @@
 #include "VTK.h"
 #include "Crystallography.h"
 #include "Orientations.h"
+
 
 namespace openphase
 {
@@ -46,7 +47,7 @@ class OP_EXPORTS MicrostructureAnalysis
 
     static void WriteEBSDDataQuaternions(const PhaseField& Phase, const SymmetryVariants& SV, const int tStep, double scale = 1.0);
     static void WriteEBSDDataQuaternionsSlice(const PhaseField& Phase, const SymmetryVariants& SV, const int tStep, const char Axis, const int Position, double scale = 1.0);
-    static void WriteEBSDVTK(PhaseField& Phase, Crystallography& CR, const Settings& locSettings, EulerConvention locConvention, const int sd, const int tStep);
+    static void WriteEBSDVTK(PhaseField& Phase, Crystallography& CR, const Settings& locSettings, EulerConventions locConvention, const int sd, const int tStep);
     static dVector3 IPFColor(size_t sd, EulerAngles& tempEuler, Crystallography& CR);
 
     ///< Writes RGB as Vector Field
@@ -68,7 +69,7 @@ class OP_EXPORTS MicrostructureAnalysis
     static void GrainTopologyStatistics();
     static void GrainsSurfaceArea(const PhaseField& Phase);                     ///< Calculates approximate grains surface area.
 
-    static dVector3 FindValuePosition(PhaseField& Phi, size_t index, double value, dVector3 start_position, dVector3 direction, double tolerance = 1.0e-4);
+    static dVector3 FindValuePosition(const PhaseField& Phi, size_t index, double value, dVector3 start_position, dVector3 direction, double tolerance = 1.0e-4);
 };
 
 }

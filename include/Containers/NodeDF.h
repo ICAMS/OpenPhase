@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,6 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2009
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich;
- *                         Reza Darvishi Kamachali; Dmitry Medvedev
  *
  */
 
@@ -33,7 +29,7 @@
 
 namespace openphase
 {
-/**********************************************************/
+/********************************* Declaration ********************************/
 
 struct DrivingForceEntry                                                        ///< Structure for storing the driving force entry. Used in the NodeDF class as a storage unit.
 {
@@ -76,7 +72,8 @@ struct DrivingForceEntry                                                        
     }
 };
 
-/**********************************************************/
+/******************************************************************************/
+
 class NodeDF                                                                    ///< Stores driving forces at a grid point. Provides access and manipulation methods for the stored entries.
 {
  public:
@@ -99,23 +96,23 @@ class NodeDF                                                                    
     NodeDF& operator-=(const NodeDF& n);                                        ///< Minus-equal operator. Takes as input another NodeDF type entry. Subtracts all entries.
     NodeDF& operator*=(const double  n);                                        ///< Multiplies all entries by a number.
 
-    void    set_raw    (const size_t n, const size_t m, const double value);    ///< Sets raw in antisymmetric case (changes sign when index order changes): f(n,m) = -f(m,n)
-    void    set_tmp    (const size_t n, const size_t m, const double value);    ///< Sets tmp in antisymmetric case (changes sign when index order changes): f(n,m) = -f(m,n)
-    void    set_average(const size_t n, const size_t m, const double value);    ///< Sets average in antisymmetric case (changes sign when index order changes): f(n,m) = -f(m,n).
+    void    set_raw    (const size_t n, const size_t m, const double value);    ///< Sets raw value in antisymmetric case (changes sign when index order changes): f(n,m) = -f(m,n)
+    void    set_tmp    (const size_t n, const size_t m, const double value);    ///< Sets tmp value in antisymmetric case (changes sign when index order changes): f(n,m) = -f(m,n)
+    void    set_average(const size_t n, const size_t m, const double value);    ///< Sets average value in antisymmetric case (changes sign when index order changes): f(n,m) = -f(m,n).
     void    set_weight (const size_t n, const size_t m, const double value);    ///< Sets weight in symmetric case (does not change the sign when index order changes): f(n,m) = f(m,n).
     void    set_all    (const size_t n, const size_t m, const double raw_value,
                                                         const double tmp_value,
                                                         const double avg_value,
                                                         const double wgt_value);///< Sets all values
 
-    double  get_raw    (const size_t n, const size_t m) const;                  ///< Returns raw in antisymmetric case (changes sign when index order changes): f(n,m) = -f(m,n).
-    double  get_tmp    (const size_t n, const size_t m) const;                  ///< Returns tmp in antisymmetric case (changes sign when index order changes): f(n,m) = -f(m,n).
-    double  get_average(const size_t n, const size_t m) const;                  ///< Returns average in antisymmetric case (changes sign when index order changes): f(n,m) = -f(m,n).
+    double  get_raw    (const size_t n, const size_t m) const;                  ///< Returns raw value in antisymmetric case (changes sign when index order changes): f(n,m) = -f(m,n).
+    double  get_tmp    (const size_t n, const size_t m) const;                  ///< Returns tmp value in antisymmetric case (changes sign when index order changes): f(n,m) = -f(m,n).
+    double  get_average(const size_t n, const size_t m) const;                  ///< Returns average value in antisymmetric case (changes sign when index order changes): f(n,m) = -f(m,n).
     double  get_weight (const size_t n, const size_t m) const;                  ///< Returns weight in symmetric case (does not change the sign when index order changes): f(n,m) = f(m,n).
 
-    void    add_raw    (const size_t n, const size_t m, const double value);    ///< Increments raw in antisymmetric case (changes sign when index order changes): f(n,m) = -f(m,n).
-    void    add_tmp    (const size_t n, const size_t m, const double value);    ///< Increments tmp in antisymmetric case (changes sign when index order changes): f(n,m) = -f(m,n).
-    void    add_average(const size_t n, const size_t m, const double value);    ///< Increments average in antisymmetric case (changes sign when index order changes): f(n,m) = -f(m,n).
+    void    add_raw    (const size_t n, const size_t m, const double value);    ///< Increments raw value in antisymmetric case (changes sign when index order changes): f(n,m) = -f(m,n).
+    void    add_tmp    (const size_t n, const size_t m, const double value);    ///< Increments tmp value in antisymmetric case (changes sign when index order changes): f(n,m) = -f(m,n).
+    void    add_average(const size_t n, const size_t m, const double value);    ///< Increments average value in antisymmetric case (changes sign when index order changes): f(n,m) = -f(m,n).
     void    add_weight (const size_t n, const size_t m, const double value);    ///< Increments weight in symmetric case (does not change the sign when index order changes): f(n,m) = f(m,n).
     void    add_all    (const size_t n, const size_t m, const double raw_value,
                                                         const double tmp_value,
@@ -124,6 +121,7 @@ class NodeDF                                                                    
 
     void    clear() {Fields.clear();};                                          ///< Empties the field storage.
     size_t  size() const {return Fields.size();};                               ///< Returns the size of storage.
+    size_t  capacity() const {return Fields.capacity();};                       ///< Returns the capacity of storage.
     typedef std::vector<DrivingForceEntry>::iterator iterator;                  ///< Iterator over storage vector
     typedef std::vector<DrivingForceEntry>::const_iterator citerator;           ///< Constant iterator over storage vector
     iterator  begin() {return Fields.begin();};                                 ///< Iterator to the begin of storage vector
@@ -134,17 +132,17 @@ class NodeDF                                                                    
     DrivingForceEntry& front(void) {return Fields.front();};                    ///< Reference to the first FieldEntry.
     const DrivingForceEntry& front(void) const {return Fields.front();};        ///< Constant reference to the first DrivingForceEntry.
 
-    void pack(std::vector<double>& buffer);
-    void unpack(std::vector<double>& buffer, size_t& it);
-    void Read(std::istream& inp);
-    void Write(std::ostream& outp) const;
+    void pack(std::vector<double>& buffer);                                     ///< Writes NodeDF into the buffer (used for MPI mode communication)
+    void unpack(std::vector<double>& buffer, size_t& it);                       ///< Read NodeDF from the buffer (used for MPI mode communication)
+    void read(std::istream& inp);                                               ///< Reads NodeDF content from the input stream.
+    void write(std::ostream& outp) const;                                       ///< Writes NodeDF content into the output stream.
 
  protected:
  private:
     std::vector<DrivingForceEntry> Fields;                                      ///< DrivingForceEntry storage vector.
 };
 
-/***************************************************************/
+/******************************* Implementation *******************************/
 
 inline NodeDF NodeDF::operator+(const NodeDF& n) const
 {
@@ -225,6 +223,7 @@ inline NodeDF& NodeDF::operator=(const NodeDF& n)
     Fields = n.Fields;
     return *this;
 }
+
 
 inline void NodeDF::set_raw(const size_t n, const size_t m, const double value)
 {
@@ -569,7 +568,7 @@ inline void NodeDF::unpack(std::vector<double>& buffer, size_t& it)
     }
 }
 
-inline void NodeDF::Read(std::istream& inp)
+inline void NodeDF::read(std::istream& inp)
 {
     size_t size = 0;
     inp.read(reinterpret_cast<char*>(&size), sizeof(size_t));
@@ -586,7 +585,7 @@ inline void NodeDF::Read(std::istream& inp)
     }
 }
 
-inline void NodeDF::Write(std::ostream& outp) const
+inline void NodeDF::write(std::ostream& outp) const
 {
     size_t size = Fields.size();
     outp.write(reinterpret_cast<const char*>(&size), sizeof(size_t));

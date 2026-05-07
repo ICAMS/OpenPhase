@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,11 +18,11 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2014
- *   Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev;
- *                         Reza Darvishi Kamachali; Philipp Engels;
- *                         Raphael Schiedung
+ *
+ *  File created :   2014
+ *  Main contributors :   Oleg Shchyglo; Efim Borukhovich; Dmitry Medvedev;
+ *                        Reza Darvishi Kamachali; Philipp Engels;
+ *                        Raphael Schiedung
  *
  */
 
@@ -266,9 +266,9 @@ void Initializations::RandomNuclei(PhaseField& Phase,
                     int Q1 = loc_orientation(VariantsGenerator);
                     int Q2 = loc_orientation(VariantsGenerator);
                     int Q3 = loc_orientation(VariantsGenerator);
-                    EulerAngles locAngles({Q1*Pi/180, Q2*Pi/180, Q3*Pi/180}, XYZ);
+                    EulerAngles locAngles({Q1*Pi/180, Q2*Pi/180, Q3*Pi/180}, "XYZ");
 
-                    Phase.FieldsProperties[locIndex].Orientation = locAngles.getQuaternion();
+                    Phase.FieldsProperties[locIndex].Orientation = locAngles.get_quaternion();
                 }
                 if(randomVariants)
                 {
@@ -718,6 +718,83 @@ vector<size_t> Initializations::TwoWalls(PhaseField& Phase,
     return vector<size_t>({index1,index2});
 }
 
+vector<size_t> Initializations::TwoWalls(PhaseField& Phase,
+                                        size_t ChannelPhaseIndex,
+                                        size_t WallsPhaseIndex,
+                                        double WallsThickness,
+                                        BoundaryConditions& BC,
+                                        int axis /* 0=x, 1=y, 2=z */)
+{
+    // interface width in lattice units (same logic you already had)
+    const double iWidth =
+        (Phase.Grid.Resolution == Resolutions::Dual) ? 0.5 * Phase.Grid.iWidth : Phase.Grid.iWidth;
+
+    // Add phase/grain infos
+    size_t index1 = Phase.AddGrainInfo(ChannelPhaseIndex);
+    size_t index2 = Phase.AddGrainInfo(WallsPhaseIndex);
+
+    const int offset = static_cast<int>(WallsThickness);
+
+    // Map axis -> total size and offset
+    auto TotalN = [&]() -> int {
+        switch (axis) {
+            case 0: return Phase.Grid.TotalNx;
+            case 1: return Phase.Grid.TotalNy;
+            default: return Phase.Grid.TotalNz;
+        }
+    };
+
+    auto Offset = [&]() -> int {
+        switch (axis) {
+            case 0: return Phase.Grid.OffsetX;
+            case 1: return Phase.Grid.OffsetY;
+            default: return Phase.Grid.OffsetZ;
+        }
+    };
+
+    const int Ns = TotalN();
+    const int Os = Offset();
+
+    STORAGE_LOOP_BEGIN(i, j, k, Phase.Fields, Phase.Fields.Bcells())
+    {
+        Phase.Fields(i, j, k).clear();
+        Phase.Fields(i, j, k).flag = 0;
+
+        // coordinate along selected axis (including correct offset)
+        const int s_local = (axis == 0 ? i : (axis == 1 ? j : k));
+        const double s = static_cast<double>(s_local + Os);
+
+        // same conditions as your z-version, just using s and Ns
+        if (s > offset + iWidth / 2.0 && s < Ns - offset - 1 - iWidth / 2.0)
+        {
+            Phase.Fields(i, j, k).set_value(index1, 1.0);
+        }
+        else if (s < offset - iWidth / 2.0 || s > Ns - offset - 1 + iWidth / 2.0)
+        {
+            Phase.Fields(i, j, k).set_value(index2, 1.0);
+        }
+        else if (s >= offset - iWidth / 2.0 && s <= offset + iWidth / 2.0)
+        {
+            const double IntProf = 0.5 - 0.5 * sin(Pi * (s - offset) / iWidth);
+            Phase.Fields(i, j, k).set_value(index1, 1.0 - IntProf);
+            Phase.Fields(i, j, k).set_value(index2, IntProf);
+            Phase.Fields(i, j, k).flag = 2;
+        }
+        else if (s >= Ns - offset - 1 - iWidth / 2.0 && s <= Ns - offset - 1 + iWidth / 2.0)
+        {
+            const double IntProf = 0.5 + 0.5 * sin(Pi * (Ns - s - offset - 1) / iWidth);
+            Phase.Fields(i, j, k).set_value(index1, IntProf);
+            Phase.Fields(i, j, k).set_value(index2, 1.0 - IntProf);
+            Phase.Fields(i, j, k).flag = 2;
+        }
+    }
+    STORAGE_LOOP_END
+
+    Phase.FinalizeInitialization(BC);
+    return { index1, index2 };
+}
+
+
 vector<size_t> Initializations::TwoDifferentWalls(PhaseField& Phase,
                                                   size_t ChannelPhaseIndex,
                                                   size_t WallsPhaseIndex,
@@ -849,6 +926,132 @@ size_t Initializations::Ellipsoid(PhaseField& Phase,
     return index;
 }
 
+size_t Initializations::Ellipsoid(PhaseField& Phase,
+                                  size_t PhaseIndex,
+                                  double RadiusX, double RadiusY, double RadiusZ,
+                                  double x0, double y0, double z0,
+                                  double tx, double ty, double tz,   // Euler angles (ZYX)
+                                  BoundaryConditions& BC)
+{
+    const double iWidth = (Phase.Grid.Resolution == Resolutions::Dual)
+        ? 0.5 * Phase.Grid.iWidth
+        : Phase.Grid.iWidth;
+
+    size_t index = Phase.AddGrainInfo(PhaseIndex);
+
+    // -------------------------------
+    // Precompute rotation matrix (ZYX order)
+    // Same as your Rectangular()
+    // -------------------------------
+    double cx = cos(tx), sx = sin(tx);
+    double cy = cos(ty), sy = sin(ty);
+    double cz = cos(tz), sz = sin(tz);
+
+    double R[3][3];
+    R[0][0] = cz*cy;
+    R[0][1] = cz*sy*sx - sz*cx;
+    R[0][2] = cz*sy*cx + sz*sx;
+
+    R[1][0] = sz*cy;
+    R[1][1] = sz*sy*sx + cz*cx;
+    R[1][2] = sz*sy*cx - cz*sx;
+
+    R[2][0] = -sy;
+    R[2][1] = cy*sx;
+    R[2][2] = cy*cx;
+
+    // -------------------------------
+    // Inner/outer radii
+    // -------------------------------
+    double Rxi = RadiusX - iWidth*0.5;
+    double Ryi = RadiusY - iWidth*0.5;
+    double Rzi = RadiusZ - iWidth*0.5;
+
+    double Rxo = RadiusX + iWidth*0.5;
+    double Ryo = RadiusY + iWidth*0.5;
+    double Rzo = RadiusZ + iWidth*0.5;
+
+    // squares for cheap tests
+    double Rxi2 = Rxi*Rxi, Ryi2 = Ryi*Ryi, Rzi2 = Rzi*Rzi;
+    double Rxo2 = Rxo*Rxo, Ryo2 = Ryo*Ryo, Rzo2 = Rzo*Rzo;
+
+    // -------------------------------
+    // Implicit function in local frame
+    // >0 outside, <0 inside
+    // -------------------------------
+    auto PinE_local = [&](double xl, double yl, double zl,
+                          double Rx, double Ry, double Rz) -> double
+    {
+        return (xl*xl)/(Rx*Rx) + (yl*yl)/(Ry*Ry) + (zl*zl)/(Rz*Rz) - 1.0;
+    };
+
+    STORAGE_LOOP_BEGIN(i,j,k,Phase.Fields,Phase.Fields.Bcells())
+    {
+        const double x = double(i + Phase.Grid.OffsetX);
+        const double y = double(j + Phase.Grid.OffsetY);
+        const double z = double(k + Phase.Grid.OffsetZ);
+
+        // (1) Translate to ellipsoid center
+        const double xr = x - x0;
+        const double yr = y - y0;
+        const double zr = z - z0;
+
+        // (2) world -> ellipsoid-local uses transpose(R) = inverse(R)
+        const double xl = R[0][0]*xr + R[1][0]*yr + R[2][0]*zr;
+        const double yl = R[0][1]*xr + R[1][1]*yr + R[2][1]*zr;
+        const double zl = R[0][2]*xr + R[1][2]*yr + R[2][2]*zr;
+
+        // (3) Standard axis-aligned ellipsoid tests in local coords
+        const double in_inner = (xl*xl/Rxi2 + yl*yl/Ryi2 + zl*zl/Rzi2);
+        const double in_outer = (xl*xl/Rxo2 + yl*yl/Ryo2 + zl*zl/Rzo2);
+
+        if (in_inner <= 1.0)  // pure phase
+        {
+            Phase.Fields(i, j, k).clear();
+            Phase.Fields(i, j, k).set_value(index, 1.0);
+        }
+        else if (in_outer <= 1.0) // interface band
+        {
+            // Find coordinate rr inside interface (same idea as your original)
+            double r1 = -iWidth*0.5;
+            double r2 =  iWidth*0.5;
+            double rr = 0.5*(r1 + r2);
+            double tolerance = 1e-6;
+
+            // bisection-like search using implicit function in LOCAL coords
+            while (fabs(r2 - r1) > tolerance)
+            {
+                if (PinE_local(xl, yl, zl, RadiusX + r1, RadiusY + r1, RadiusZ + r1) > 0.0)
+                    r1 += 0.25*(r2 - r1);
+                else
+                    r1 -= 0.25*(r2 - r1);
+
+                if (PinE_local(xl, yl, zl, RadiusX + r2, RadiusY + r2, RadiusZ + r2) < 0.0)
+                    r2 -= 0.25*(r2 - r1);
+                else
+                    r2 += 0.25*(r2 - r1);
+
+                rr = 0.5*(r1 + r2);
+            }
+
+            const double IntProf = 0.5 - 0.5*sin(Pi*rr/iWidth);
+
+            for (auto alpha = Phase.Fields(i,j,k).begin();
+                 alpha < Phase.Fields(i,j,k).end(); ++alpha)
+            {
+                alpha->value *= (1.0 - IntProf);
+            }
+
+            Phase.Fields(i, j, k).set_value(index, IntProf);
+            Phase.Fields(i, j, k).flag = 2;
+        }
+    }
+    STORAGE_LOOP_END
+
+    Phase.FinalizeInitialization(BC);
+    return index;
+}
+
 void Initializations::Read(PhaseField& Phase, string FileName,
                            BoundaryConditions& BC)
 {
@@ -858,7 +1061,7 @@ void Initializations::Read(PhaseField& Phase, string FileName,
     {
         STORAGE_LOOP_BEGIN(i,j,k,Phase.Fields,Phase.Fields.Bcells())
         {
-            for(auto alpha = Phase.Fields(i,j,k).begin();
+            for(auto alpha  = Phase.Fields(i,j,k).begin();
                      alpha != Phase.Fields(i,j,k).end(); alpha++)
             {
                if(alpha->index >= Phase.FieldsProperties.size())
@@ -875,7 +1078,7 @@ void Initializations::Read(PhaseField& Phase, string FileName,
     {
         STORAGE_LOOP_BEGIN(i,j,k,Phase.FieldsDR,Phase.FieldsDR.Bcells())
         {
-            for(auto alpha = Phase.FieldsDR(i,j,k).begin();
+            for(auto alpha  = Phase.FieldsDR(i,j,k).begin();
                      alpha != Phase.FieldsDR(i,j,k).end(); alpha++)
             {
                 if(alpha->index >= Phase.FieldsProperties.size())
@@ -887,7 +1090,7 @@ void Initializations::Read(PhaseField& Phase, string FileName,
         }
         STORAGE_LOOP_END
     }
-    Phase.Finalize(BC);
+    Phase.FinalizeInitialization(BC);
 }
 
 size_t Initializations::Rectangular(PhaseField& Phase, size_t PhaseIndex,
@@ -948,12 +1151,97 @@ size_t Initializations::Rectangular(PhaseField& Phase, size_t PhaseIndex,
 
     if (Finalize)
     {
-        Phase.Finalize(BC);
+        Phase.FinalizeInitialization(BC);
+    }
+    return locIndex;
+}
 
-        if(Phase.Grid.Resolution == Resolutions::Dual)
+size_t Initializations::Rectangular(PhaseField& Phase, size_t PhaseIndex,
+                                    double Lx, double Ly, double Lz,
+                                    double x0, double y0, double z0,
+                                    double tx, double ty, double tz,
+                                    const BoundaryConditions& BC,
+                                    const bool Finalize)
+{
+    const double iWidth = (Phase.Grid.Resolution == Resolutions::Dual) ? 0.5*Phase.Grid.iWidth : Phase.Grid.iWidth;
+    const double SizeX = (Lx < iWidth) ? 1: (Lx - iWidth)/2.0;
+    const double SizeY = (Ly < iWidth) ? 1: (Ly - iWidth)/2.0;
+    const double SizeZ = (Lz < iWidth) ? 1: (Lz - iWidth)/2.0;
+
+    // Precompute rotation matrix (ZYX order)
+    double cx = cos(tx), sx = sin(tx);
+    double cy = cos(ty), sy = sin(ty);
+    double cz = cos(tz), sz = sin(tz);
+
+    double R[3][3];
+    R[0][0] = cz*cy;
+    R[0][1] = cz*sy*sx - sz*cx;
+    R[0][2] = cz*sy*cx + sz*sx;
+
+    R[1][0] = sz*cy;
+    R[1][1] = sz*sy*sx + cz*cx;
+    R[1][2] = sz*sy*cx - cz*sx;
+
+    R[2][0] = -sy;
+    R[2][1] = cy*sx;
+    R[2][2] = cy*cx;
+
+    const size_t locIndex = Phase.AddGrainInfo(PhaseIndex);
+    STORAGE_LOOP_BEGIN(i,j,k,Phase.Fields,Phase.Fields.Bcells())
+    {
+        const double x = double(i+Phase.Grid.OffsetX);
+        const double y = double(j+Phase.Grid.OffsetY);
+        const double z = double(k+Phase.Grid.OffsetZ);
+
+        // (1) Translate to box center
+        const double xr = x - x0;
+        const double yr = y - y0;
+        const double zr = z - z0;
+
+        // world -> box local uses transpose (inverse)
+        //// (2) Rotate relative coordinates
+        double xr_rot = R[0][0]*xr + R[1][0]*yr + R[2][0]*zr;
+        double yr_rot = R[0][1]*xr + R[1][1]*yr + R[2][1]*zr;
+        double zr_rot = R[0][2]*xr + R[1][2]*yr + R[2][2]*zr;
+
+        // (3) Distance to box walls in rotated frame
+        dVector3 dist = { std::abs(xr_rot) - SizeX,
+                          std::abs(yr_rot) - SizeY,
+                          std::abs(zr_rot) - SizeZ };
+
+        // Set phase field
+        if (dist[0] <= 0 && dist[1] <= 0 && dist[2] <= 0)
         {
-            Phase.Refine();
+            Phase.Fields(i, j, k).clear();
+            Phase.Fields(i, j, k).set_value(locIndex, 1);
         }
+        else if (dist[0] <= iWidth && dist[1] <= iWidth && dist[2] <= iWidth)
+        {
+            const double xx = std::max(dist[0], std::max(dist[1], dist[2]));
+            const double IntProf = 0.5 + 0.5 * std::cos(Pi * xx / iWidth);
+            Phase.Fields(i,j,k).flag = 2;
+
+            double tmp = IntProf;
+            for(auto alpha = Phase.Fields(i,j,k).begin();
+                     alpha != Phase.Fields(i,j,k).end(); alpha++)
+            if (alpha->value > tmp)
+            {
+                alpha->value -= tmp;
+                tmp = 0;
+            }
+            else
+            {
+                tmp -= alpha->value;
+                alpha->value = 0;
+            }
+            Phase.Fields(i,j,k).set_value(locIndex, IntProf);
+        }
+    }
+    STORAGE_LOOP_END
+
+    if (Finalize)
+    {
+        Phase.FinalizeInitialization(BC);
     }
     return locIndex;
 }
@@ -1418,11 +1706,11 @@ int Initializations::TwoDimEBSDWithOrientations(std::string filename, std::vecto
             if( !iline ) break;
         }
 
-        tempEang.set_convention(ZXZ);
+        tempEang.set_convention("ZXZ");
 
         ConsoleOutput::WriteWarning("Using ZXZ angle convention", thisclassname, "TwoDimEBSDWithOrientations()");
 
-        tempEang.setTrigonometricFunctions();
+        tempEang.set_trigonometric_functions();
         Eang.push_back(tempEang);
     }
 
@@ -1467,7 +1755,7 @@ int Initializations::TwoDimEBSDWithOrientations(std::string filename, std::vecto
             {
                 // SetInitialOrientations
                 EulerAngles EangLocal = Eang[-1 + iterx + colstep];
-                OR.Quaternions(i,j,0) = EangLocal.getQuaternion();
+                OR.Quaternions(i,j,0) = EangLocal.get_quaternion();
                 StorageEulerAngles(i,j,0) = EangLocal;
 
                 // Set phase fields
@@ -1872,8 +2160,8 @@ std::vector<size_t> Initializations::FillRectangularWithSpheres(
         double Q1 = Q1Distribution(generator) * Pi/180.0;
         double Q2 = Q2Distribution(generator) * Pi/180.0;
         double Q3 = Q3Distribution(generator) * Pi/180.0;
-        EulerAngles locAngles({Q1, Q2, Q3}, XYZ);
-        Phase.FieldsProperties[n].Orientation = locAngles.getQuaternion();
+        EulerAngles locAngles({Q1, Q2, Q3}, "XYZ");
+        Phase.FieldsProperties[n].Orientation = locAngles.get_quaternion();
     }
 
 #ifdef MPI_PARALLEL
@@ -1958,12 +2246,7 @@ std::vector<size_t> Initializations::RectangularGreenBody(
         ConsoleOutput::WriteWarning(ecep.what(),"Initializations","FillWithSpheresWithDensity");
     }
 
-    // Finalise initialization
-    if(Phase.Grid.Resolution == Resolutions::Dual)
-    {
-        Phase.Refine();
-    }
-    Phase.Finalize(BC);
+    Phase.FinalizeInitialization(BC);
     return SpheresIdx;
 }
 
@@ -2127,45 +2410,7 @@ void Initializations::VoronoiTessellation(PhaseField& Phase,
 
     Phase.SetBoundaryConditions(BC);
 
-    // Spread interfaces by overlapping the grains near the interface
-    ConsoleOutput::WriteSimple("Creating grain boundaries...");
-    STORAGE_LOOP_BEGIN(i,j,k,Phase.Fields,0)
-    if(Phase.Fields(i,j,k).size() == 1)
-    {
-        size_t alpha_index = Phase.Fields(i,j,k).begin()->index;
-
-        for(int di = -1; di <= 1; di++)
-        for(int dj = -1; dj <= 1; dj++)
-        for(int dk = -1; dk <= 1; dk++)
-        if(i+di >= 0 and i+di < Nx and
-           j+dj >= 0 and j+dj < Ny and
-           k+dk >= 0 and k+dk < Nz and
-           (di != 0 or dj != 0 or dk != 0))
-        {
-            bool grain_not_present = true;
-            for(auto beta  = Phase.Fields(i+di,j+dj,k+dk).begin();
-                     beta != Phase.Fields(i+di,j+dj,k+dk).end(); ++beta)
-            if(beta->index == alpha_index)
-            {
-                grain_not_present = false;
-                break;
-            }
-            else
-            {
-                break;
-            }
-            if(grain_not_present)
-            {
-                for(auto beta  = Phase.Fields(i+di,j+dj,k+dk).begin();
-                         beta != Phase.Fields(i+di,j+dj,k+dk).end(); ++beta)
-                {
-                    Phase.Fields(i,j,k).add_value(beta->index, 1.0);
-                }
-                Phase.Fields(i+di,j+dj,k+dk).add_value(alpha_index, 1.0);
-            }
-        }
-    }
-    STORAGE_LOOP_END
+    Phase.SmoothInitialization();
 
     Phase.FinalizeInitialization(BC);
     ConsoleOutput::WriteSimple("Done!");
@@ -2186,8 +2431,8 @@ void Initializations::VoronoiTessellation(PhaseField& Phase,
         double Q2 = Phase.Grid.dNx*Phase.Grid.dNz*Q2Distribution(OrientGenerator2) * Pi/180.0;
         double Q3 = Phase.Grid.dNx*Phase.Grid.dNy*Q3Distribution(OrientGenerator3) * Pi/180.0;
 
-        EulerAngles locAngles({Q1, Q2, Q3}, XYZ);
-        Phase.FieldsProperties[n].Orientation = locAngles.getQuaternion();
+        EulerAngles locAngles({Q1, Q2, Q3}, "XYZ");
+        Phase.FieldsProperties[n].Orientation = locAngles.get_quaternion();
     }
 
     ConsoleOutput::WriteSimple("Done!");
@@ -2213,6 +2458,13 @@ void Initializations::ReadCSV(PhaseField& Phase, BoundaryConditions& BC, std::fi
         std::string line;
         while (std::getline(file, line))
         {
+            // Strip Windows line ending
+            if (!line.empty() && line.back() == '\r')
+                line.pop_back();
+
+            if (line.empty())
+                continue;
+
             std::vector<long int> row;
             std::istringstream lineStream(line);
             std::string cell;
@@ -2291,55 +2543,236 @@ void Initializations::ReadCSV(PhaseField& Phase, BoundaryConditions& BC, std::fi
     Phase.FinalizeInitialization(BC);
     Phase.SetBoundaryConditions(BC);
 
-    // Smooth phase-field
-    Storage3D<NodePF,0> tmp(Phase.Fields);
-    STORAGE_LOOP_BEGIN(i,j,k,Phase.Fields,0)
-    {
-        if (Phase.Grid.dNx)
-        {
-            if (Phase.Fields(i,j,k).front().index != Phase.Fields(i+1,j,k).front().index) tmp(i,j,k).add_value(Phase.Fields(i+1,j,k).front().index, 1);
-            if (Phase.Fields(i,j,k).front().index != Phase.Fields(i-1,j,k).front().index) tmp(i,j,k).add_value(Phase.Fields(i-1,j,k).front().index, 1);
-        }
-        if (Phase.Grid.dNy)
-        {
-            if (Phase.Fields(i,j,k).front().index != Phase.Fields(i,j+1,k).front().index) tmp(i,j,k).add_value(Phase.Fields(i,j+1,k).front().index, 1);
-            if (Phase.Fields(i,j,k).front().index != Phase.Fields(i,j-1,k).front().index) tmp(i,j,k).add_value(Phase.Fields(i,j-1,k).front().index, 1);
-        }
-        if (Phase.Grid.dNz)
-        {
-            if (Phase.Fields(i,j,k).front().index != Phase.Fields(i,j,k+1).front().index) tmp(i,j,k).add_value(Phase.Fields(i,j,k+1).front().index, 1);
-            if (Phase.Fields(i,j,k).front().index != Phase.Fields(i,j,k-1).front().index) tmp(i,j,k).add_value(Phase.Fields(i,j,k-1).front().index, 1);
-        }
-        if (Phase.Grid.dNx && Phase.Grid.dNy)
-        {
-            if (Phase.Fields(i,j,k).front().index != Phase.Fields(i-1,j+1,k).front().index) tmp(i,j,k).add_value(Phase.Fields(i-1,j+1,k).front().index, 1);
-            if (Phase.Fields(i,j,k).front().index != Phase.Fields(i-1,j-1,k).front().index) tmp(i,j,k).add_value(Phase.Fields(i-1,j-1,k).front().index, 1);
-            if (Phase.Fields(i,j,k).front().index != Phase.Fields(i+1,j+1,k).front().index) tmp(i,j,k).add_value(Phase.Fields(i+1,j+1,k).front().index, 1);
-            if (Phase.Fields(i,j,k).front().index != Phase.Fields(i+1,j-1,k).front().index) tmp(i,j,k).add_value(Phase.Fields(i+1,j-1,k).front().index, 1);
-        }
-        if (Phase.Grid.dNx && Phase.Grid.dNz)
-        {
-            if (Phase.Fields(i,j,k).front().index != Phase.Fields(i-1,j,k+1).front().index) tmp(i,j,k).add_value(Phase.Fields(i-1,j,k+1).front().index, 1);
-            if (Phase.Fields(i,j,k).front().index != Phase.Fields(i-1,j,k-1).front().index) tmp(i,j,k).add_value(Phase.Fields(i-1,j,k-1).front().index, 1);
-            if (Phase.Fields(i,j,k).front().index != Phase.Fields(i+1,j,k+1).front().index) tmp(i,j,k).add_value(Phase.Fields(i+1,j,k+1).front().index, 1);
-            if (Phase.Fields(i,j,k).front().index != Phase.Fields(i+1,j,k-1).front().index) tmp(i,j,k).add_value(Phase.Fields(i+1,j,k-1).front().index, 1);
-        }
-        if (Phase.Grid.dNy && Phase.Grid.dNz)
-        {
-            if (Phase.Fields(i,j,k).front().index != Phase.Fields(i,j-1,k+1).front().index) tmp(i,j,k).add_value(Phase.Fields(i,j-1,k+1).front().index, 1);
-            if (Phase.Fields(i,j,k).front().index != Phase.Fields(i,j-1,k-1).front().index) tmp(i,j,k).add_value(Phase.Fields(i,j-1,k-1).front().index, 1);
-            if (Phase.Fields(i,j,k).front().index != Phase.Fields(i,j+1,k+1).front().index) tmp(i,j,k).add_value(Phase.Fields(i,j+1,k+1).front().index, 1);
-            if (Phase.Fields(i,j,k).front().index != Phase.Fields(i,j+1,k-1).front().index) tmp(i,j,k).add_value(Phase.Fields(i,j+1,k-1).front().index, 1);
-        }
-    }
-    STORAGE_LOOP_END
-    STORAGE_LOOP_BEGIN(i,j,k,Phase.Fields,0)
-    {
-        Phase.Fields(i,j,k) = tmp(i,j,k);
-    }
-    STORAGE_LOOP_END
+    Phase.SmoothInitialization();
+    
     Phase.FinalizeInitialization(BC);
     Phase.SetBoundaryConditions(BC);
+}
+
+void Initializations::ReadKanapyData(PhaseField& Phase, BoundaryConditions& BC, std::filesystem::path FilePath)
+{
+    std::ifstream f(FilePath);
+    if (!f.is_open())
+    {
+        ConsoleOutput::WriteExit("Could not open file " + FilePath.string(), "Initializations", "ReadKanapyData");
+        OP_Exit(EXIT_FAILURE);
+    }
+
+    json data = json::parse(f);
+    if (data.contains("RVE_size"))
+    {
+        json RVE_size = data["RVE_size"];
+        int Size_X = RVE_size[0];
+        int Size_Y = RVE_size[1];
+        int Size_Z = RVE_size[2];
+        json discretization = data["discretization_unit_size"];
+        double dx_X = discretization[0];
+        double dx_Y = discretization[1];
+        double dx_Z = discretization[2];
+        Size_X /= dx_X;
+        Size_Y /= dx_Y;
+        Size_Z /= dx_Z;
+        if (Size_X != Phase.Grid.Nx or Size_Y != Phase.Grid.Ny or Size_Z != Phase.Grid.Nz)
+        {
+            ConsoleOutput::WriteExit("Grid sizes do not match.", "Initializations", "ReadKanapyData");
+            OP_Exit(EXIT_FAILURE);
+        }
+        std::map<size_t, size_t> grainIdxMap;
+        if (data.contains("microstructure_evolution"))
+        {
+            json Voxels = data["microstructure_evolution"][0]["voxels"];
+            for (size_t i = 0; i < Voxels.size(); ++i)
+            {
+                int x = Voxels[i]["voxel_index"][0];
+                int y = Voxels[i]["voxel_index"][1];
+                int z = Voxels[i]["voxel_index"][2];
+                int grain_id = Voxels[i]["grain_id"];
+                int phase_id = data["microstructure_evolution"][0]["grains"][grain_id-1]["phase_id"];
+                size_t grainIdx = 0;
+                if (grainIdxMap.find(grain_id) == grainIdxMap.end())
+                {
+                    grainIdxMap[grain_id] = Phase.AddGrainInfo(phase_id);
+                    grainIdx = grainIdxMap[grain_id];
+                }
+                else
+                {
+                    grainIdx = grainIdxMap[grain_id];
+                }
+                Phase.Fields(x,y,z).set_value(grainIdx, 1.0);
+            }
+        }
+        Phase.FinalizeInitialization(BC);
+        Phase.SetBoundaryConditions(BC);
+
+        Phase.SmoothInitialization();
+
+        Phase.FinalizeInitialization(BC);
+        Phase.SetBoundaryConditions(BC);
+        json Grains = data["microstructure_evolution"][0]["grains"];
+        json Phases = data["phases"];
+        for(size_t n = 0; n < Phase.FieldsProperties.size(); n++)
+        {
+            double Q1 = Grains[n]["orientation"][0];
+            double Q2 = Grains[n]["orientation"][1];
+            double Q3 = Grains[n]["orientation"][2];
+            int phase_id= Grains[n]["phase_id"];
+            std::string convention = Phases[phase_id]["orientation"]["global_rotation_convention"];
+            EulerAngles locAngles({Q1, Q2, Q3}, convention);
+            Phase.FieldsProperties[n].Orientation = locAngles.get_quaternion();
+        }
+    }
+}
+
+size_t Initializations::BlobbyAuto(PhaseField& Phase, size_t PhaseIndex,
+                                   double Lx, double Ly, double Lz,
+                                   double x0, double y0, double z0,
+                                   double maxAmplitude, size_t numBumps,
+                                   const BoundaryConditions& BC,
+                                   const bool Finalize)
+{
+    // Interface thickness in index units
+    const double iWidth = (Phase.Grid.Resolution == Resolutions::Dual)
+                            ? 0.5 * Phase.Grid.iWidth
+                            : Phase.Grid.iWidth;
+
+    const size_t locIndex = Phase.AddGrainInfo(PhaseIndex);
+
+    // Generate random parameters for the blobby surface (SDF = 0 surface)
+    std::vector<double> amplitudes, freqTheta, freqPhi, phases;
+    GenerateBlobbyParams(numBumps, amplitudes, freqTheta, freqPhi, phases, maxAmplitude);
+
+    // If a dimension is inactive, pin the center in that direction
+    if (Phase.Grid.dNx == 0.0) x0 = 0.0;
+    if (Phase.Grid.dNy == 0.0) y0 = 0.0;
+    if (Phase.Grid.dNz == 0.0) z0 = 0.0;
+
+    STORAGE_LOOP_BEGIN(i, j, k, Phase.Fields, Phase.Fields.Bcells())
+    {
+        const double x = double(i + Phase.Grid.OffsetX);
+        const double y = double(j + Phase.Grid.OffsetY);
+        const double z = double(k + Phase.Grid.OffsetZ);
+
+        const double D = BlobbySDF(x, y, z,
+                                   x0, y0, z0,
+                                   Lx, Ly, Lz,
+                                   amplitudes, freqTheta, freqPhi, phases);
+
+        if (D <= 0.0)
+        {
+            // Fully inside solid region
+            Phase.Fields(i, j, k).clear();
+            Phase.Fields(i, j, k).set_value(locIndex, 1.0);
+        }
+        else if (D <= iWidth)
+        {
+            // Diffuse interface band: smooth cosine profile from 1 → 0 over [0, iWidth]
+            const double IntProf = 0.5 + 0.5 * std::cos(Pi * D / iWidth);
+
+            // Mark interface cell
+            Phase.Fields(i, j, k).flag = 2;
+
+            // Renormalize other phase fractions to keep sum = 1
+            double tmp = IntProf;
+            for (auto alpha = Phase.Fields(i, j, k).begin();
+                      alpha != Phase.Fields(i, j, k).end(); ++alpha)
+            {
+                if (alpha->value > tmp)
+                {
+                    alpha->value -= tmp;
+                    tmp = 0.0;
+                }
+                else
+                {
+                    tmp -= alpha->value;
+                    alpha->value = 0.0;
+                }
+            }
+
+            // Set blobby phase fraction
+            Phase.Fields(i, j, k).set_value(locIndex, IntProf);
+        }
+        // else: outside the diffuse band, leave existing values (gas/other phases) unchanged
+    }
+    STORAGE_LOOP_END
+
+    if (Finalize)
+        Phase.FinalizeInitialization(BC);
+
+    return locIndex;
+}
+
+
+
+double Initializations::BlobbySDF(double x, double y, double z,
+                 double x0, double y0, double z0,
+                 double Lx, double Ly, double Lz,
+                 const std::vector<double>& amplitudes,
+                 const std::vector<double>& freqTheta,
+                 const std::vector<double>& freqPhi,
+                 const std::vector<double>& phases)
+{
+    double dx = x - x0;
+    double dy = y - y0;
+    double dz = z - z0;
+    constexpr double r_min = 2.0; // in grid index units
+
+    // Ensure all frequencies are integers in param generation!
+    // (see note below for param generation)
+
+    auto SDF2D = [&](double dx_, double dy_, double L)
+    {
+        double angle = atan2(dy_, dx_);
+        double r_shape = L;
+        for (size_t k = 0; k < amplitudes.size(); ++k)
+            r_shape += amplitudes[k] * sin(freqTheta[k]*angle + phases[k]);
+        r_shape = std::max(r_shape, r_min);
+        return sqrt(dx_*dx_ + dy_*dy_) - r_shape;
+    };
+
+    // 2D case: XY, XZ, or YZ plane
+    if (Lz == 0)
+        return SDF2D(dx, dy, Lx);
+    if (Ly == 0)
+        return SDF2D(dx, dz, Lx);
+    if (Lx == 0)
+        return SDF2D(dy, dz, Ly);
+
+    auto SDF3D = [&](double dx_, double dy_, double dz_)
+    {
+        double theta = atan2(sqrt(dx_*dx_ + dy_*dy_), dz_);
+        double phi   = atan2(dy_, dx_);
+        double r_shape = Lx;
+        for (size_t k = 0; k < amplitudes.size(); ++k)
+            r_shape += amplitudes[k] * sin(freqTheta[k]*theta + freqPhi[k]*phi + phases[k]);
+        r_shape = std::max(r_shape, r_min);
+        double r = sqrt(dx_*dx_ + dy_*dy_ + dz_*dz_);
+        return r - r_shape;
+    };
+    return SDF3D(dx, dy, dz);
+}
+
+void Initializations::GenerateBlobbyParams(
+    size_t numBumps, std::vector<double>& amplitudes, 
+    std::vector<double>& freqTheta, std::vector<double>& freqPhi, 
+    std::vector<double>& phases, double maxAmplitude)
+{
+    std::default_random_engine rng(42);
+    std::uniform_real_distribution<double> amp_dist(0.0, maxAmplitude);
+    std::uniform_real_distribution<double> phase_dist(0.0, 2*Pi);
+    std::uniform_int_distribution<int> freq_dist(5, 20);
+
+    for (size_t k = 0; k < numBumps; ++k)
+    {
+        double amp = amp_dist(rng);
+        // Make first 3 have bigger amplitude, rest decay
+        if (k > 2)
+            amp /= sqrt(k - 1);
+        amplitudes.push_back(amp);
+
+        freqTheta.push_back(freq_dist(rng));
+        freqPhi.push_back(freq_dist(rng));
+        phases.push_back(phase_dist(rng));
+    }
 }
 
 }// namespace openphase

@@ -1,9 +1,9 @@
 /*
- *   This file is part of the OpenPhase (R) software library.
- *  
- *  Copyright (c) 2009-2025 Ruhr-Universitaet Bochum,
+ *  This file is part of the OpenPhase (R) software library.
+ *
+ *  Copyright (c) 2009-2026 Ruhr-Universitaet Bochum,
  *                Universitaetsstrasse 150, D-44801 Bochum, Germany
- *            AND 2018-2025 OpenPhase Solutions GmbH,
+ *            AND 2018-2026 OpenPhase Solutions GmbH,
  *                Universitaetsstrasse 136, D-44799 Bochum, Germany.
  *  
  *  This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- *   File created :   2012
- *   Main contributors :   Oleg Shchyglo; Raphael Schiedung
+ *
+ *  File created :   2012
+ *  Main contributors :   Oleg Shchyglo; Raphael Schiedung
  *
  */
 
@@ -50,6 +50,7 @@ const double LBStencil1D[3][3][3] = {{{    0.0,     0.0,     0.0},
                                       {    0.0, 1.0/6.0,     0.0},
                                       {    0.0,     0.0,     0.0}}};            ///< D1Q3 lattice Boltzmann stencil
 
+
 const double LBStencil2D[3][3][3] = {{{     0.0, 1.0/36.0,      0.0},
                                       {1.0/36.0, 1.0/9.0,  1.0/36.0},
                                       {     0.0, 1.0/36.0,      0.0}},
@@ -62,6 +63,7 @@ const double LBStencil2D[3][3][3] = {{{     0.0, 1.0/36.0,      0.0},
                                       {1.0/36.0, 1.0/9.0, 1.0/36.0},
                                       {     0.0, 1.0/36.0,     0.0}}};          ///< D2Q9 lattice Boltzmann stencil
 
+
 const double LBStencil3D[3][3][3] = {{{1.0/216.0, 1.0/54.0, 1.0/216.0},
                                       {1.0/54.0,  2.0/27.0, 1.0/54.0},
                                       {1.0/216.0, 1.0/54.0, 1.0/216.0}},
@@ -73,6 +75,7 @@ const double LBStencil3D[3][3][3] = {{{1.0/216.0, 1.0/54.0, 1.0/216.0},
                                      {{1.0/216.0, 1.0/54.0, 1.0/216.0},
                                       {1.0/54.0,  2.0/27.0, 1.0/54.0},
                                       {1.0/216.0, 1.0/54.0, 1.0/216.0}}};       ///< D3Q27 lattice Boltzmann stencil
+
 
 class OP_EXPORTS D3Q27                                                                     ///< Lattice Boltzmann populations storage/manipulator
 {
