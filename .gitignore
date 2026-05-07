@@ -10,3 +10,4 @@
 .clang-format
 .clangd
 compile_commands.json
+build/
