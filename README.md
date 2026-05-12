@@ -1,4 +1,4 @@
-# OpenPhase-Academic v2.0
+# OpenPhase-Academic v2.1
 
 <div align="center">
   <img src="documentation/UserManual/Figures/openphase-logo.png" alt="OpenPhase Academic Logo" width="300">
@@ -8,7 +8,7 @@ OpenPhase is an open-source software library for phase-field simulations of comp
 
 ## Description
 
-OpenPhase-Academic v2.0 provides a comprehensive framework for phase-field modeling, enabling researchers to simulate complex material science phenomena. The library is designed with a modular architecture, making it easy to combine different physical models and simulation components for your specific research needs.
+OpenPhase-Academic v2.1 provides a comprehensive framework for phase-field modeling, enabling researchers to simulate complex material science phenomena. The library is designed with a modular architecture, making it easy to combine different physical models and simulation components for your specific research needs.
 
 ### Simulated Phenomena
 
