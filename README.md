@@ -337,4 +337,4 @@ OpenPhase has been developed with contributions from researchers at Ruhr Univers
 
 ---
 
-**Note**: This is the Academic version of OpenPhase (v2.0). For the latest version and commercial licensing options, visit [www.openphase-solutions.com](https://openphase-solutions.com/).
+**Note**: This is the Academic version of OpenPhase (v2.1). For the latest version and commercial licensing options, visit [www.openphase-solutions.com](https://openphase-solutions.com/).
