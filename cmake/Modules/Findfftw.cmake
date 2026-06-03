@@ -1,8 +1,20 @@
 # Find FFTW
 # Try to find the FFTW libraries
 
-find_path(FFTW_INCLUDE_DIR fftw3.h)
-find_library(FFTW_LIBRARY fftw3)
+set(FFTW_HINT_INCLUDE_DIRS)
+set(FFTW_HINT_LIBRARY_DIRS)
+
+if(DEFINED ENV{CONDA_PREFIX})
+  list(APPEND FFTW_HINT_INCLUDE_DIRS "$ENV{CONDA_PREFIX}/include")
+  list(APPEND FFTW_HINT_LIBRARY_DIRS "$ENV{CONDA_PREFIX}/lib")
+endif()
+
+find_path(FFTW_INCLUDE_DIR fftw3.h
+  HINTS ${FFTW_HINT_INCLUDE_DIRS}
+)
+find_library(FFTW_LIBRARY fftw3
+  HINTS ${FFTW_HINT_LIBRARY_DIRS}
+)
 
 if (NOT FFTW_INCLUDE_DIR)
   message(FATAL_ERROR "FFTW include directory not found.")

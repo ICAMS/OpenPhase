@@ -39,12 +39,25 @@ EXTERNAL_INCLUDES += -I$(DEPTH)/external/WinBase64
 EXTERNAL_LIBS  = $(DEPTH)/external/miniz.o
 EXTERNAL_LIBS += $(DEPTH)/external/WinBase64/libbase64.o
 
+CONDA_PREFIX ?= $(shell printf '%s' "$$CONDA_PREFIX")
+CONDA_INCLUDE_DIR = $(CONDA_PREFIX)/include
+CONDA_LIB_DIR = $(CONDA_PREFIX)/lib
+
+ifneq ($(wildcard $(CONDA_INCLUDE_DIR)/fftw3.h),)
+    INCLUDES += -I$(CONDA_INCLUDE_DIR)
+endif
+
 ifneq ($(CXX),)
     CXX = g++
 endif
 
 CXXFLAGS = -fopenmp -Wall -Wextra -Wno-unused-parameter -std=c++17 -fPIC
 STDLIBS = -lfftw3_omp -lfftw3 -lgomp
+
+ifneq ($(wildcard $(CONDA_LIB_DIR)/libfftw3.so)$(wildcard $(CONDA_LIB_DIR)/libfftw3.a),)
+    STDLIBS := -L$(CONDA_LIB_DIR) $(STDLIBS) -Wl,-rpath='$(CONDA_LIB_DIR)'
+    RUNPATH += -Wl,-rpath='$(CONDA_LIB_DIR)'
+endif
 
 COMPVER = $(shell $(CXX) -dumpversion)
 ifneq ($(findstring debug, $(SETTINGS)),)
