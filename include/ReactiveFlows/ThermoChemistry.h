@@ -47,6 +47,7 @@
 
 #include "cantera/base/Array.h"
 #include "cantera/base/Solution.h"
+#include "cantera/thermo/Species.h"
 #include "cantera/thermo/ThermoFactory.h"
 #include "cantera/kinetics/KineticsFactory.h"
 #include "cantera/transport/TransportFactory.h"

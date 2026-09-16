@@ -220,6 +220,65 @@ Example:
 make SETTINGS="debug serial"
 ```
 
+### Optional: Cantera Support (Reactive Flow Examples)
+
+The examples in `examples/ReactiveFlow/` (e.g. `FlamePackedBed-SFB287-A3Geom`) model
+chemically reacting gas flow through particle beds and use
+[Cantera](https://cantera.org) for chemical kinetics, thermodynamics, and
+transport properties. Cantera support is **not** available through the plain
+`make` build above — it requires building OpenPhase with **CMake** instead,
+with the `CANTERA_PATH` environment variable set to a Cantera installation
+**before** you run `cmake`.
+
+`CANTERA_PATH` must point to a directory that already contains a built and
+installed Cantera, i.e. `$CANTERA_PATH/include/cantera/...` and
+`$CANTERA_PATH/lib/libcantera.*`. Just `git clone`-ing the Cantera source is
+not enough by itself — Cantera has to be compiled first — so pick one of the
+two options below.
+
+#### Option 1: Install Cantera via your package manager (recommended)
+
+On Ubuntu/Debian:
+```bash
+sudo apt install libcantera-dev
+```
+
+Then configure and build OpenPhase with CMake:
+```bash
+git clone https://github.com/ICAMS/OpenPhase.git $HOME/openphase
+cd $HOME/openphase
+export CANTERA_PATH=/usr
+mkdir build
+cd build
+cmake ..
+cmake --build .
+```
+
+#### Option 2: Build Cantera from source
+
+If no Cantera package is available for your OS, build it yourself with
+[SCons](https://scons.org) (Cantera's own build system — not CMake):
+
+```bash
+git clone --branch v3.2.0 --depth 1 https://github.com/Cantera/cantera.git $HOME/cantera-src
+cd $HOME/cantera-src
+scons build prefix=$HOME/cantera-install
+scons install
+export CANTERA_PATH=$HOME/cantera-install
+
+git clone https://github.com/ICAMS/OpenPhase.git $HOME/openphase
+cd $HOME/openphase
+mkdir build
+cd build
+cmake ..
+cmake --build .
+```
+
+**Note:** `CANTERA_PATH` is only read when `cmake ..` is run (CMake's
+configure step), not at build time. If you set or change it after already
+running `cmake ..` once, re-run `cmake ..` (or delete and recreate the
+`build/` directory) before `cmake --build .`.
+
 ## Project Structure
 
 - `include/`: Header files containing the library API
